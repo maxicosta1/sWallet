@@ -62,6 +62,10 @@
                     <span class="nav-icon">C</span>
                     Clientes
                 </button>
+                <button class="nav-link" data-view="crm" type="button">
+                    <span class="nav-icon">CRM</span>
+                    CRM / Ventas
+                </button>
                 <button class="nav-link" data-view="proyectos" type="button">
                     <span class="nav-icon">PR</span>
                     Proyectos
@@ -78,6 +82,14 @@
                     <span class="nav-icon">F</span>
                     Facturacion
                 </button>
+                <button class="nav-link" data-view="presupuestos" type="button">
+                    <span class="nav-icon">PS</span>
+                    Presupuestos
+                </button>
+                <button class="nav-link" data-view="calendario" type="button">
+                    <span class="nav-icon">CA</span>
+                    Calendario
+                </button>
                 <button class="nav-link" data-view="administracion" type="button">
                     <span class="nav-icon">A</span>
                     Administracion
@@ -89,6 +101,26 @@
                 <button class="nav-link" data-view="metas" type="button">
                     <span class="nav-icon">G</span>
                     Metas
+                </button>
+                <button class="nav-link" data-view="documentos" type="button">
+                    <span class="nav-icon">DOC</span>
+                    Documentos
+                </button>
+                <button class="nav-link" data-view="soporte" type="button">
+                    <span class="nav-icon">SM</span>
+                    Soporte
+                </button>
+                <button class="nav-link" data-view="equipo" type="button">
+                    <span class="nav-icon">EQ</span>
+                    Equipo
+                </button>
+                <button class="nav-link" data-view="marketing" type="button">
+                    <span class="nav-icon">MK</span>
+                    Marketing
+                </button>
+                <button class="nav-link" data-view="portal" type="button">
+                    <span class="nav-icon">PC</span>
+                    Portal Cliente
                 </button>
                 <button class="nav-link" data-view="movimientos" type="button">
                     <span class="nav-icon">M</span>
@@ -910,6 +942,189 @@
                         <div class="goal-grid" id="goalsGrid"></div>
                     </section>
                 </div>
+            </section>
+
+            <section class="view" id="crmView" data-view-panel="crm">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="opportunityModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Pipeline comercial</p><h2 id="opportunityFormTitle">Nueva oportunidad</h2></div></div>
+                        <form id="opportunityForm" class="data-form" novalidate>
+                            <input type="hidden" id="opportunityId">
+                            <label>Cliente<select id="opportunityClient" required></select></label>
+                            <label>Titulo<input id="opportunityTitle" required type="text" placeholder="Landing, mantenimiento, ecommerce..."></label>
+                            <div class="form-row">
+                                <label>Servicio<input id="opportunityService" required type="text"></label>
+                                <label>Valor estimado<input id="opportunityValue" required min="1" step="0.01" type="number"></label>
+                                <label>Moneda<select id="opportunityCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Probabilidad %<input id="opportunityProbability" required min="0" max="100" step="1" type="number"></label>
+                                <label>Estado<select id="opportunityStatus" required><option value="lead_nuevo">Lead nuevo</option><option value="contactado">Contactado</option><option value="respondio">Respondio</option><option value="reunion_agendada">Reunion agendada</option><option value="presupuesto_enviado">Presupuesto enviado</option><option value="negociacion">Negociacion</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="perdido">Perdido</option></select></label>
+                                <label>Responsable<input id="opportunityResponsible" type="text"></label>
+                            </div>
+                            <label>Proxima accion<input id="opportunityNextAction" type="text"></label>
+                            <label>Notas<textarea id="opportunityNotes" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelOpportunityEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar oportunidad</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">CRM / Ventas</p><h2>Pipeline comercial</h2></div><button class="primary-button compact write-action" data-open-modal="opportunityModal" type="button">Nueva oportunidad</button></div>
+                        <div class="kanban-board wide-board" id="crmPipeline"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="presupuestosView" data-view-panel="presupuestos">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="budgetModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Presupuestos</p><h2 id="budgetFormTitle">Nuevo presupuesto</h2></div></div>
+                        <form id="budgetForm" class="data-form" novalidate>
+                            <input type="hidden" id="budgetId">
+                            <label>Cliente<select id="budgetClient" required></select></label>
+                            <label>Proyecto potencial<input id="budgetProjectName" required type="text"></label>
+                            <label>Servicios y precios<textarea id="budgetServices" required rows="5" placeholder="Landing premium:450000&#10;SEO tecnico:120000"></textarea></label>
+                            <div class="form-row">
+                                <label>Descuento<input id="budgetDiscount" min="0" step="0.01" type="number"></label>
+                                <label>Moneda<select id="budgetCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                                <label>Valido hasta<input id="budgetValidUntil" required type="date"></label>
+                            </div>
+                            <label>Estado<select id="budgetStatus" required><option value="borrador">Borrador</option><option value="enviado">Enviado</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="vencido">Vencido</option></select></label>
+                            <label>Notas<textarea id="budgetNotes" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelBudgetEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar presupuesto</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Propuestas</p><h2>Presupuestos</h2></div><button class="primary-button compact write-action" data-open-modal="budgetModal" type="button">Nuevo presupuesto</button></div>
+                        <div class="table-wrap"><table><thead><tr><th>Presupuesto</th><th>Total</th><th>Descuento</th><th>Validez</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="budgetsTable"></tbody></table></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="calendarioView" data-view-panel="calendario">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="calendarEventModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Agenda</p><h2 id="calendarEventFormTitle">Nuevo evento</h2></div></div>
+                        <form id="calendarEventForm" class="data-form" novalidate>
+                            <input type="hidden" id="calendarEventId">
+                            <label>Titulo<input id="calendarEventTitle" required type="text"></label>
+                            <div class="form-row">
+                                <label>Tipo<select id="calendarEventType" required><option value="reunion">Reunion</option><option value="entrega">Entrega</option><option value="pago">Pago</option><option value="seguimiento">Seguimiento</option><option value="tarea_interna">Tarea interna</option><option value="marketing">Marketing</option><option value="renovacion">Renovacion</option><option value="otro">Otro</option></select></label>
+                                <label>Fecha<input id="calendarEventDate" required type="date"></label>
+                                <label>Prioridad<select id="calendarEventPriority" required><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Inicio<input id="calendarEventStart" type="time"></label>
+                                <label>Fin<input id="calendarEventEnd" type="time"></label>
+                                <label>Estado<select id="calendarEventStatus" required><option value="pendiente">Pendiente</option><option value="completado">Completado</option><option value="cancelado">Cancelado</option></select></label>
+                            </div>
+                            <label>Cliente<select id="calendarEventClient"></select></label>
+                            <label>Proyecto<select id="calendarEventProject"></select></label>
+                            <label>Descripcion<textarea id="calendarEventDescription" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelCalendarEventEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar evento</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Calendario</p><h2>Mes actual</h2></div><button class="primary-button compact write-action" data-open-modal="calendarEventModal" type="button">Nuevo evento</button></div>
+                        <div class="finance-calendar full-calendar" id="fullCalendarGrid"></div>
+                    </section>
+                </div>
+                <section class="panel"><div class="panel-header"><div><p class="eyebrow">Google Calendar</p><h2>Eventos y vencimientos</h2></div></div><div class="table-wrap"><table><thead><tr><th>Evento</th><th>Fecha</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="calendarEventsTable"></tbody></table></div></section>
+            </section>
+
+            <section class="view" id="documentosView" data-view-panel="documentos">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="documentModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Biblioteca</p><h2 id="documentFormTitle">Nuevo documento</h2></div></div>
+                        <form id="documentForm" class="data-form" novalidate>
+                            <input type="hidden" id="documentId">
+                            <label>Nombre<input id="documentName" required type="text"></label>
+                            <label>Tipo<input id="documentType" required type="text" placeholder="Contrato, brief, comprobante..."></label>
+                            <label>Cliente<select id="documentClient"></select></label>
+                            <label>Proyecto<select id="documentProject"></select></label>
+                            <label>Archivo o link<input id="documentLink" type="url" placeholder="https://..."></label>
+                            <label>Etiquetas<input id="documentTags" type="text" placeholder="contrato, legal, cliente"></label>
+                            <label>Descripcion<textarea id="documentDescription" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelDocumentEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar documento</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel"><div class="panel-header"><div><p class="eyebrow">Archivos</p><h2>Documentos</h2></div><button class="primary-button compact write-action" data-open-modal="documentModal" type="button">Nuevo documento</button></div><div class="resource-grid" id="documentsGrid"></div></section>
+                </div>
+            </section>
+
+            <section class="view" id="soporteView" data-view-panel="soporte">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="supportModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Mantenimiento</p><h2 id="supportFormTitle">Nuevo mantenimiento</h2></div></div>
+                        <form id="supportForm" class="data-form" novalidate>
+                            <input type="hidden" id="supportId">
+                            <label>Cliente<select id="supportClient" required></select></label>
+                            <label>Proyecto/Web<select id="supportProject"></select></label>
+                            <div class="form-row"><label>URL<input id="supportUrl" type="url"></label><label>Dominio<input id="supportDomain" type="text"></label><label>Hosting<input id="supportHosting" type="text"></label></div>
+                            <div class="form-row"><label>Renovacion dominio<input id="supportDomainRenewal" type="date"></label><label>Renovacion hosting<input id="supportHostingRenewal" type="date"></label></div>
+                            <div class="form-row"><label>Plan<input id="supportPlan" required type="text"></label><label>Precio mensual<input id="supportMonthlyPrice" required min="0" step="0.01" type="number"></label><label>Moneda<select id="supportCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label></div>
+                            <label>Estado<select id="supportStatus" required><option value="activo">Activo</option><option value="pendiente">Pendiente</option><option value="pausado">Pausado</option><option value="finalizado">Finalizado</option></select></label>
+                            <label>Notas<textarea id="supportNotes" rows="2"></textarea></label>
+                            <div class="form-actions"><button class="ghost-button" id="cancelSupportEdit" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar mantenimiento</button></div>
+                        </form>
+                    </section>
+                    <section class="panel"><div class="panel-header"><div><p class="eyebrow">Webs entregadas</p><h2>Soporte y mantenimiento</h2></div><button class="primary-button compact write-action" data-open-modal="supportModal" type="button">Nuevo mantenimiento</button></div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Plan</th><th>Mensual</th><th>Renovaciones</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="supportTable"></tbody></table></div></section>
+                </div>
+            </section>
+
+            <section class="view" id="equipoView" data-view-panel="equipo">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="teamModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Equipo</p><h2 id="teamFormTitle">Nuevo miembro</h2></div></div>
+                        <form id="teamForm" class="data-form" novalidate>
+                            <input type="hidden" id="teamId">
+                            <label>Nombre<input id="teamName" required type="text"></label>
+                            <label>Email<input id="teamEmail" required type="email"></label>
+                            <div class="form-row"><label>Rol<input id="teamRole" required type="text" placeholder="Administrador, Finanzas, Desarrollador..."></label><label>Estado<select id="teamStatus" required><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label></div>
+                            <label>Foco / permisos<input id="teamFocus" type="text"></label>
+                            <div class="form-actions"><button class="ghost-button" id="cancelTeamEdit" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar miembro</button></div>
+                        </form>
+                    </section>
+                    <section class="panel"><div class="panel-header"><div><p class="eyebrow">Roles</p><h2>Equipo interno</h2></div><button class="primary-button compact write-action" data-open-modal="teamModal" type="button">Nuevo miembro</button></div><div class="table-wrap"><table><thead><tr><th>Miembro</th><th>Rol</th><th>Foco</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="teamTable"></tbody></table></div></section>
+                </div>
+            </section>
+
+            <section class="view" id="marketingView" data-view-panel="marketing">
+                <div class="content-grid form-and-table">
+                    <section class="panel modal-panel" id="marketingModal" data-modal>
+                        <div class="panel-header"><div><p class="eyebrow">Marketing</p><h2 id="marketingFormTitle">Nueva campana</h2></div></div>
+                        <form id="marketingForm" class="data-form" novalidate>
+                            <input type="hidden" id="marketingId">
+                            <label>Nombre<input id="marketingName" required type="text"></label>
+                            <label>Rubro objetivo<input id="marketingTarget" required type="text"></label>
+                            <label>Mensaje usado<textarea id="marketingMessage" required rows="3"></textarea></label>
+                            <div class="form-row"><label>Contactos<input id="marketingContacts" min="0" type="number"></label><label>Respuestas<input id="marketingResponses" min="0" type="number"></label><label>Reuniones<input id="marketingMeetings" min="0" type="number"></label><label>Ventas<input id="marketingSales" min="0" type="number"></label></div>
+                            <div class="form-row"><label>Estado<select id="marketingStatus" required><option value="activa">Activa</option><option value="pausada">Pausada</option><option value="cerrada">Cerrada</option></select></label><label>Fecha<input id="marketingDate" required type="date"></label></div>
+                            <div class="form-actions"><button class="ghost-button" id="cancelMarketingEdit" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar campana</button></div>
+                        </form>
+                    </section>
+                    <section class="panel"><div class="panel-header"><div><p class="eyebrow">Adquisicion</p><h2>Campanas</h2></div><button class="primary-button compact write-action" data-open-modal="marketingModal" type="button">Nueva campana</button></div><div class="table-wrap"><table><thead><tr><th>Campana</th><th>Contactos/Resp/Reun/Ventas</th><th>Respuesta</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="marketingTable"></tbody></table></div></section>
+                </div>
+                <section class="panel"><div class="panel-header"><div><p class="eyebrow">Plantillas</p><h2>Mensajes por rubro</h2></div></div><div class="stack-list" id="marketingTemplates"></div></section>
+            </section>
+
+            <section class="view" id="portalView" data-view-panel="portal">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Portal cliente</p><h2>Vista interna simulada</h2></div></div>
+                    <div class="filters-grid compact-filters"><label>Cliente<select id="portalClient"></select></label></div>
+                </section>
+                <div id="portalOverview"></div>
             </section>
 
             <section class="view" id="configuracionView" data-view-panel="configuracion">

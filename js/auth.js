@@ -39,7 +39,7 @@ export function registerInitialUser({ name, email, password }) {
   state.users.push(user);
   state.session = { userId: user.id, createdAt: new Date().toISOString() };
 
-  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length || state.tasks.length || state.goals.length;
+  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length || state.tasks.length || state.goals.length || state.opportunities.length || state.budgets.length;
   if (hasExistingData) {
     attachUserToExistingData(user.id);
   } else {
@@ -68,7 +68,7 @@ export function logout() {
 }
 
 function attachUserToExistingData(userId) {
-  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions"].forEach((key) => {
+  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions", "opportunities", "budgets", "calendarEvents", "documents", "supportPlans", "teamMembers", "marketingCampaigns", "clientPortalItems"].forEach((key) => {
     state[key] = state[key].map((item) => ({ ...item, userId: item.userId || userId }));
   });
 

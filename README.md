@@ -1,56 +1,35 @@
-# sCode Finance OS
+# sWallet
 
-Aplicación SaaS interna para administrar finanzas y operaciones de sCode Digital Solutions.
+Sistema interno estatico para administrar sCode Digital Solutions desde Live Server.
 
-## Stack
+## Ejecutar
 
-- Next.js App Router + TypeScript
-- TailwindCSS + componentes estilo shadcn/ui
-- Framer Motion
-- Recharts
-- Zustand
-- Prisma ORM + PostgreSQL
-- Auth.js con credenciales, sesiones y roles
+Abrir `index.html` con Live Server. La primera vez muestra registro de admin; luego se accede con el usuario creado. Los datos se guardan en `localStorage` bajo `scodeFinanceApp`.
 
-## Ejecutar localmente
+## Estructura
 
-1. Instalar Node.js 20+ con npm.
-2. Copiar `.env.example` a `.env`.
-3. Levantar PostgreSQL:
+- `index.html`: layout, vistas y formularios.
+- `style.css`: tema claro sCode, componentes, responsive y modales.
+- `app.js`: inicializador.
+- `js/state.js`: estado, modelos locales y datos demo.
+- `js/storage.js`: persistencia local.
+- `js/auth.js`: auth mock, sesion y roles.
+- `js/finance.js`: calculos, filtros, busqueda y alertas.
+- `js/render.js`: render de vistas, tablas, cards, graficos y resets.
+- `js/events.js`: eventos, validaciones, CRUD y exportacion CSV.
 
-```bash
-docker compose up -d
-```
+## Modulos
 
-4. Instalar dependencias y preparar base:
+Dashboard, Clientes, CRM/Ventas, Proyectos, Finanzas, Pagos, Facturacion, Presupuestos, Calendario, Administracion, Tareas, Metas, Documentos, Soporte, Equipo, Marketing, Portal Cliente, Movimientos, Reportes, Suscripciones y Configuracion.
 
-```bash
-npm install
-npx prisma generate
-npx prisma migrate dev --name init
-npx prisma db seed
-npm run dev
-```
+## Flujo Basico
 
-5. Ingresar en `http://localhost:3000/login`.
+1. Crear cliente en `Clientes`.
+2. Crear proyecto asociado en `Proyectos`.
+3. Registrar facturas en `Facturacion` y cobros en `Pagos`.
+4. Organizar trabajo en `Tareas`, `Administracion`, `Calendario` y `CRM`.
+5. Revisar estado general en `Dashboard` y `Reportes`.
 
-Credenciales demo:
+## Futuro Backend
 
-- `admin@scode.com`
-- `admin123456`
-
-## Scripts
-
-```bash
-npm run dev
-npm run build
-npm run typecheck
-npm run lint
-npm run db:studio
-```
-
-## Prototipo anterior
-
-El prototipo HTML/CSS/JS vanilla quedó archivado en `legacy-static/`.
-
-link: https://maxicosta1.github.io/sWallet/
+Las colecciones ya estan separadas por dominio y guardan `userId`. Para migrar a backend, reemplazar `js/storage.js` por servicios HTTP/API manteniendo la misma forma de datos.

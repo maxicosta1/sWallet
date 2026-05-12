@@ -10,15 +10,22 @@ import {
   renderAll,
   renderView,
   resetActionForm,
+  resetBudgetForm,
+  resetCalendarEventForm,
   resetClientForm,
+  resetDocumentForm,
   resetGoalForm,
   resetInvoiceForm,
+  resetMarketingForm,
   resetMovementForm,
   resetNoteForm,
+  resetOpportunityForm,
   resetPaymentForm,
   resetProjectForm,
   resetRequestForm,
+  resetSupportForm,
   resetSubscriptionForm,
+  resetTeamForm,
   resetTaskForm,
   syncControls
 } from "./render.js";
@@ -74,6 +81,13 @@ export function bindEvents() {
   dom.requestForm.addEventListener("submit", handleRequestSubmit);
   dom.noteForm.addEventListener("submit", handleNoteSubmit);
   dom.actionForm.addEventListener("submit", handleActionSubmit);
+  dom.opportunityForm.addEventListener("submit", handleOpportunitySubmit);
+  dom.budgetForm.addEventListener("submit", handleBudgetSubmit);
+  dom.calendarEventForm.addEventListener("submit", handleCalendarEventSubmit);
+  dom.documentForm.addEventListener("submit", handleDocumentSubmit);
+  dom.supportForm.addEventListener("submit", handleSupportSubmit);
+  dom.teamForm.addEventListener("submit", handleTeamSubmit);
+  dom.marketingForm.addEventListener("submit", handleMarketingSubmit);
 
   dom.cancelClientEdit.addEventListener("click", () => { resetClientForm(); closeModal(); });
   dom.cancelPaymentEdit.addEventListener("click", () => { resetPaymentForm(); closeModal(); });
@@ -84,6 +98,13 @@ export function bindEvents() {
   dom.cancelTaskEdit.addEventListener("click", () => { resetTaskForm(); closeModal(); });
   dom.cancelGoalEdit.addEventListener("click", () => { resetGoalForm(); closeModal(); });
   dom.cancelRequestEdit.addEventListener("click", () => { resetRequestForm(); closeModal(); });
+  dom.cancelOpportunityEdit.addEventListener("click", () => { resetOpportunityForm(); closeModal(); });
+  dom.cancelBudgetEdit.addEventListener("click", () => { resetBudgetForm(); closeModal(); });
+  dom.cancelCalendarEventEdit.addEventListener("click", () => { resetCalendarEventForm(); closeModal(); });
+  dom.cancelDocumentEdit.addEventListener("click", () => { resetDocumentForm(); closeModal(); });
+  dom.cancelSupportEdit.addEventListener("click", () => { resetSupportForm(); closeModal(); });
+  dom.cancelTeamEdit.addEventListener("click", () => { resetTeamForm(); closeModal(); });
+  dom.cancelMarketingEdit.addEventListener("click", () => { resetMarketingForm(); closeModal(); });
   dom.goCreateClient.addEventListener("click", () => {
     renderView("clientes");
     resetClientForm();
@@ -95,7 +116,11 @@ export function bindEvents() {
   });
 
   dom.invoiceClient.addEventListener("change", syncControls);
-  [dom.taskClient, dom.requestClient, dom.noteClient, dom.actionClient].forEach((control) => control.addEventListener("change", syncControls));
+  [dom.taskClient, dom.requestClient, dom.noteClient, dom.actionClient, dom.budgetClient, dom.calendarEventClient, dom.documentClient, dom.supportClient].forEach((control) => control.addEventListener("change", syncControls));
+  dom.portalClient.addEventListener("input", () => {
+    state.selectedPortalClientId = dom.portalClient.value;
+    renderAll();
+  });
   dom.paymentInvoice.addEventListener("change", syncPaymentFromInvoice);
   dom.projectFilterClient.addEventListener("input", () => {
     state.projectFilterClientId = dom.projectFilterClient.value;
@@ -232,7 +257,14 @@ function resetForModal(id) {
     goalModal: resetGoalForm,
     requestModal: resetRequestForm,
     noteModal: resetNoteForm,
-    actionModal: resetActionForm
+    actionModal: resetActionForm,
+    opportunityModal: resetOpportunityForm,
+    budgetModal: resetBudgetForm,
+    calendarEventModal: resetCalendarEventForm,
+    documentModal: resetDocumentForm,
+    supportModal: resetSupportForm,
+    teamModal: resetTeamForm,
+    marketingModal: resetMarketingForm
   };
   resets[id]?.();
 }
@@ -546,6 +578,158 @@ function handleActionSubmit(event) {
   saveAndRender("Accion guardada", "Seguimiento actualizado.");
 }
 
+function handleOpportunitySubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.opportunityForm)) return;
+  if (!clientExists(dom.opportunityClient.value)) return notify("Cliente obligatorio", "La oportunidad debe estar asociada a un cliente.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.opportunityClient.value,
+    title: dom.opportunityTitle.value.trim(),
+    service: dom.opportunityService.value.trim(),
+    value: Number(dom.opportunityValue.value),
+    currency: dom.opportunityCurrency.value,
+    probability: Number(dom.opportunityProbability.value),
+    status: dom.opportunityStatus.value,
+    nextAction: dom.opportunityNextAction.value.trim(),
+    responsible: dom.opportunityResponsible.value.trim(),
+    notes: dom.opportunityNotes.value.trim()
+  };
+  if (dom.opportunityId.value) updateRecord(state.opportunities, dom.opportunityId.value, payload);
+  else state.opportunities.push(createRecord(payload));
+  resetOpportunityForm();
+  saveAndRender("Oportunidad guardada", "Pipeline comercial actualizado.");
+}
+
+function handleBudgetSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.budgetForm)) return;
+  if (!clientExists(dom.budgetClient.value)) return notify("Cliente obligatorio", "El presupuesto debe estar asociado a un cliente.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.budgetClient.value,
+    projectName: dom.budgetProjectName.value.trim(),
+    services: dom.budgetServices.value.trim(),
+    discount: Number(dom.budgetDiscount.value || 0),
+    currency: dom.budgetCurrency.value,
+    validUntil: dom.budgetValidUntil.value,
+    status: dom.budgetStatus.value,
+    notes: dom.budgetNotes.value.trim()
+  };
+  if (dom.budgetId.value) updateRecord(state.budgets, dom.budgetId.value, payload);
+  else state.budgets.push(createRecord(payload));
+  resetBudgetForm();
+  saveAndRender("Presupuesto guardado", "La propuesta quedo registrada.");
+}
+
+function handleCalendarEventSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.calendarEventForm)) return;
+  if (dom.calendarEventClient.value && !clientExists(dom.calendarEventClient.value)) return notify("Cliente invalido", "Selecciona un cliente existente.");
+  if (dom.calendarEventProject.value && !projectExists(dom.calendarEventProject.value, dom.calendarEventClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente.");
+  const payload = {
+    userId: state.session.userId,
+    title: dom.calendarEventTitle.value.trim(),
+    type: dom.calendarEventType.value,
+    date: dom.calendarEventDate.value,
+    startTime: dom.calendarEventStart.value,
+    endTime: dom.calendarEventEnd.value,
+    clientId: dom.calendarEventClient.value,
+    projectId: dom.calendarEventProject.value,
+    status: dom.calendarEventStatus.value,
+    priority: dom.calendarEventPriority.value,
+    description: dom.calendarEventDescription.value.trim()
+  };
+  if (dom.calendarEventId.value) updateRecord(state.calendarEvents, dom.calendarEventId.value, payload);
+  else state.calendarEvents.push(createRecord(payload));
+  resetCalendarEventForm();
+  saveAndRender("Evento guardado", "Calendario actualizado.");
+}
+
+function handleDocumentSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.documentForm)) return;
+  if (dom.documentProject.value && !projectExists(dom.documentProject.value, dom.documentClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
+  const payload = {
+    userId: state.session.userId,
+    name: dom.documentName.value.trim(),
+    type: dom.documentType.value.trim(),
+    clientId: dom.documentClient.value,
+    projectId: dom.documentProject.value,
+    link: dom.documentLink.value.trim(),
+    tags: dom.documentTags.value.trim(),
+    description: dom.documentDescription.value.trim()
+  };
+  if (dom.documentId.value) updateRecord(state.documents, dom.documentId.value, payload);
+  else state.documents.push(createRecord(payload));
+  resetDocumentForm();
+  saveAndRender("Documento guardado", "Biblioteca actualizada.");
+}
+
+function handleSupportSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.supportForm)) return;
+  if (!clientExists(dom.supportClient.value)) return notify("Cliente obligatorio", "El mantenimiento debe tener cliente.");
+  if (dom.supportProject.value && !projectExists(dom.supportProject.value, dom.supportClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.supportClient.value,
+    projectId: dom.supportProject.value,
+    url: dom.supportUrl.value.trim(),
+    domain: dom.supportDomain.value.trim(),
+    hosting: dom.supportHosting.value.trim(),
+    domainRenewal: dom.supportDomainRenewal.value,
+    hostingRenewal: dom.supportHostingRenewal.value,
+    plan: dom.supportPlan.value.trim(),
+    monthlyPrice: Number(dom.supportMonthlyPrice.value),
+    currency: dom.supportCurrency.value,
+    status: dom.supportStatus.value,
+    notes: dom.supportNotes.value.trim()
+  };
+  if (dom.supportId.value) updateRecord(state.supportPlans, dom.supportId.value, payload);
+  else state.supportPlans.push(createRecord(payload));
+  resetSupportForm();
+  saveAndRender("Mantenimiento guardado", "Soporte actualizado.");
+}
+
+function handleTeamSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.teamForm)) return;
+  const payload = {
+    userId: state.session.userId,
+    name: dom.teamName.value.trim(),
+    email: dom.teamEmail.value.trim(),
+    role: dom.teamRole.value.trim(),
+    status: dom.teamStatus.value,
+    focus: dom.teamFocus.value.trim()
+  };
+  if (dom.teamId.value) updateRecord(state.teamMembers, dom.teamId.value, payload);
+  else state.teamMembers.push(createRecord(payload));
+  resetTeamForm();
+  saveAndRender("Miembro guardado", "Equipo actualizado.");
+}
+
+function handleMarketingSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.marketingForm)) return;
+  const payload = {
+    userId: state.session.userId,
+    name: dom.marketingName.value.trim(),
+    target: dom.marketingTarget.value.trim(),
+    message: dom.marketingMessage.value.trim(),
+    contacts: Number(dom.marketingContacts.value || 0),
+    responses: Number(dom.marketingResponses.value || 0),
+    meetings: Number(dom.marketingMeetings.value || 0),
+    sales: Number(dom.marketingSales.value || 0),
+    status: dom.marketingStatus.value,
+    date: dom.marketingDate.value
+  };
+  if (dom.marketingId.value) updateRecord(state.marketingCampaigns, dom.marketingId.value, payload);
+  else state.marketingCampaigns.push(createRecord(payload));
+  resetMarketingForm();
+  saveAndRender("Campana guardada", "Marketing actualizado.");
+}
+
 function saveExchangeRate() {
   if (!assertWritable()) return;
   const value = Number(dom.exchangeRate.value);
@@ -600,7 +784,10 @@ function exportCsv() {
     ...state.payments.filter((item) => item.userId === userId).map((item) => ["pago", item.method, item.clientId, item.projectId, item.amount, item.currency, item.status, item.date]),
     ...state.movements.filter((item) => item.userId === userId).map((item) => [item.type, item.category, "", "", item.amount, item.currency, "", item.date]),
     ...state.tasks.filter((item) => item.userId === userId).map((item) => ["tarea", item.title, item.clientId, item.projectId, "", "", item.status, item.dueDate]),
-    ...state.goals.filter((item) => item.userId === userId).map((item) => ["meta", item.name, "", "", item.current, item.type, item.status, item.dueDate])
+    ...state.goals.filter((item) => item.userId === userId).map((item) => ["meta", item.name, "", "", item.current, item.type, item.status, item.dueDate]),
+    ...state.opportunities.filter((item) => item.userId === userId).map((item) => ["oportunidad", item.title, item.clientId, "", item.value, item.currency, item.status, item.createdAt]),
+    ...state.budgets.filter((item) => item.userId === userId).map((item) => ["presupuesto", item.projectName, item.clientId, "", budgetTotal(item), item.currency, item.status, item.validUntil]),
+    ...state.calendarEvents.filter((item) => item.userId === userId).map((item) => ["evento", item.title, item.clientId, item.projectId, "", "", item.status, item.date])
   ];
   const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -643,6 +830,22 @@ function exposeInlineActions() {
   window.deleteNote = (id) => deleteGeneric("notes", id, "Nota eliminada");
   window.editAction = (id) => editGeneric("actions", id, fillActionForm);
   window.deleteAction = (id) => deleteGeneric("actions", id, "Accion eliminada");
+  window.editOpportunity = (id) => editGeneric("opportunities", id, fillOpportunityForm);
+  window.deleteOpportunity = (id) => deleteGeneric("opportunities", id, "Oportunidad eliminada");
+  window.editBudget = (id) => editGeneric("budgets", id, fillBudgetForm);
+  window.deleteBudget = (id) => deleteGeneric("budgets", id, "Presupuesto eliminado");
+  window.duplicateBudget = duplicateBudget;
+  window.convertBudgetToProject = convertBudgetToProject;
+  window.editCalendarEvent = (id) => editGeneric("calendarEvents", id, fillCalendarEventForm);
+  window.deleteCalendarEvent = (id) => deleteGeneric("calendarEvents", id, "Evento eliminado");
+  window.editDocument = (id) => editGeneric("documents", id, fillDocumentForm);
+  window.deleteDocument = (id) => deleteGeneric("documents", id, "Documento eliminado");
+  window.editSupportPlan = (id) => editGeneric("supportPlans", id, fillSupportForm);
+  window.deleteSupportPlan = (id) => deleteGeneric("supportPlans", id, "Mantenimiento eliminado");
+  window.editTeamMember = (id) => editGeneric("teamMembers", id, fillTeamForm);
+  window.deleteTeamMember = (id) => deleteGeneric("teamMembers", id, "Miembro eliminado");
+  window.editMarketingCampaign = (id) => editGeneric("marketingCampaigns", id, fillMarketingForm);
+  window.deleteMarketingCampaign = (id) => deleteGeneric("marketingCampaigns", id, "Campana eliminada");
   window.goSearchResult = (view) => {
     state.globalSearch = "";
     renderView(view);
@@ -661,6 +864,55 @@ function deleteGeneric(key, id, message) {
   if (!confirm("Confirmas eliminar este registro?")) return;
   state[key] = state[key].filter((record) => record.id !== id);
   saveAndRender(message, "Los datos fueron actualizados.");
+}
+
+function duplicateBudget(id) {
+  if (!assertWritable()) return;
+  const budget = state.budgets.find((item) => item.id === id);
+  if (!budget) return;
+  const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...copy } = budget;
+  state.budgets.push(createRecord({
+    ...copy,
+    projectName: `${budget.projectName} copia`,
+    status: "borrador"
+  }));
+  saveAndRender("Presupuesto duplicado", "Se creo una copia editable.");
+}
+
+function convertBudgetToProject(id) {
+  if (!assertWritable()) return;
+  const budget = state.budgets.find((item) => item.id === id);
+  if (!budget || !clientExists(budget.clientId)) return notify("No se pudo convertir", "El presupuesto no tiene un cliente valido.");
+  state.projects.push(createRecord({
+    userId: state.session.userId,
+    clientId: budget.clientId,
+    name: budget.projectName,
+    description: budget.notes || "Proyecto creado desde presupuesto.",
+    budget: budgetTotal(budget),
+    paid: 0,
+    expenses: 0,
+    currency: budget.currency,
+    status: "planificacion",
+    progress: 0,
+    responsible: "",
+    technologies: "",
+    links: "",
+    startDate: new Date().toISOString().slice(0, 10),
+    dueDate: "",
+    notes: budget.services,
+    tasks: []
+  }));
+  updateRecord(state.budgets, id, { status: "aprobado" });
+  saveAndRender("Proyecto creado", "El presupuesto aprobado paso a delivery.");
+}
+
+function budgetTotal(budget) {
+  const subtotal = String(budget.services || "")
+    .split("\n")
+    .map((line) => Number(line.split(":").pop()))
+    .filter((value) => Number.isFinite(value))
+    .reduce((total, value) => total + value, 0);
+  return Math.max(subtotal - Number(budget.discount || 0), 0);
 }
 
 function fillClientForm(client) {
@@ -844,6 +1096,119 @@ function fillActionForm(item) {
   dom.actionFormTitle.textContent = "Editar accion";
   renderView("administracion");
   openModal("actionModal");
+}
+
+function fillOpportunityForm(item) {
+  dom.opportunityId.value = item.id;
+  dom.opportunityClient.value = item.clientId;
+  dom.opportunityTitle.value = item.title;
+  dom.opportunityService.value = item.service || "";
+  dom.opportunityValue.value = item.value || 0;
+  dom.opportunityCurrency.value = item.currency || "ARS";
+  dom.opportunityProbability.value = item.probability || 0;
+  dom.opportunityStatus.value = item.status || "lead_nuevo";
+  dom.opportunityNextAction.value = item.nextAction || "";
+  dom.opportunityResponsible.value = item.responsible || "";
+  dom.opportunityNotes.value = item.notes || "";
+  dom.opportunityFormTitle.textContent = "Editar oportunidad";
+  renderView("crm");
+  openModal("opportunityModal");
+}
+
+function fillBudgetForm(item) {
+  dom.budgetId.value = item.id;
+  dom.budgetClient.value = item.clientId;
+  dom.budgetProjectName.value = item.projectName;
+  dom.budgetServices.value = item.services || "";
+  dom.budgetDiscount.value = item.discount || 0;
+  dom.budgetCurrency.value = item.currency || "ARS";
+  dom.budgetValidUntil.value = item.validUntil || "";
+  dom.budgetStatus.value = item.status || "borrador";
+  dom.budgetNotes.value = item.notes || "";
+  dom.budgetFormTitle.textContent = "Editar presupuesto";
+  renderView("presupuestos");
+  openModal("budgetModal");
+}
+
+function fillCalendarEventForm(item) {
+  dom.calendarEventId.value = item.id;
+  dom.calendarEventTitle.value = item.title;
+  dom.calendarEventType.value = item.type || "reunion";
+  dom.calendarEventDate.value = item.date || "";
+  dom.calendarEventStart.value = item.startTime || "";
+  dom.calendarEventEnd.value = item.endTime || "";
+  dom.calendarEventClient.value = item.clientId || "";
+  syncControls();
+  dom.calendarEventProject.value = item.projectId || "";
+  dom.calendarEventStatus.value = item.status || "pendiente";
+  dom.calendarEventPriority.value = item.priority || "media";
+  dom.calendarEventDescription.value = item.description || "";
+  dom.calendarEventFormTitle.textContent = "Editar evento";
+  renderView("calendario");
+  openModal("calendarEventModal");
+}
+
+function fillDocumentForm(item) {
+  dom.documentId.value = item.id;
+  dom.documentName.value = item.name;
+  dom.documentType.value = item.type || "";
+  dom.documentClient.value = item.clientId || "";
+  syncControls();
+  dom.documentProject.value = item.projectId || "";
+  dom.documentLink.value = item.link || "";
+  dom.documentTags.value = item.tags || "";
+  dom.documentDescription.value = item.description || "";
+  dom.documentFormTitle.textContent = "Editar documento";
+  renderView("documentos");
+  openModal("documentModal");
+}
+
+function fillSupportForm(item) {
+  dom.supportId.value = item.id;
+  dom.supportClient.value = item.clientId;
+  syncControls();
+  dom.supportProject.value = item.projectId || "";
+  dom.supportUrl.value = item.url || "";
+  dom.supportDomain.value = item.domain || "";
+  dom.supportHosting.value = item.hosting || "";
+  dom.supportDomainRenewal.value = item.domainRenewal || "";
+  dom.supportHostingRenewal.value = item.hostingRenewal || "";
+  dom.supportPlan.value = item.plan || "";
+  dom.supportMonthlyPrice.value = item.monthlyPrice || 0;
+  dom.supportCurrency.value = item.currency || "ARS";
+  dom.supportStatus.value = item.status || "activo";
+  dom.supportNotes.value = item.notes || "";
+  dom.supportFormTitle.textContent = "Editar mantenimiento";
+  renderView("soporte");
+  openModal("supportModal");
+}
+
+function fillTeamForm(item) {
+  dom.teamId.value = item.id;
+  dom.teamName.value = item.name;
+  dom.teamEmail.value = item.email;
+  dom.teamRole.value = item.role;
+  dom.teamStatus.value = item.status || "activo";
+  dom.teamFocus.value = item.focus || "";
+  dom.teamFormTitle.textContent = "Editar miembro";
+  renderView("equipo");
+  openModal("teamModal");
+}
+
+function fillMarketingForm(item) {
+  dom.marketingId.value = item.id;
+  dom.marketingName.value = item.name;
+  dom.marketingTarget.value = item.target;
+  dom.marketingMessage.value = item.message || "";
+  dom.marketingContacts.value = item.contacts || 0;
+  dom.marketingResponses.value = item.responses || 0;
+  dom.marketingMeetings.value = item.meetings || 0;
+  dom.marketingSales.value = item.sales || 0;
+  dom.marketingStatus.value = item.status || "activa";
+  dom.marketingDate.value = item.date || "";
+  dom.marketingFormTitle.textContent = "Editar campana";
+  renderView("marketing");
+  openModal("marketingModal");
 }
 
 function debounce(callback, delay) {

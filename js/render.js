@@ -3,10 +3,14 @@ import {
   actions,
   billingSummaryByClient,
   billingTotals,
+  budgets,
+  calendarEvents,
   clientAdminSummary,
   clientHealth,
+  clientPortalItems,
   clients,
   companyProgress,
+  documents,
   filteredInvoices,
   globalTotals,
   goalProgressPercent,
@@ -16,6 +20,7 @@ import {
   notifications,
   normalizedInvoiceStatus,
   notes,
+  opportunities,
   paidForInvoice,
   payments,
   projectFinancials,
@@ -23,6 +28,9 @@ import {
   requests,
   searchResults,
   subscriptions,
+  supportPlans,
+  teamMembers,
+  marketingCampaigns,
   tasks,
   totalsForMonth,
   upcomingPayments
@@ -34,13 +42,21 @@ export const dom = {};
 const titles = {
   dashboard: "Dashboard financiero",
   clientes: "Clientes",
+  crm: "CRM / Ventas",
   proyectos: "Proyectos",
   finanzas: "Finanzas",
   pagos: "Pagos",
   facturacion: "Facturacion",
+  presupuestos: "Presupuestos",
+  calendario: "Calendario",
   administracion: "Administracion",
   tareas: "Tareas",
   metas: "Metas",
+  documentos: "Documentos",
+  soporte: "Soporte",
+  equipo: "Equipo",
+  marketing: "Marketing",
+  portal: "Portal cliente",
   movimientos: "Movimientos",
   reportes: "Reportes",
   suscripciones: "Suscripciones",
@@ -82,15 +98,23 @@ export function renderAll() {
   renderDashboardCalendar();
   renderClients();
   renderClientKanban();
+  renderCRM();
   renderProjects();
   renderFinance();
   renderInvoices();
   renderPayments();
+  renderBudgets();
+  renderCalendarModule();
   renderMovements();
   renderSubscriptions();
   renderAdministration();
   renderTasks();
   renderGoals();
+  renderDocuments();
+  renderSupport();
+  renderTeam();
+  renderMarketing();
+  renderClientPortal();
   renderSettings();
   renderReports();
   drawAllCharts();
@@ -139,6 +163,8 @@ function renderStats() {
   const billing = billingTotals();
   const pendingTasks = tasks().filter((task) => !["completada", "cancelada"].includes(task.status)).length;
   const activeProjects = projects().filter((project) => !["finalizado", "entregado", "cancelado"].includes(project.status)).length;
+  const pendingBudgets = budgets().filter((budget) => ["borrador", "enviado"].includes(budget.status)).length;
+  const meetings = calendarEvents().filter((event) => event.type === "reunion" && event.status !== "completado").length;
   const overdue = filteredInvoices({ clientId: "", projectId: "", status: "vencida", currency: "", from: "", to: "", quick: "" }).length;
   const progress = companyProgress();
   const cards = [
@@ -150,6 +176,8 @@ function renderStats() {
     ["Pendiente", formatARS(billing.pendiente), "Por cobrar", "coral"],
     ["Proyectos activos", activeProjects.toString(), "Delivery en curso", "green"],
     ["Tareas pendientes", pendingTasks.toString(), "Trabajo interno abierto", ""],
+    ["Presupuestos", pendingBudgets.toString(), "Propuestas pendientes", "blue"],
+    ["Reuniones", meetings.toString(), "Agenda abierta", ""],
     ["Pagos vencidos", overdue.toString(), "Requieren seguimiento", "coral"],
     ["Metas", `${progress}%`, "Progreso general sCode", "blue"],
     ["Clientes", clients().length.toString(), "Cartera visible", ""]
@@ -289,6 +317,23 @@ function renderDashboardCalendar() {
       <a class="ghost-button compact" href="${googleCalendarUrl(event)}" target="_blank" rel="noopener">Agregar</a>
     </article>
   `).join("") : emptyState("Sin vencimientos para vincular.");
+}
+
+function renderMonthGrid(events) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const startOffset = (first.getDay() + 6) % 7;
+  const days = Array.from({ length: startOffset + last.getDate() }, (_, index) => {
+    const day = index - startOffset + 1;
+    if (day < 1) return `<span class="calendar-day muted"></span>`;
+    const dateKey = toInputDate(new Date(year, month, day));
+    const dayEvents = events.filter((event) => event.date === dateKey);
+    return `<button class="calendar-day ${dateKey === toInputDate(now) ? "today" : ""} ${dayEvents.length ? "has-event" : ""}" type="button"><span>${day}</span>${dayEvents.length ? `<i>${dayEvents.length}</i>` : ""}</button>`;
+  });
+  return `<div class="calendar-weekdays"><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span></div><div class="calendar-days">${days.join("")}</div>`;
 }
 
 function renderClients() {
@@ -522,7 +567,7 @@ function renderSettings() {
     <article class="list-item"><div><strong>Permisos</strong><span>${canWrite() ? "Puede crear y editar" : "Solo visualizacion"}</span></div><span class="badge ${canDelete() ? "admin" : "neutral"}">${canDelete() ? "admin" : "limitado"}</span></article>
   `;
   dom.settingsData.innerHTML = `
-    <article class="list-item"><div><strong>Datos locales</strong><span>${clients().length} clientes, ${projects().length} proyectos, ${tasks().length} tareas</span></div><span class="badge saludable">localStorage</span></article>
+    <article class="list-item"><div><strong>Datos locales</strong><span>${clients().length} clientes, ${projects().length} proyectos, ${tasks().length} tareas, ${budgets().length} presupuestos, ${calendarEvents().length} eventos</span></div><span class="badge saludable">localStorage</span></article>
     <article class="list-item"><div><strong>Cotizacion</strong><span>1 USD = ${formatARS(state.exchangeRate)}</span></div><span class="badge neutral">editable</span></article>
   `;
 }
@@ -633,6 +678,175 @@ function renderMovements() {
   `).join("") : tableEmpty(6, "No hay movimientos registrados.");
 }
 
+function renderCRM() {
+  if (!dom.crmPipeline) return;
+  const stages = ["lead_nuevo", "contactado", "respondio", "reunion_agendada", "presupuesto_enviado", "negociacion", "aprobado", "rechazado", "perdido"];
+  dom.crmPipeline.innerHTML = stages.map((stage) => {
+    const rows = opportunities().filter((item) => item.status === stage);
+    return `
+      <section class="kanban-column">
+        <header><strong>${labelize(stage)}</strong><span>${rows.length}</span></header>
+        ${rows.length ? rows.map((item) => `
+          <article class="kanban-card">
+            <strong>${escapeHTML(item.title)}</strong>
+            <span>${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</span>
+            <div class="card-meta"><span>${formatMoney(item.value || 0, item.currency || "ARS")}</span><span>${Number(item.probability || 0)}%</span></div>
+            <small>${escapeHTML(item.nextAction || "Sin proxima accion")}</small>
+            <div class="actions-cell">
+              <button class="ghost-button compact write-action" type="button" onclick="editOpportunity('${item.id}')">Editar</button>
+              <button class="danger-button compact delete-action" type="button" onclick="deleteOpportunity('${item.id}')">Eliminar</button>
+            </div>
+          </article>
+        `).join("") : `<p class="kanban-empty">Sin oportunidades</p>`}
+      </section>
+    `;
+  }).join("");
+}
+
+function renderBudgets() {
+  if (!dom.budgetsTable) return;
+  const rows = budgets().sort((a, b) => parseDate(b.createdAt) - parseDate(a.createdAt));
+  dom.budgetsTable.innerHTML = rows.length ? rows.map((item) => {
+    const total = budgetTotal(item);
+    return `
+      <tr>
+        <td><div class="entity-title"><strong>${escapeHTML(item.projectName)}</strong><span>${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</span></div></td>
+        <td>${formatMoney(total, item.currency)}</td>
+        <td>${item.discount ? formatMoney(item.discount, item.currency) : "-"}</td>
+        <td>${formatDate(item.validUntil)}</td>
+        <td><span class="badge ${item.status}">${labelize(item.status)}</span></td>
+        <td>
+          <div class="actions-cell">
+            <button class="ghost-button compact write-action" type="button" onclick="editBudget('${item.id}')">Editar</button>
+            <button class="ghost-button compact write-action" type="button" onclick="duplicateBudget('${item.id}')">Duplicar</button>
+            <button class="primary-button compact write-action" type="button" onclick="convertBudgetToProject('${item.id}')">Proyecto</button>
+            <button class="danger-button compact delete-action" type="button" onclick="deleteBudget('${item.id}')">Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("") : tableEmpty(6, "No hay presupuestos cargados.");
+}
+
+function renderCalendarModule() {
+  if (!dom.calendarEventsTable) return;
+  const events = getCalendarEvents().concat(calendarEvents().map((event) => ({
+    ...event,
+    detail: getClient(event.clientId)?.company || "Interno",
+    description: event.description || labelize(event.type),
+    manual: true
+  }))).sort((a, b) => parseDate(a.date) - parseDate(b.date));
+  dom.fullCalendarGrid.innerHTML = renderMonthGrid(events);
+  dom.calendarEventsTable.innerHTML = events.length ? events.slice(0, 18).map((event) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(event.title)}</strong><span>${escapeHTML(event.detail || labelize(event.type))}</span></div></td>
+      <td>${formatDate(event.date)} ${event.startTime ? escapeHTML(event.startTime) : ""}</td>
+      <td><span class="badge ${event.priority || event.type || "pendiente"}">${labelize(event.type || event.priority || "evento")}</span></td>
+      <td>
+        <div class="actions-cell">
+          <a class="ghost-button compact" href="${googleCalendarUrl(event)}" target="_blank" rel="noreferrer">Google</a>
+          ${event.manual ? `<button class="ghost-button compact write-action" type="button" onclick="editCalendarEvent('${event.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteCalendarEvent('${event.id}')">Eliminar</button>` : ""}
+        </div>
+      </td>
+    </tr>
+  `).join("") : tableEmpty(4, "No hay eventos programados.");
+}
+
+function renderDocuments() {
+  if (!dom.documentsGrid) return;
+  const rows = documents();
+  dom.documentsGrid.innerHTML = rows.length ? rows.map((item) => `
+    <article class="resource-card">
+      <span class="badge ${item.type}">${labelize(item.type)}</span>
+      <strong>${escapeHTML(item.name)}</strong>
+      <p>${escapeHTML(getClient(item.clientId)?.company || "Documento interno")} - ${escapeHTML(getProject(item.projectId)?.name || "General")}</p>
+      <small>${escapeHTML(item.tags || "Sin etiquetas")}</small>
+      <div class="actions-cell">
+        ${item.link ? `<a class="ghost-button compact" href="${escapeAttribute(item.link)}" target="_blank" rel="noreferrer">Abrir</a>` : ""}
+        <button class="ghost-button compact write-action" type="button" onclick="editDocument('${item.id}')">Editar</button>
+        <button class="danger-button compact delete-action" type="button" onclick="deleteDocument('${item.id}')">Eliminar</button>
+      </div>
+    </article>
+  `).join("") : emptyState("No hay documentos guardados.");
+}
+
+function renderSupport() {
+  if (!dom.supportTable) return;
+  const rows = supportPlans().sort((a, b) => parseDate(a.hostingRenewal || a.domainRenewal) - parseDate(b.hostingRenewal || b.domainRenewal));
+  dom.supportTable.innerHTML = rows.length ? rows.map((item) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</strong><span>${escapeHTML(item.url || item.domain || "")}</span></div></td>
+      <td>${escapeHTML(item.plan)}</td>
+      <td>${formatMoney(item.monthlyPrice || 0, item.currency || "ARS")}</td>
+      <td>${formatDate(item.domainRenewal)} / ${formatDate(item.hostingRenewal)}</td>
+      <td><span class="badge ${item.status}">${labelize(item.status)}</span></td>
+      <td><div class="actions-cell"><button class="ghost-button compact write-action" type="button" onclick="editSupportPlan('${item.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteSupportPlan('${item.id}')">Eliminar</button></div></td>
+    </tr>
+  `).join("") : tableEmpty(6, "No hay planes de soporte.");
+}
+
+function renderTeam() {
+  if (!dom.teamTable) return;
+  const rows = teamMembers();
+  dom.teamTable.innerHTML = rows.length ? rows.map((item) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>${escapeHTML(item.email)}</span></div></td>
+      <td>${escapeHTML(item.role)}</td>
+      <td>${escapeHTML(item.focus || "-")}</td>
+      <td><span class="badge ${item.status}">${labelize(item.status)}</span></td>
+      <td><div class="actions-cell"><button class="ghost-button compact write-action" type="button" onclick="editTeamMember('${item.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteTeamMember('${item.id}')">Eliminar</button></div></td>
+    </tr>
+  `).join("") : tableEmpty(5, "No hay miembros del equipo.");
+}
+
+function renderMarketing() {
+  if (!dom.marketingTable) return;
+  const rows = marketingCampaigns().sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  dom.marketingTable.innerHTML = rows.length ? rows.map((item) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>${escapeHTML(item.target)}</span></div></td>
+      <td>${Number(item.contacts || 0)} / ${Number(item.responses || 0)} / ${Number(item.meetings || 0)} / ${Number(item.sales || 0)}</td>
+      <td>${conversionRate(item.responses, item.contacts)}%</td>
+      <td><span class="badge ${item.status}">${labelize(item.status)}</span></td>
+      <td><div class="actions-cell"><button class="ghost-button compact write-action" type="button" onclick="editMarketingCampaign('${item.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteMarketingCampaign('${item.id}')">Eliminar</button></div></td>
+    </tr>
+  `).join("") : tableEmpty(5, "No hay campanas cargadas.");
+  dom.marketingTemplates.innerHTML = ["Estudios contables", "Arquitectos", "Hoteles", "Restaurantes", "Gimnasios", "Inmobiliarias"].map((target) => `
+    <article class="list-item"><div><strong>${target}</strong><span>Mensaje base: web premium para captar mas consultas y ordenar presencia digital.</span></div></article>
+  `).join("");
+}
+
+function renderClientPortal() {
+  if (!dom.portalClient) return;
+  if (!state.selectedPortalClientId && clients()[0]) state.selectedPortalClientId = clients()[0].id;
+  dom.portalClient.value = state.selectedPortalClientId;
+  const client = getClient(state.selectedPortalClientId);
+  if (!client) {
+    dom.portalOverview.innerHTML = emptyState("Selecciona un cliente para ver el portal simulado.");
+    return;
+  }
+  const clientProjects = projects().filter((project) => project.clientId === client.id);
+  const clientInvoices = filteredInvoices({ clientId: client.id, projectId: "", status: "", currency: "", from: "", to: "", quick: "" });
+  const files = documents().filter((doc) => doc.clientId === client.id).concat(clientPortalItems().filter((item) => item.clientId === client.id));
+  dom.portalOverview.innerHTML = `
+    <section class="portal-preview">
+      <div>
+        <p class="eyebrow">Portal simulado</p>
+        <h2>${escapeHTML(client.company)}</h2>
+        <p>${escapeHTML(client.service || "Servicios sCode")}</p>
+      </div>
+      <div class="stats-grid compact-stats">
+        <article class="stat-card"><span>Proyectos</span><strong>${clientProjects.length}</strong><small>Asociados</small></article>
+        <article class="stat-card"><span>Pagos pendientes</span><strong>${clientInvoices.filter((invoice) => normalizedInvoiceStatus(invoice) !== "pagada").length}</strong><small>Visibles para seguimiento</small></article>
+        <article class="stat-card"><span>Archivos</span><strong>${files.length}</strong><small>Documentos y links</small></article>
+      </div>
+      <div class="resource-grid">
+        ${clientProjects.map((project) => `<article class="resource-card"><strong>${escapeHTML(project.name)}</strong><p>${escapeHTML(project.description || "")}</p><div class="progress-bar"><i style="width:${Number(project.progress || 0)}%"></i></div></article>`).join("") || emptyState("Sin proyectos para mostrar.")}
+      </div>
+    </section>
+  `;
+}
+
 function renderSubscriptions() {
   const rows = subscriptions().sort((a, b) => parseDate(a.renewalDate) - parseDate(b.renewalDate));
   dom.subscriptionsTable.innerHTML = rows.length ? rows.map((subscription) => `
@@ -671,14 +885,14 @@ function populateClientSelects() {
   const options = [`<option value="">Todos</option>`].concat(clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`));
   const requiredOptions = clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`).join("");
 
-  ["filterClient", "billingFilterClient", "projectFilterClient", "adminClientFilter"].forEach((id) => {
+  ["filterClient", "billingFilterClient", "projectFilterClient", "adminClientFilter", "portalClient"].forEach((id) => {
     if (!dom[id]) return;
     const value = dom[id].value;
     dom[id].innerHTML = options.join("");
     if ([...dom[id].options].some((option) => option.value === value)) dom[id].value = value;
   });
 
-  ["paymentClient", "projectClient", "invoiceClient", "taskClient", "requestClient", "noteClient", "actionClient"].forEach((id) => {
+  ["paymentClient", "projectClient", "invoiceClient", "taskClient", "requestClient", "noteClient", "actionClient", "opportunityClient", "budgetClient", "calendarEventClient", "documentClient", "supportClient"].forEach((id) => {
     if (!dom[id]) return;
     const value = dom[id].value;
     dom[id].innerHTML = requiredOptions || `<option value="">Crea un cliente primero</option>`;
@@ -688,6 +902,7 @@ function populateClientSelects() {
   if (dom.billingFilterClient) dom.billingFilterClient.value = state.billingFilters.clientId;
   if (dom.projectFilterClient) dom.projectFilterClient.value = state.projectFilterClientId;
   if (dom.adminClientFilter) dom.adminClientFilter.value = state.adminFilterClientId;
+  if (dom.portalClient) dom.portalClient.value = state.selectedPortalClientId;
 }
 
 function populateProjectSelects() {
@@ -723,7 +938,11 @@ function populateProjectSelects() {
     ["taskProject", dom.taskClient?.value],
     ["requestProject", dom.requestClient?.value],
     ["noteProject", dom.noteClient?.value],
-    ["actionProject", dom.actionClient?.value]
+    ["actionProject", dom.actionClient?.value],
+    ["budgetProject", dom.budgetClient?.value],
+    ["calendarEventProject", dom.calendarEventClient?.value],
+    ["documentProject", dom.documentClient?.value],
+    ["supportProject", dom.supportClient?.value]
   ].forEach(([id, clientId]) => {
     if (!dom[id]) return;
     const value = dom[id].value;
@@ -821,6 +1040,66 @@ export function resetActionForm() {
   dom.actionFormTitle.textContent = "Nueva accion";
 }
 
+export function resetOpportunityForm() {
+  dom.opportunityForm?.reset();
+  if (!dom.opportunityForm) return;
+  dom.opportunityId.value = "";
+  dom.opportunityCurrency.value = "ARS";
+  dom.opportunityProbability.value = 50;
+  dom.opportunityFormTitle.textContent = "Nueva oportunidad";
+}
+
+export function resetBudgetForm() {
+  dom.budgetForm?.reset();
+  if (!dom.budgetForm) return;
+  dom.budgetId.value = "";
+  dom.budgetCurrency.value = "ARS";
+  dom.budgetValidUntil.value = toInputDate(new Date(Date.now() + 10 * DAY_MS));
+  dom.budgetStatus.value = "borrador";
+  dom.budgetFormTitle.textContent = "Nuevo presupuesto";
+}
+
+export function resetCalendarEventForm() {
+  dom.calendarEventForm?.reset();
+  if (!dom.calendarEventForm) return;
+  dom.calendarEventId.value = "";
+  dom.calendarEventDate.value = toInputDate(new Date());
+  dom.calendarEventStart.value = "10:00";
+  dom.calendarEventEnd.value = "10:30";
+  dom.calendarEventFormTitle.textContent = "Nuevo evento";
+}
+
+export function resetDocumentForm() {
+  dom.documentForm?.reset();
+  if (!dom.documentForm) return;
+  dom.documentId.value = "";
+  dom.documentFormTitle.textContent = "Nuevo documento";
+}
+
+export function resetSupportForm() {
+  dom.supportForm?.reset();
+  if (!dom.supportForm) return;
+  dom.supportId.value = "";
+  dom.supportDomainRenewal.value = toInputDate(new Date(Date.now() + 30 * DAY_MS));
+  dom.supportHostingRenewal.value = toInputDate(new Date(Date.now() + 30 * DAY_MS));
+  dom.supportFormTitle.textContent = "Nuevo mantenimiento";
+}
+
+export function resetTeamForm() {
+  dom.teamForm?.reset();
+  if (!dom.teamForm) return;
+  dom.teamId.value = "";
+  dom.teamFormTitle.textContent = "Nuevo miembro";
+}
+
+export function resetMarketingForm() {
+  dom.marketingForm?.reset();
+  if (!dom.marketingForm) return;
+  dom.marketingId.value = "";
+  dom.marketingDate.value = toInputDate(new Date());
+  dom.marketingFormTitle.textContent = "Nueva campana";
+}
+
 export function closeMobileMenu() {
   dom.sidebar.classList.remove("open");
   dom.mobileBackdrop.classList.remove("show");
@@ -884,7 +1163,33 @@ function getActivityRows() {
     clientId: ""
   }));
 
-  return paymentRows.concat(movementRows, taskRows, goalRows).sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  const budgetRows = budgets().map((budget) => ({
+    origin: "Presupuesto",
+    title: budget.projectName,
+    detail: getClient(budget.clientId)?.company || "",
+    amount: budgetTotal(budget),
+    currency: budget.currency,
+    date: budget.validUntil,
+    type: "presupuesto",
+    sign: "",
+    status: budget.status,
+    clientId: budget.clientId
+  }));
+
+  const eventRows = calendarEvents().map((event) => ({
+    origin: "Calendario",
+    title: event.title,
+    detail: getClient(event.clientId)?.company || labelize(event.type),
+    amount: 0,
+    currency: "ARS",
+    date: event.date,
+    type: "evento",
+    sign: "",
+    status: event.status,
+    clientId: event.clientId
+  }));
+
+  return paymentRows.concat(movementRows, taskRows, goalRows, budgetRows, eventRows).sort((a, b) => parseDate(b.date) - parseDate(a.date));
 }
 
 function matchesReportFilters(item) {
@@ -947,6 +1252,19 @@ function googleCalendarUrl(event) {
     location: "sCode Digital Solutions"
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function budgetTotal(budget) {
+  const subtotal = String(budget.services || "")
+    .split("\n")
+    .map((line) => Number(line.split(":").pop()))
+    .filter((value) => Number.isFinite(value))
+    .reduce((total, value) => total + value, 0);
+  return Math.max(subtotal - Number(budget.discount || 0), 0);
+}
+
+function conversionRate(part, total) {
+  return total ? Math.round((Number(part || 0) / Number(total || 1)) * 100) : 0;
 }
 
 function calendarDate(date) {
@@ -1135,6 +1453,10 @@ export function escapeHTML(value) {
     '"': "&quot;",
     "'": "&#039;"
   }[char]));
+}
+
+export function escapeAttribute(value) {
+  return escapeHTML(value);
 }
 
 export function emptyState(message) {

@@ -51,6 +51,38 @@ export function actions() {
   return scoped("actions").filter((action) => !action.clientId || clientExists(action.clientId));
 }
 
+export function opportunities() {
+  return scoped("opportunities").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
+export function budgets() {
+  return scoped("budgets").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
+export function calendarEvents() {
+  return scoped("calendarEvents").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
+export function documents() {
+  return scoped("documents").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
+export function supportPlans() {
+  return scoped("supportPlans").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
+export function teamMembers() {
+  return scoped("teamMembers");
+}
+
+export function marketingCampaigns() {
+  return scoped("marketingCampaigns");
+}
+
+export function clientPortalItems() {
+  return scoped("clientPortalItems").filter((item) => !item.clientId || clientExists(item.clientId));
+}
+
 export function clientExists(clientId) {
   return clients().some((client) => client.id === clientId);
 }
@@ -283,6 +315,20 @@ export function notifications() {
     rows.push({ type: "Pedido urgente", tone: "coral", title: request.description, detail: clientName(request.clientId), date: request.dueDate || request.date });
   });
 
+  budgets().filter((budget) => ["enviado", "borrador"].includes(budget.status) && budget.validUntil && startOfDay(parseDate(budget.validUntil)) <= soon).forEach((budget) => {
+    rows.push({ type: "Presupuesto", tone: startOfDay(parseDate(budget.validUntil)) < today ? "vencida" : "pendiente", title: budget.projectName, detail: clientName(budget.clientId), date: budget.validUntil });
+  });
+
+  calendarEvents().filter((event) => event.date && event.status !== "completado" && startOfDay(parseDate(event.date)) <= soon).forEach((event) => {
+    rows.push({ type: "Calendario", tone: event.priority === "urgente" ? "coral" : "pendiente", title: event.title, detail: clientName(event.clientId), date: event.date });
+  });
+
+  supportPlans().forEach((plan) => {
+    [plan.domainRenewal, plan.hostingRenewal].filter(Boolean).forEach((date) => {
+      if (startOfDay(parseDate(date)) <= soon) rows.push({ type: "Renovacion", tone: "pendiente", title: plan.domain || plan.url, detail: clientName(plan.clientId), date });
+    });
+  });
+
   return rows.sort((a, b) => parseDate(a.date) - parseDate(b.date)).slice(0, 12);
 }
 
@@ -317,7 +363,13 @@ export function searchResults(query = state.globalSearch) {
     ...payments().filter((payment) => includes([payment.method, payment.notes])).map((item) => ({ type: "Pago", title: clientName(item.clientId), detail: payment.notes || payment.method, view: "pagos" })),
     ...tasks().filter((task) => includes([task.title, task.description, task.responsible, task.comments])).map((item) => ({ type: "Tarea", title: item.title, detail: clientName(item.clientId), view: "tareas" })),
     ...requests().filter((request) => includes([request.description, request.type, request.responsible, request.notes])).map((item) => ({ type: "Pedido", title: item.description, detail: clientName(item.clientId), view: "administracion" })),
-    ...notes().filter((note) => includes([note.title, note.content])).map((item) => ({ type: "Nota", title: item.title, detail: clientName(item.clientId), view: "administracion" }))
+    ...notes().filter((note) => includes([note.title, note.content])).map((item) => ({ type: "Nota", title: item.title, detail: clientName(item.clientId), view: "administracion" })),
+    ...opportunities().filter((item) => includes([item.title, item.service, item.nextAction, item.responsible])).map((item) => ({ type: "CRM", title: item.title, detail: clientName(item.clientId), view: "crm" })),
+    ...budgets().filter((item) => includes([item.projectName, item.services, item.notes])).map((item) => ({ type: "Presupuesto", title: item.projectName, detail: clientName(item.clientId), view: "presupuestos" })),
+    ...calendarEvents().filter((item) => includes([item.title, item.type, item.description])).map((item) => ({ type: "Calendario", title: item.title, detail: clientName(item.clientId), view: "calendario" })),
+    ...documents().filter((item) => includes([item.name, item.type, item.tags, item.description])).map((item) => ({ type: "Documento", title: item.name, detail: clientName(item.clientId), view: "documentos" })),
+    ...supportPlans().filter((item) => includes([item.url, item.domain, item.hosting, item.plan, item.notes])).map((item) => ({ type: "Soporte", title: item.domain || item.url, detail: clientName(item.clientId), view: "soporte" })),
+    ...marketingCampaigns().filter((item) => includes([item.name, item.target, item.message])).map((item) => ({ type: "Marketing", title: item.name, detail: item.target, view: "marketing" }))
   ].slice(0, 12);
 }
 

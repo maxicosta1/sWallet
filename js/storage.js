@@ -1,24 +1,38 @@
 import { state, STORAGE_KEY } from "./state.js";
 
+const persistedArrays = [
+  "users",
+  "clients",
+  "projects",
+  "invoices",
+  "payments",
+  "movements",
+  "subscriptions",
+  "tasks",
+  "goals",
+  "requests",
+  "notes",
+  "actions",
+  "opportunities",
+  "budgets",
+  "calendarEvents",
+  "documents",
+  "supportPlans",
+  "teamMembers",
+  "marketingCampaigns",
+  "clientPortalItems"
+];
+
 export function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) return;
 
   try {
     const parsed = JSON.parse(saved);
-    state.users = parsed.users || [];
     state.session = parsed.session || null;
-    state.clients = parsed.clients || [];
-    state.projects = parsed.projects || [];
-    state.invoices = parsed.invoices || [];
-    state.payments = parsed.payments || [];
-    state.movements = parsed.movements || [];
-    state.subscriptions = parsed.subscriptions || [];
-    state.tasks = parsed.tasks || [];
-    state.goals = parsed.goals || [];
-    state.requests = parsed.requests || [];
-    state.notes = parsed.notes || [];
-    state.actions = parsed.actions || [];
+    persistedArrays.forEach((key) => {
+      state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
+    });
     state.exchangeRate = Number(parsed.exchangeRate) || 1200;
   } catch {
     localStorage.removeItem(STORAGE_KEY);
@@ -26,22 +40,14 @@ export function loadState() {
 }
 
 export function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    users: state.users,
+  const payload = persistedArrays.reduce((acc, key) => {
+    acc[key] = state[key];
+    return acc;
+  }, {
     session: state.session,
-    clients: state.clients,
-    projects: state.projects,
-    invoices: state.invoices,
-    payments: state.payments,
-    movements: state.movements,
-    subscriptions: state.subscriptions,
-    tasks: state.tasks,
-    goals: state.goals,
-    requests: state.requests,
-    notes: state.notes,
-    actions: state.actions,
     exchangeRate: state.exchangeRate
-  }));
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
 export function resetStorage() {

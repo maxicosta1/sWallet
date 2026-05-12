@@ -15,6 +15,14 @@ export const state = {
   requests: [],
   notes: [],
   actions: [],
+  opportunities: [],
+  budgets: [],
+  calendarEvents: [],
+  documents: [],
+  supportPlans: [],
+  teamMembers: [],
+  marketingCampaigns: [],
+  clientPortalItems: [],
   exchangeRate: 1200,
   activeView: "dashboard",
   globalSearch: "",
@@ -39,7 +47,8 @@ export const state = {
   selectedClientId: "",
   taskFilter: "",
   goalFilter: "",
-  adminFilterClientId: ""
+  adminFilterClientId: "",
+  selectedPortalClientId: ""
 };
 
 export function createRecord(payload) {
@@ -148,5 +157,42 @@ export function seedDemoData(userId) {
     createRecord({ userId, clientId: clients[0].id, projectId: projects[1].id, title: "Coordinar reunion de cierre", dueDate: d(3), priority: "alta", status: "pendiente" })
   ];
 
-  return { clients, projects, invoices, payments, movements, subscriptions, tasks, goals, requests, notes, actions };
+  const opportunities = [
+    createRecord({ userId, clientId: clients[2].id, title: "Performance ecommerce Q3", service: "Ecommerce + performance", value: 2200, currency: "USD", probability: 72, status: "negociacion", nextAction: "Enviar alcance revisado", responsible: "Comercial", notes: "Buen potencial de upsell mensual." }),
+    createRecord({ userId, clientId: clients[1].id, title: "Landing campana legal", service: "Landing page premium", value: 950, currency: "USD", probability: 58, status: "reunion_agendada", nextAction: "Preparar propuesta", responsible: "Agustin", notes: "Necesita conversion a leads." })
+  ];
+
+  const budgets = [
+    createRecord({ userId, clientId: clients[2].id, projectName: "Growth ecommerce", services: "Auditoria UX:500\nOptimizacion checkout:900\nCampanas:600", discount: 0, currency: "USD", validUntil: d(12), status: "enviado", notes: "Valido por 12 dias." }),
+    createRecord({ userId, clientId: clients[0].id, projectName: "SEO tecnico Norte Lab", services: "Auditoria SEO:180000\nImplementacion tecnica:240000", discount: 20000, currency: "ARS", validUntil: d(8), status: "borrador", notes: "Puede convertirse en retainer." })
+  ];
+
+  const calendarEvents = [
+    createRecord({ userId, title: "Revision Norte Lab", type: "reunion", date: d(1), startTime: "10:00", endTime: "10:45", clientId: clients[0].id, projectId: projects[1].id, status: "pendiente", priority: "alta", description: "Validar entrega final." }),
+    createRecord({ userId, title: "Seguimiento Mercado Aura", type: "seguimiento", date: d(3), startTime: "15:00", endTime: "15:30", clientId: clients[2].id, projectId: projects[0].id, status: "pendiente", priority: "urgente", description: "Cobro y alcance del siguiente hito." })
+  ];
+
+  const documents = [
+    createRecord({ userId, name: "Brief Mercado Aura", type: "brief", clientId: clients[2].id, projectId: projects[0].id, link: "https://drive.google.com", tags: "brief,ecommerce", description: "Brief inicial y referencias de marca." }),
+    createRecord({ userId, name: "Contrato Norte Lab", type: "contrato", clientId: clients[0].id, projectId: projects[1].id, link: "https://drive.google.com", tags: "contrato,legal", description: "Contrato de desarrollo institucional." })
+  ];
+
+  const supportPlans = [
+    createRecord({ userId, clientId: clients[1].id, projectId: projects[2].id, url: "https://rivaslegal.com", domain: "rivaslegal.com", hosting: "Cloudflare + WP", domainRenewal: d(45), hostingRenewal: d(18), plan: "Mantenimiento mensual", monthlyPrice: 850, currency: "USD", status: "activo", notes: "Incluye seguridad, backups y mejoras menores." })
+  ];
+
+  const teamMembers = [
+    createRecord({ userId, name: "Agustin", email: "agustin@scode.com", role: "Administrador", status: "activo", focus: "Direccion, clientes y UX" }),
+    createRecord({ userId, name: "Bruno", email: "bruno@scode.com", role: "Desarrollador", status: "activo", focus: "Frontend y ecommerce" })
+  ];
+
+  const marketingCampaigns = [
+    createRecord({ userId, name: "Estudios contables mayo", target: "Estudios contables", message: "Web profesional para captar consultas", contacts: 80, responses: 12, meetings: 4, sales: 1, status: "activa", date: d(-6) })
+  ];
+
+  const clientPortalItems = [
+    createRecord({ userId, clientId: clients[2].id, title: "Preview ecommerce", type: "avance", status: "visible", link: "https://preview.scode.dev", notes: "Demo interna simulada para futuro portal." })
+  ];
+
+  return { clients, projects, invoices, payments, movements, subscriptions, tasks, goals, requests, notes, actions, opportunities, budgets, calendarEvents, documents, supportPlans, teamMembers, marketingCampaigns, clientPortalItems };
 }
