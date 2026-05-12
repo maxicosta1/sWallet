@@ -14,6 +14,11 @@ export function loadState() {
     state.payments = parsed.payments || [];
     state.movements = parsed.movements || [];
     state.subscriptions = parsed.subscriptions || [];
+    state.tasks = parsed.tasks || [];
+    state.goals = parsed.goals || [];
+    state.requests = parsed.requests || [];
+    state.notes = parsed.notes || [];
+    state.actions = parsed.actions || [];
     state.exchangeRate = Number(parsed.exchangeRate) || 1200;
   } catch {
     localStorage.removeItem(STORAGE_KEY);
@@ -30,6 +35,11 @@ export function saveState() {
     payments: state.payments,
     movements: state.movements,
     subscriptions: state.subscriptions,
+    tasks: state.tasks,
+    goals: state.goals,
+    requests: state.requests,
+    notes: state.notes,
+    actions: state.actions,
     exchangeRate: state.exchangeRate
   }));
 }

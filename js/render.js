@@ -1,17 +1,29 @@
 import { canDelete, canWrite, currentUser, hasUsers, isAuthenticated } from "./auth.js";
 import {
+  actions,
   billingSummaryByClient,
   billingTotals,
+  clientAdminSummary,
+  clientHealth,
   clients,
+  companyProgress,
   filteredInvoices,
   globalTotals,
+  goalProgressPercent,
+  goals,
   invoiceAmountARS,
   movements,
+  notifications,
   normalizedInvoiceStatus,
+  notes,
   paidForInvoice,
   payments,
+  projectFinancials,
   projects,
+  requests,
+  searchResults,
   subscriptions,
+  tasks,
   totalsForMonth,
   upcomingPayments
 } from "./finance.js";
@@ -22,12 +34,17 @@ export const dom = {};
 const titles = {
   dashboard: "Dashboard financiero",
   clientes: "Clientes",
+  proyectos: "Proyectos",
+  finanzas: "Finanzas",
   pagos: "Pagos",
   facturacion: "Facturacion",
+  administracion: "Administracion",
+  tareas: "Tareas",
+  metas: "Metas",
   movimientos: "Movimientos",
   reportes: "Reportes",
-  proyectos: "Proyectos",
-  suscripciones: "Suscripciones"
+  suscripciones: "Suscripciones",
+  configuracion: "Configuracion"
 };
 
 export function bindDom() {
@@ -60,12 +77,20 @@ export function renderAll() {
   renderBankingHero();
   renderStats();
   renderDashboardLists();
+  renderGlobalSearch();
+  renderNotifications();
   renderClients();
+  renderClientKanban();
   renderProjects();
+  renderFinance();
   renderInvoices();
   renderPayments();
   renderMovements();
   renderSubscriptions();
+  renderAdministration();
+  renderTasks();
+  renderGoals();
+  renderSettings();
   renderReports();
   drawAllCharts();
 }
@@ -105,6 +130,10 @@ function renderStats() {
   const month = totalsForMonth();
   const totals = globalTotals();
   const billing = billingTotals();
+  const pendingTasks = tasks().filter((task) => !["completada", "cancelada"].includes(task.status)).length;
+  const activeProjects = projects().filter((project) => !["finalizado", "entregado", "cancelado"].includes(project.status)).length;
+  const overdue = filteredInvoices({ clientId: "", projectId: "", status: "vencida", currency: "", from: "", to: "", quick: "" }).length;
+  const progress = companyProgress();
   const cards = [
     ["Saldo total", formatARS(totals.balanceARS), "Consolidado con cotizacion actual", "green"],
     ["Ingresos del mes", formatARS(month.income), "Cobros + ingresos", "blue"],
@@ -112,7 +141,10 @@ function renderStats() {
     ["Estimado del mes", formatARS(month.estimated), "Ingresos + pendientes - gastos", ""],
     ["Facturado", formatARS(billing.facturado), "Facturacion global filtrable", "blue"],
     ["Pendiente", formatARS(billing.pendiente), "Por cobrar", "coral"],
-    ["Proyectos activos", projects().filter((project) => !["entregado", "pausado", "cancelado"].includes(project.status)).length.toString(), "Delivery en curso", "green"],
+    ["Proyectos activos", activeProjects.toString(), "Delivery en curso", "green"],
+    ["Tareas pendientes", pendingTasks.toString(), "Trabajo interno abierto", ""],
+    ["Pagos vencidos", overdue.toString(), "Requieren seguimiento", "coral"],
+    ["Metas", `${progress}%`, "Progreso general sCode", "blue"],
     ["Clientes", clients().length.toString(), "Cartera visible", ""]
   ];
 
@@ -163,19 +195,60 @@ function renderDashboardLists() {
       <strong class="${item.type === "salida" ? "amount-negative" : "amount-positive"}">${item.sign}${formatMoney(item.amount, item.currency)}</strong>
     </article>
   `).join("") : emptyState("Todavia no hay movimientos.");
+
+  if (dom.companyProgressWidget) {
+    const progress = companyProgress();
+    dom.companyProgressWidget.innerHTML = `
+      <div class="progress-hero">
+        <strong>${progress}%</strong>
+        <span>Promedio entre cobranza, delivery y metas.</span>
+        <div class="progress-bar"><i style="width:${progress}%"></i></div>
+      </div>
+    `;
+  }
+}
+
+function renderNotifications() {
+  if (!dom.notificationsList) return;
+  const rows = notifications();
+  dom.notificationsList.innerHTML = rows.length ? rows.map((item) => `
+    <article class="list-item alert-item ${item.tone}">
+      <div>
+        <strong>${escapeHTML(item.type)} - ${escapeHTML(item.title)}</strong>
+        <span>${escapeHTML(item.detail)} - ${formatDate(item.date)}</span>
+      </div>
+      <span class="badge ${item.tone}">${escapeHTML(item.tone)}</span>
+    </article>
+  `).join("") : emptyState("No hay alertas internas.");
+}
+
+function renderGlobalSearch() {
+  if (!dom.globalSearch || !dom.globalSearchResults) return;
+  dom.globalSearch.value = state.globalSearch;
+  const rows = searchResults();
+  dom.globalSearchResults.hidden = !state.globalSearch;
+  dom.globalSearchResults.innerHTML = rows.length ? rows.map((item) => `
+    <button type="button" onclick="goSearchResult('${item.view}')">
+      <span>${escapeHTML(item.type)}</span>
+      <strong>${escapeHTML(item.title)}</strong>
+      <small>${escapeHTML(item.detail)}</small>
+    </button>
+  `).join("") : emptyState("Sin resultados.");
 }
 
 function renderClients() {
   const rows = clients();
   dom.clientsTable.innerHTML = rows.length ? rows.map((client) => {
     const clientProjects = projects().filter((project) => project.clientId === client.id);
+    const clientTasks = tasks().filter((task) => task.clientId === client.id);
+    const health = clientHealth(client.id);
     const summary = billingSummaryByClient({ ...state.billingFilters, clientId: client.id, projectId: "" })[0];
     return `
       <tr>
         <td><div class="entity-title"><strong>${escapeHTML(client.name)}</strong><span>${escapeHTML(client.company)} - ${escapeHTML(client.email)}</span></div></td>
         <td>${escapeHTML(client.service)}</td>
         <td>${formatMoney(client.amount, client.currency)}</td>
-        <td><span class="badge ${client.status}">${client.status}</span></td>
+        <td><span class="badge ${client.status}">${labelize(client.status)}</span><span class="health-pill ${health.tone}">${health.label}</span></td>
         <td>
           <div class="actions-cell">
             <button class="ghost-button compact" type="button" onclick="showClientDetail('${client.id}')">Detalle</button>
@@ -187,15 +260,50 @@ function renderClients() {
       <tr class="client-detail-row ${state.selectedClientId === client.id ? "show" : ""}">
         <td colspan="5">
           <div class="detail-panel">
+            <div class="detail-grid">
+              <span><strong>Prioridad</strong>${labelize(client.priority || "media")}</span>
+              <span><strong>Ultimo contacto</strong>${client.lastContact ? formatDate(client.lastContact) : "Sin dato"}</span>
+              <span><strong>Web</strong>${escapeHTML(client.website || "Sin web")}</span>
+              <span><strong>Redes</strong>${escapeHTML(client.socials || "Sin dato")}</span>
+            </div>
             <strong>Proyectos asociados</strong>
             <p>${clientProjects.length ? clientProjects.map((project) => escapeHTML(project.name)).join(", ") : "Sin proyectos asociados."}</p>
+            <strong>Tareas asociadas</strong>
+            <p>${clientTasks.length ? clientTasks.map((task) => escapeHTML(task.title)).join(", ") : "Sin tareas asociadas."}</p>
             <strong>Facturacion</strong>
-            <p>Facturado: ${formatARS(summary?.totalFacturado || 0)} · Pendiente: ${formatARS(summary?.totalPendiente || 0)}</p>
+            <p>Facturado: ${formatARS(summary?.totalFacturado || 0)} - Cobrado: ${formatARS(summary?.totalCobrado || 0)} - Pendiente: ${formatARS(summary?.totalPendiente || 0)}</p>
+            <strong>Notas internas</strong>
+            <p>${escapeHTML(client.observations || "Sin notas.")}</p>
           </div>
         </td>
       </tr>
     `;
   }).join("") : tableEmpty(5, "No hay clientes registrados.");
+}
+
+function renderClientKanban() {
+  if (!dom.clientKanban) return;
+  const statuses = ["lead", "contactado", "presupuesto_enviado", "en_negociacion", "cliente_activo", "esperando_respuesta", "proyecto_finalizado", "perdido"];
+  dom.clientKanban.innerHTML = statuses.map((status) => {
+    const rows = clients().filter((client) => normalizeClientStatus(client.status) === status);
+    return `
+      <article class="kanban-column">
+        <h3>${labelize(status)} <span>${rows.length}</span></h3>
+        <div class="kanban-cards">
+          ${rows.length ? rows.map((client) => {
+            const health = clientHealth(client.id);
+            return `
+              <button class="kanban-card" type="button" onclick="showClientDetail('${client.id}')">
+                <strong>${escapeHTML(client.company)}</strong>
+                <span>${escapeHTML(client.service || client.name)}</span>
+                <small class="health-pill ${health.tone}">${health.label}</small>
+              </button>
+            `;
+          }).join("") : `<div class="kanban-empty">Sin clientes</div>`}
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderProjects() {
@@ -207,14 +315,16 @@ function renderProjects() {
 
   dom.projectsTable.innerHTML = filtered.length ? filtered.map((project) => {
     const client = getClient(project.clientId);
+    const financials = projectFinancials(project.id);
     return `
       <tr>
-        <td><div class="entity-title"><strong>${escapeHTML(project.name)}</strong><span>${escapeHTML(project.description || "")}</span></div></td>
+        <td><div class="entity-title"><strong>${escapeHTML(project.name)}</strong><span>${escapeHTML(project.description || "")}</span><small>${escapeHTML(project.responsible || "Sin responsable")} - ${escapeHTML(project.technologies || "Sin tecnologias")}</small></div></td>
         <td>${escapeHTML(client?.company || "Cliente eliminado")}</td>
         <td>${formatMoney(project.budget, project.currency)}</td>
+        <td class="${financials.profit >= 0 ? "amount-positive" : "amount-negative"}">${formatARS(financials.profit)}</td>
         <td><div class="progress-cell"><span>${project.progress}%</span><div class="progress-bar"><i style="width:${Math.min(Math.max(project.progress, 0), 100)}%"></i></div></div></td>
         <td>${project.dueDate ? formatDate(project.dueDate) : "Sin fecha"}</td>
-        <td><span class="badge ${project.status}">${project.status.replace("_", " ")}</span></td>
+        <td><span class="badge ${project.status}">${labelize(project.status)}</span></td>
         <td>
           <div class="actions-cell">
             <button class="ghost-button compact write-action" type="button" onclick="editProject('${project.id}')">Editar</button>
@@ -223,7 +333,143 @@ function renderProjects() {
         </td>
       </tr>
     `;
-  }).join("") : tableEmpty(7, availableClients.length ? "No hay proyectos para este filtro." : "Primero tenes que crear un cliente para poder crear un proyecto.");
+  }).join("") : tableEmpty(8, availableClients.length ? "No hay proyectos para este filtro." : "Primero tenes que crear un cliente para poder crear un proyecto.");
+}
+
+function renderFinance() {
+  if (!dom.financeStats) return;
+  const totals = globalTotals();
+  const month = totalsForMonth();
+  const billing = billingTotals();
+  dom.financeStats.innerHTML = `
+    <article class="stat-card green"><span>Caja total</span><strong>${formatARS(totals.balanceARS)}</strong><small>ARS + USD convertido</small></article>
+    <article class="stat-card blue"><span>Caja ARS</span><strong>${formatMoney(totals.ars, "ARS")}</strong><small>Moneda original</small></article>
+    <article class="stat-card blue"><span>Caja USD</span><strong>${formatMoney(totals.usd, "USD")}</strong><small>Moneda original</small></article>
+    <article class="stat-card coral"><span>Deuda total</span><strong>${formatARS(billing.pendiente)}</strong><small>Facturacion pendiente</small></article>
+  `;
+  dom.financeSummary.innerHTML = [
+    ["Ingresos del mes", formatARS(month.income), "Cobros y entradas"],
+    ["Gastos del mes", formatARS(month.expenses), "Salidas operativas"],
+    ["Ganancia neta", formatARS(month.profit), "Resultado real"],
+    ["Estimado", formatARS(month.estimated), "Incluye pendientes"]
+  ].map(([title, value, detail]) => `<article class="list-item"><div><strong>${title}</strong><span>${detail}</span></div><strong>${value}</strong></article>`).join("");
+  const profitable = projects().map((project) => ({ project, financials: projectFinancials(project.id) })).sort((a, b) => b.financials.profit - a.financials.profit).slice(0, 6);
+  dom.profitProjects.innerHTML = profitable.length ? profitable.map(({ project, financials }) => `
+    <article class="list-item">
+      <div><strong>${escapeHTML(project.name)}</strong><span>${escapeHTML(getClient(project.clientId)?.company || "Sin cliente")}</span></div>
+      <strong class="${financials.profit >= 0 ? "amount-positive" : "amount-negative"}">${formatARS(financials.profit)}</strong>
+    </article>
+  `).join("") : emptyState("Sin proyectos para analizar.");
+}
+
+function renderAdministration() {
+  if (!dom.adminClientSummaries) return;
+  const selected = state.adminFilterClientId;
+  const summaries = clients().filter((client) => !selected || client.id === selected).map(clientAdminSummary);
+  dom.adminClientSummaries.innerHTML = summaries.length ? summaries.map((item) => `
+    <article class="admin-card">
+      <div class="admin-card-head">
+        <div><span>${escapeHTML(item.client.name)}</span><strong>${escapeHTML(item.client.company)}</strong></div>
+        <span class="health-pill ${item.health.tone}">${item.health.label}</span>
+      </div>
+      <div class="admin-lines">
+        <p><strong>Proyecto activo:</strong> ${escapeHTML(item.activeProject?.name || "Sin proyecto activo")}</p>
+        <p><strong>Pidio:</strong> ${escapeHTML(item.asked)}</p>
+        <p><strong>Falta hacer:</strong> ${item.pendingWork} tareas abiertas</p>
+        <p><strong>Entregado:</strong> ${item.delivered} tareas completadas</p>
+        <p><strong>Falta cobrar:</strong> ${formatARS(item.pendingMoney)}</p>
+        <p><strong>Proxima accion:</strong> ${escapeHTML(item.nextAction)}</p>
+      </div>
+      <span class="badge ${item.priority}">${labelize(item.priority)}</span>
+    </article>
+  `).join("") : emptyState("Sin clientes para administrar.");
+
+  const requestRows = requests().filter((request) => !selected || request.clientId === selected);
+  dom.requestsTable.innerHTML = requestRows.length ? requestRows.sort((a, b) => parseDate(a.dueDate || a.date) - parseDate(b.dueDate || b.date)).map((request) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(request.description)}</strong><span>${labelize(request.type)} - ${escapeHTML(request.responsible || "")}</span></div></td>
+      <td>${escapeHTML(getClient(request.clientId)?.company || "Sin cliente")}</td>
+      <td><span class="badge ${request.priority}">${labelize(request.priority)}</span></td>
+      <td><span class="badge ${request.status}">${labelize(request.status)}</span></td>
+      <td>${request.dueDate ? formatDate(request.dueDate) : "-"}</td>
+      <td><div class="actions-cell"><button class="ghost-button compact write-action" type="button" onclick="editRequest('${request.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteRequest('${request.id}')">Eliminar</button></div></td>
+    </tr>
+  `).join("") : tableEmpty(6, "Sin pedidos registrados.");
+
+  dom.notesList.innerHTML = notes().filter((note) => !selected || note.clientId === selected).slice().sort((a, b) => parseDate(b.date) - parseDate(a.date)).slice(0, 8).map((note) => `
+    <article class="list-item"><div><strong>${escapeHTML(note.title)}</strong><span>${escapeHTML(getClient(note.clientId)?.company || "")} - ${escapeHTML(note.content)}</span></div><div class="actions-cell"><span class="badge ${note.tone}">${labelize(note.tone)}</span><button class="ghost-button compact write-action" type="button" onclick="editNote('${note.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteNote('${note.id}')">Eliminar</button></div></article>
+  `).join("") || emptyState("Sin notas internas.");
+
+  dom.actionsList.innerHTML = actions().filter((action) => !selected || action.clientId === selected).slice().sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate)).slice(0, 8).map((action) => `
+    <article class="list-item"><div><strong>${escapeHTML(action.title)}</strong><span>${escapeHTML(getClient(action.clientId)?.company || "")} - ${formatDate(action.dueDate)}</span></div><div class="actions-cell"><span class="badge ${action.priority}">${labelize(action.status)}</span><button class="ghost-button compact write-action" type="button" onclick="editAction('${action.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteAction('${action.id}')">Eliminar</button></div></article>
+  `).join("") || emptyState("Sin proximas acciones.");
+}
+
+function renderTasks() {
+  if (!dom.tasksTable) return;
+  const rows = tasks().filter((task) => !state.taskFilter || task.status === state.taskFilter);
+  const statuses = ["pendiente", "en_proceso", "en_revision", "completada", "cancelada"];
+  dom.taskBoard.innerHTML = statuses.map((status) => {
+    const statusRows = rows.filter((task) => task.status === status);
+    return `
+      <article class="kanban-column">
+        <h3>${labelize(status)} <span>${statusRows.length}</span></h3>
+        <div class="kanban-cards">
+          ${statusRows.length ? statusRows.map((task) => `
+            <button class="kanban-card" type="button" onclick="editTask('${task.id}')">
+              <strong>${escapeHTML(task.title)}</strong>
+              <span>${escapeHTML(getClient(task.clientId)?.company || "Sin cliente")}</span>
+              <small class="badge ${task.priority}">${labelize(task.priority)} - ${formatDate(task.dueDate)}</small>
+            </button>
+          `).join("") : `<div class="kanban-empty">Sin tareas</div>`}
+        </div>
+      </article>
+    `;
+  }).join("");
+  dom.tasksTable.innerHTML = rows.length ? rows.map((task) => `
+    <tr>
+      <td><div class="entity-title"><strong>${escapeHTML(task.title)}</strong><span>${escapeHTML(task.responsible || "")}</span></div></td>
+      <td>${escapeHTML(getClient(task.clientId)?.company || "Sin cliente")}</td>
+      <td>${escapeHTML(getProject(task.projectId)?.name || "General")}</td>
+      <td><span class="badge ${task.priority}">${labelize(task.priority)}</span></td>
+      <td><span class="badge ${task.status}">${labelize(task.status)}</span></td>
+      <td>${formatDate(task.dueDate)}</td>
+      <td><div class="actions-cell"><button class="ghost-button compact write-action" type="button" onclick="editTask('${task.id}')">Editar</button><button class="danger-button compact delete-action" type="button" onclick="deleteTask('${task.id}')">Eliminar</button></div></td>
+    </tr>
+  `).join("") : tableEmpty(7, "No hay tareas para este filtro.");
+}
+
+function renderGoals() {
+  if (!dom.goalsGrid) return;
+  dom.goalsGrid.innerHTML = goals().length ? goals().map((goal) => {
+    const progress = goalProgressPercent(goal);
+    const status = progress >= 100 ? "completada" : parseDate(goal.dueDate) < new Date() ? "vencida" : goal.status;
+    return `
+      <article class="goal-card">
+        <div><span>${labelize(goal.period)} - ${labelize(goal.type)}</span><strong>${escapeHTML(goal.name)}</strong></div>
+        <div class="progress-cell"><span>${progress}%</span><div class="progress-bar"><i style="width:${progress}%"></i></div></div>
+        <p>${goal.current} / ${goal.target} - vence ${formatDate(goal.dueDate)}</p>
+        <div class="actions-cell">
+          <span class="badge ${status}">${labelize(status)}</span>
+          <button class="ghost-button compact write-action" type="button" onclick="editGoal('${goal.id}')">Editar</button>
+          <button class="danger-button compact delete-action" type="button" onclick="deleteGoal('${goal.id}')">Eliminar</button>
+        </div>
+      </article>
+    `;
+  }).join("") : emptyState("Sin metas cargadas.");
+}
+
+function renderSettings() {
+  if (!dom.settingsSession) return;
+  const user = currentUser();
+  dom.settingsSession.innerHTML = `
+    <article class="list-item"><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
+    <article class="list-item"><div><strong>Permisos</strong><span>${canWrite() ? "Puede crear y editar" : "Solo visualizacion"}</span></div><span class="badge ${canDelete() ? "admin" : "neutral"}">${canDelete() ? "admin" : "limitado"}</span></article>
+  `;
+  dom.settingsData.innerHTML = `
+    <article class="list-item"><div><strong>Datos locales</strong><span>${clients().length} clientes, ${projects().length} proyectos, ${tasks().length} tareas</span></div><span class="badge saludable">localStorage</span></article>
+    <article class="list-item"><div><strong>Cotizacion</strong><span>1 USD = ${formatARS(state.exchangeRate)}</span></div><span class="badge neutral">editable</span></article>
+  `;
 }
 
 function renderInvoices() {
@@ -252,7 +498,7 @@ function renderInvoices() {
           <span class="badge ${summary.totalVencido > 0 ? "vencida" : summary.totalPendiente > 0 ? "pendiente" : "pagada"}">${summary.status}</span>
         </button>
         <div class="billing-detail ${state.selectedBillingClientId === summary.client.id ? "show" : ""}">
-          <p>${summary.invoiceCount} facturas · ${summary.projectCount} proyectos · Ultimo pago: ${summary.lastPayment ? formatDate(summary.lastPayment.date) : "Sin pagos"} · Proximo vencimiento: ${summary.nextDue ? formatDate(summary.nextDue.dueDate) : "Sin vencimientos"}</p>
+          <p>${summary.invoiceCount} facturas - ${summary.projectCount} proyectos - Ultimo pago: ${summary.lastPayment ? formatDate(summary.lastPayment.date) : "Sin pagos"} - Proximo vencimiento: ${summary.nextDue ? formatDate(summary.nextDue.dueDate) : "Sin vencimientos"}</p>
           <div class="table-wrap mini-table">
             <table>
               <thead><tr><th>Factura</th><th>Proyecto</th><th>Monto</th><th>Cobrado</th><th>Vence</th><th>Estado</th></tr></thead>
@@ -370,16 +616,23 @@ function populateClientSelects() {
   const options = [`<option value="">Todos</option>`].concat(clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`));
   const requiredOptions = clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`).join("");
 
-  ["filterClient", "billingFilterClient", "projectFilterClient"].forEach((id) => {
-    if (dom[id]) dom[id].innerHTML = options.join("");
+  ["filterClient", "billingFilterClient", "projectFilterClient", "adminClientFilter"].forEach((id) => {
+    if (!dom[id]) return;
+    const value = dom[id].value;
+    dom[id].innerHTML = options.join("");
+    if ([...dom[id].options].some((option) => option.value === value)) dom[id].value = value;
   });
 
-  ["paymentClient", "projectClient", "invoiceClient"].forEach((id) => {
-    if (dom[id]) dom[id].innerHTML = requiredOptions || `<option value="">Crea un cliente primero</option>`;
+  ["paymentClient", "projectClient", "invoiceClient", "taskClient", "requestClient", "noteClient", "actionClient"].forEach((id) => {
+    if (!dom[id]) return;
+    const value = dom[id].value;
+    dom[id].innerHTML = requiredOptions || `<option value="">Crea un cliente primero</option>`;
+    if ([...dom[id].options].some((option) => option.value === value)) dom[id].value = value;
   });
 
   if (dom.billingFilterClient) dom.billingFilterClient.value = state.billingFilters.clientId;
   if (dom.projectFilterClient) dom.projectFilterClient.value = state.projectFilterClientId;
+  if (dom.adminClientFilter) dom.adminClientFilter.value = state.adminFilterClientId;
 }
 
 function populateProjectSelects() {
@@ -394,16 +647,35 @@ function populateProjectSelects() {
   const invoiceClientId = dom.invoiceClient?.value;
   const invoiceProjects = invoiceClientId ? projects().filter((project) => project.clientId === invoiceClientId) : projects();
   if (dom.invoiceProject) {
+    const value = dom.invoiceProject.value;
     dom.invoiceProject.innerHTML = [`<option value="">General del cliente</option>`].concat(invoiceProjects.map((project) => `<option value="${project.id}">${escapeHTML(project.name)}</option>`)).join("");
+    if ([...dom.invoiceProject.options].some((option) => option.value === value)) dom.invoiceProject.value = value;
   }
 
   if (dom.paymentInvoice) {
+    const value = dom.paymentInvoice.value;
     dom.paymentInvoice.innerHTML = [`<option value="">Sin factura</option>`].concat(filteredInvoices({}).map((invoice) => `<option value="${invoice.id}">${escapeHTML(invoice.number)} - ${escapeHTML(getClient(invoice.clientId)?.company || "")}</option>`)).join("");
+    if ([...dom.paymentInvoice.options].some((option) => option.value === value)) dom.paymentInvoice.value = value;
   }
 
   if (dom.paymentProject) {
+    const value = dom.paymentProject.value;
     dom.paymentProject.innerHTML = [`<option value="">Sin proyecto</option>`].concat(projects().map((project) => `<option value="${project.id}">${escapeHTML(project.name)}</option>`)).join("");
+    if ([...dom.paymentProject.options].some((option) => option.value === value)) dom.paymentProject.value = value;
   }
+
+  [
+    ["taskProject", dom.taskClient?.value],
+    ["requestProject", dom.requestClient?.value],
+    ["noteProject", dom.noteClient?.value],
+    ["actionProject", dom.actionClient?.value]
+  ].forEach(([id, clientId]) => {
+    if (!dom[id]) return;
+    const value = dom[id].value;
+    const rows = clientId ? projects().filter((project) => project.clientId === clientId) : projects();
+    dom[id].innerHTML = [`<option value="">General</option>`].concat(rows.map((project) => `<option value="${project.id}">${escapeHTML(project.name)}</option>`)).join("");
+    if ([...dom[id].options].some((option) => option.value === value)) dom[id].value = value;
+  });
 }
 
 export function resetPaymentForm() {
@@ -446,6 +718,54 @@ export function resetSubscriptionForm() {
   dom.subscriptionFormTitle.textContent = "Nueva suscripcion";
 }
 
+export function resetClientForm() {
+  dom.clientForm.reset();
+  dom.clientId.value = "";
+  dom.clientFirstContact.value = toInputDate(new Date());
+  dom.clientLastContact.value = toInputDate(new Date());
+  dom.clientFormTitle.textContent = "Crear cliente";
+}
+
+export function resetTaskForm() {
+  dom.taskForm?.reset();
+  if (!dom.taskForm) return;
+  dom.taskId.value = "";
+  dom.taskDueDate.value = toInputDate(new Date(Date.now() + 7 * DAY_MS));
+  dom.taskFormTitle.textContent = "Nueva tarea";
+}
+
+export function resetGoalForm() {
+  dom.goalForm?.reset();
+  if (!dom.goalForm) return;
+  dom.goalId.value = "";
+  dom.goalDueDate.value = toInputDate(new Date(Date.now() + 30 * DAY_MS));
+  dom.goalFormTitle.textContent = "Nueva meta";
+}
+
+export function resetRequestForm() {
+  dom.requestForm?.reset();
+  if (!dom.requestForm) return;
+  dom.requestId.value = "";
+  dom.requestDate.value = toInputDate(new Date());
+  dom.requestDueDate.value = toInputDate(new Date(Date.now() + 7 * DAY_MS));
+  dom.requestFormTitle.textContent = "Nuevo pedido";
+}
+
+export function resetNoteForm() {
+  dom.noteForm?.reset();
+  if (!dom.noteForm) return;
+  dom.noteId.value = "";
+  dom.noteFormTitle.textContent = "Nota interna";
+}
+
+export function resetActionForm() {
+  dom.actionForm?.reset();
+  if (!dom.actionForm) return;
+  dom.actionId.value = "";
+  dom.actionDueDate.value = toInputDate(new Date(Date.now() + 3 * DAY_MS));
+  dom.actionFormTitle.textContent = "Nueva accion";
+}
+
 export function closeMobileMenu() {
   dom.sidebar.classList.remove("open");
   dom.mobileBackdrop.classList.remove("show");
@@ -483,7 +803,33 @@ function getActivityRows() {
     clientId: ""
   }));
 
-  return paymentRows.concat(movementRows).sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  const taskRows = tasks().map((task) => ({
+    origin: "Tarea",
+    title: task.title,
+    detail: getClient(task.clientId)?.company || task.responsible || "",
+    amount: 0,
+    currency: "ARS",
+    date: task.dueDate,
+    type: "tarea",
+    sign: "",
+    status: task.status,
+    clientId: task.clientId
+  }));
+
+  const goalRows = goals().map((goal) => ({
+    origin: "Meta",
+    title: goal.name,
+    detail: `${labelize(goal.type)} - ${goalProgressPercent(goal)}%`,
+    amount: goal.current,
+    currency: "ARS",
+    date: goal.dueDate,
+    type: "meta",
+    sign: "",
+    status: goal.status,
+    clientId: ""
+  }));
+
+  return paymentRows.concat(movementRows, taskRows, goalRows).sort((a, b) => parseDate(b.date) - parseDate(a.date));
 }
 
 function matchesReportFilters(item) {
@@ -633,6 +979,25 @@ export function getProject(id) {
 
 export function getInvoice(id) {
   return invoices().find((invoice) => invoice.id === id);
+}
+
+export function labelize(value) {
+  const labels = {
+    en_progreso: "en desarrollo",
+    revision: "en revision",
+    entregado: "finalizado",
+    activo: "cliente activo",
+    pendiente: "pendiente",
+    finalizado: "proyecto finalizado"
+  };
+  return (labels[value] || String(value || "")).replaceAll("_", " ");
+}
+
+function normalizeClientStatus(status) {
+  if (status === "activo") return "cliente_activo";
+  if (status === "pendiente") return "en_negociacion";
+  if (status === "finalizado") return "proyecto_finalizado";
+  return status || "lead";
 }
 
 export function formatMoney(amount, currency) {

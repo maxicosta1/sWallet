@@ -31,6 +31,26 @@ export function subscriptions() {
   return scoped("subscriptions");
 }
 
+export function tasks() {
+  return scoped("tasks").filter((task) => !task.clientId || clientExists(task.clientId));
+}
+
+export function goals() {
+  return scoped("goals");
+}
+
+export function requests() {
+  return scoped("requests").filter((request) => !request.clientId || clientExists(request.clientId));
+}
+
+export function notes() {
+  return scoped("notes").filter((note) => !note.clientId || clientExists(note.clientId));
+}
+
+export function actions() {
+  return scoped("actions").filter((action) => !action.clientId || clientExists(action.clientId));
+}
+
 export function clientExists(clientId) {
   return clients().some((client) => client.id === clientId);
 }
@@ -183,4 +203,125 @@ export function upcomingPayments() {
     .filter((invoice) => startOfDay(parseDate(invoice.dueDate)) <= limit)
     .sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate))
     .slice(0, 5);
+}
+
+export function projectFinancials(projectId) {
+  const project = projects().find((item) => item.id === projectId);
+  if (!project) return { budget: 0, paid: 0, expenses: 0, pending: 0, profit: 0 };
+  const paid = payments()
+    .filter((payment) => payment.projectId === projectId && payment.status === "pagado")
+    .reduce((total, payment) => total + toARS(payment.amount, payment.currency), 0);
+  const manualPaid = toARS(project.paid || 0, project.currency || "ARS");
+  const budget = toARS(project.budget || 0, project.currency || "ARS");
+  const expenses = toARS(project.expenses || 0, project.currency || "ARS");
+  const collected = Math.max(paid, manualPaid);
+  return {
+    budget,
+    paid: collected,
+    expenses,
+    pending: Math.max(budget - collected, 0),
+    profit: collected - expenses
+  };
+}
+
+export function clientHealth(clientId) {
+  const summary = billingSummaryByClient({ clientId, projectId: "", status: "", currency: "", from: "", to: "", quick: "" })[0];
+  const overdueInvoices = invoices().filter((invoice) => invoice.clientId === clientId && normalizedInvoiceStatus(invoice) === "vencida").length;
+  const overdueTasks = tasks().filter((task) => task.clientId === clientId && !["completada", "cancelada"].includes(task.status) && startOfDay(parseDate(task.dueDate)) < startOfDay(new Date())).length;
+  const riskNotes = notes().filter((note) => note.clientId === clientId && [note.tone, note.content, note.title].join(" ").toLowerCase().includes("riesgo")).length;
+  const client = clients().find((item) => item.id === clientId);
+  const lastContact = client?.lastContact ? Math.floor((Date.now() - parseDate(client.lastContact).getTime()) / DAY_MS) : 999;
+  const score = 100 - overdueInvoices * 30 - overdueTasks * 18 - riskNotes * 15 - (summary?.totalPendiente ? 12 : 0) - (lastContact > 21 ? 12 : 0);
+  if (score < 55) return { label: "En riesgo", tone: "riesgo", score: Math.max(score, 0) };
+  if (score < 78) return { label: "Neutral", tone: "neutral", score };
+  return { label: "Saludable", tone: "saludable", score };
+}
+
+export function companyProgress() {
+  const activeProjects = projects().filter((project) => !["finalizado", "entregado", "cancelado"].includes(project.status));
+  const projectProgress = activeProjects.length ? activeProjects.reduce((total, project) => total + Number(project.progress || 0), 0) / activeProjects.length : 100;
+  const goalProgress = goals().length ? goals().reduce((total, goal) => total + goalProgressPercent(goal), 0) / goals().length : 100;
+  const totals = billingTotals();
+  const collection = totals.facturado ? (totals.cobrado / totals.facturado) * 100 : 100;
+  return Math.round((projectProgress + goalProgress + collection) / 3);
+}
+
+export function goalProgressPercent(goal) {
+  return Math.min(Math.round((Number(goal.current || 0) / Math.max(Number(goal.target || 1), 1)) * 100), 100);
+}
+
+export function notifications() {
+  const today = startOfDay(new Date());
+  const soon = startOfDay(new Date(Date.now() + 5 * DAY_MS));
+  const rows = [];
+
+  invoices().forEach((invoice) => {
+    const status = normalizedInvoiceStatus(invoice);
+    if (status === "vencida") rows.push({ type: "Pago vencido", tone: "vencida", title: invoice.number, detail: clientName(invoice.clientId), date: invoice.dueDate });
+    else if (status === "pendiente" && startOfDay(parseDate(invoice.dueDate)) <= soon) rows.push({ type: "Cobro proximo", tone: "pendiente", title: invoice.number, detail: clientName(invoice.clientId), date: invoice.dueDate });
+  });
+
+  tasks().forEach((task) => {
+    const due = startOfDay(parseDate(task.dueDate));
+    if (!["completada", "cancelada"].includes(task.status) && due < today) rows.push({ type: "Tarea vencida", tone: "vencida", title: task.title, detail: clientName(task.clientId), date: task.dueDate });
+    else if (!["completada", "cancelada"].includes(task.status) && due <= soon) rows.push({ type: "Tarea proxima", tone: "pendiente", title: task.title, detail: clientName(task.clientId), date: task.dueDate });
+  });
+
+  clients().forEach((client) => {
+    if (client.lastContact && Math.floor((Date.now() - parseDate(client.lastContact).getTime()) / DAY_MS) > 21) {
+      rows.push({ type: "Sin contacto", tone: "neutral", title: client.company, detail: "Seguimiento comercial recomendado", date: client.lastContact });
+    }
+  });
+
+  projects().forEach((project) => {
+    if (project.dueDate && !["finalizado", "entregado", "cancelado"].includes(project.status) && startOfDay(parseDate(project.dueDate)) < today) {
+      rows.push({ type: "Proyecto atrasado", tone: "vencida", title: project.name, detail: clientName(project.clientId), date: project.dueDate });
+    }
+  });
+
+  requests().filter((request) => request.priority === "urgente" && request.status !== "completado").forEach((request) => {
+    rows.push({ type: "Pedido urgente", tone: "coral", title: request.description, detail: clientName(request.clientId), date: request.dueDate || request.date });
+  });
+
+  return rows.sort((a, b) => parseDate(a.date) - parseDate(b.date)).slice(0, 12);
+}
+
+export function clientAdminSummary(client) {
+  const clientProjects = projects().filter((project) => project.clientId === client.id);
+  const activeProject = clientProjects.find((project) => !["finalizado", "entregado", "cancelado"].includes(project.status));
+  const clientRequests = requests().filter((request) => request.clientId === client.id);
+  const clientTasks = tasks().filter((task) => task.clientId === client.id);
+  const clientActions = actions().filter((action) => action.clientId === client.id && action.status !== "completada");
+  const summary = billingSummaryByClient({ clientId: client.id, projectId: "", status: "", currency: "", from: "", to: "", quick: "" })[0];
+  return {
+    client,
+    activeProject,
+    asked: clientRequests.filter((request) => request.status !== "completado").map((request) => request.description).slice(0, 2).join("; ") || "Sin pedidos abiertos",
+    pendingWork: clientTasks.filter((task) => !["completada", "cancelada"].includes(task.status)).length,
+    delivered: clientTasks.filter((task) => task.status === "completada").length,
+    pendingMoney: summary?.totalPendiente || 0,
+    nextAction: clientActions.sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate))[0]?.title || "Definir proxima accion",
+    priority: client.priority || "media",
+    health: clientHealth(client.id)
+  };
+}
+
+export function searchResults(query = state.globalSearch) {
+  const term = String(query || "").trim().toLowerCase();
+  if (!term) return [];
+  const includes = (values) => values.filter(Boolean).join(" ").toLowerCase().includes(term);
+  return [
+    ...clients().filter((client) => includes([client.name, client.company, client.email, client.service, client.observations])).map((item) => ({ type: "Cliente", title: item.company, detail: item.name, view: "clientes" })),
+    ...projects().filter((project) => includes([project.name, project.description, project.technologies, project.responsible])).map((item) => ({ type: "Proyecto", title: item.name, detail: clientName(item.clientId), view: "proyectos" })),
+    ...invoices().filter((invoice) => includes([invoice.number, invoice.notes])).map((item) => ({ type: "Factura", title: item.number, detail: clientName(item.clientId), view: "facturacion" })),
+    ...payments().filter((payment) => includes([payment.method, payment.notes])).map((item) => ({ type: "Pago", title: clientName(item.clientId), detail: payment.notes || payment.method, view: "pagos" })),
+    ...tasks().filter((task) => includes([task.title, task.description, task.responsible, task.comments])).map((item) => ({ type: "Tarea", title: item.title, detail: clientName(item.clientId), view: "tareas" })),
+    ...requests().filter((request) => includes([request.description, request.type, request.responsible, request.notes])).map((item) => ({ type: "Pedido", title: item.description, detail: clientName(item.clientId), view: "administracion" })),
+    ...notes().filter((note) => includes([note.title, note.content])).map((item) => ({ type: "Nota", title: item.title, detail: clientName(item.clientId), view: "administracion" }))
+  ].slice(0, 12);
+}
+
+function clientName(clientId) {
+  const client = clients().find((item) => item.id === clientId);
+  return client ? client.company : "Sin cliente";
 }

@@ -9,11 +9,17 @@ import {
   notify,
   renderAll,
   renderView,
+  resetActionForm,
+  resetClientForm,
+  resetGoalForm,
   resetInvoiceForm,
   resetMovementForm,
+  resetNoteForm,
   resetPaymentForm,
   resetProjectForm,
+  resetRequestForm,
   resetSubscriptionForm,
+  resetTaskForm,
   syncControls
 } from "./render.js";
 
@@ -49,20 +55,48 @@ export function bindEvents() {
   dom.projectForm.addEventListener("submit", handleProjectSubmit);
   dom.invoiceForm.addEventListener("submit", handleInvoiceSubmit);
   dom.subscriptionForm.addEventListener("submit", handleSubscriptionSubmit);
+  dom.taskForm.addEventListener("submit", handleTaskSubmit);
+  dom.goalForm.addEventListener("submit", handleGoalSubmit);
+  dom.requestForm.addEventListener("submit", handleRequestSubmit);
+  dom.noteForm.addEventListener("submit", handleNoteSubmit);
+  dom.actionForm.addEventListener("submit", handleActionSubmit);
 
+  dom.cancelClientEdit.addEventListener("click", resetClientForm);
   dom.cancelPaymentEdit.addEventListener("click", resetPaymentForm);
   dom.cancelProjectEdit.addEventListener("click", resetProjectForm);
   dom.cancelInvoiceEdit.addEventListener("click", resetInvoiceForm);
   dom.cancelMovementEdit.addEventListener("click", resetMovementForm);
   dom.cancelSubscriptionEdit.addEventListener("click", resetSubscriptionForm);
+  dom.cancelTaskEdit.addEventListener("click", resetTaskForm);
+  dom.cancelGoalEdit.addEventListener("click", resetGoalForm);
+  dom.cancelRequestEdit.addEventListener("click", resetRequestForm);
   dom.goCreateClient.addEventListener("click", () => renderView("clientes"));
 
   dom.invoiceClient.addEventListener("change", syncControls);
+  [dom.taskClient, dom.requestClient, dom.noteClient, dom.actionClient].forEach((control) => control.addEventListener("change", syncControls));
   dom.paymentInvoice.addEventListener("change", syncPaymentFromInvoice);
   dom.projectFilterClient.addEventListener("input", () => {
     state.projectFilterClientId = dom.projectFilterClient.value;
     renderAll();
   });
+
+  dom.adminClientFilter.addEventListener("input", () => {
+    state.adminFilterClientId = dom.adminClientFilter.value;
+    renderAll();
+  });
+
+  dom.taskFilter.addEventListener("input", () => {
+    state.taskFilter = dom.taskFilter.value;
+    renderAll();
+  });
+
+  dom.globalSearch.addEventListener("input", () => {
+    state.globalSearch = dom.globalSearch.value;
+    renderAll();
+  });
+
+  dom.exportCsv.addEventListener("click", exportCsv);
+  dom.printReport.addEventListener("click", () => window.print());
 
   [dom.filterFrom, dom.filterTo, dom.filterClient, dom.filterCurrency, dom.filterStatus].forEach((control) => {
     control.addEventListener("input", () => {
@@ -174,18 +208,23 @@ function handleClientSubmit(event) {
     company: dom.clientCompany.value.trim(),
     email: dom.clientEmail.value.trim(),
     phone: dom.clientPhone.value.trim(),
+    address: dom.clientAddress.value.trim(),
+    socials: dom.clientSocials.value.trim(),
+    website: dom.clientWebsite.value.trim(),
     service: dom.clientService.value.trim(),
     amount: Number(dom.clientAmount.value),
     currency: dom.clientCurrency.value,
     status: dom.clientStatus.value,
-    startDate: new Date().toISOString().slice(0, 10),
-    observations: ""
+    priority: dom.clientPriority.value,
+    firstContact: dom.clientFirstContact.value,
+    lastContact: dom.clientLastContact.value,
+    startDate: dom.clientFirstContact.value || new Date().toISOString().slice(0, 10),
+    observations: dom.clientObservations.value.trim()
   };
   if (dom.clientId.value) updateRecord(state.clients, dom.clientId.value, payload);
   else state.clients.push(createRecord(payload));
   saveAndRender("Cliente guardado", "Los datos quedaron disponibles.");
-  dom.clientForm.reset();
-  dom.clientId.value = "";
+  resetClientForm();
 }
 
 function handleProjectSubmit(event) {
@@ -201,9 +240,14 @@ function handleProjectSubmit(event) {
     name: dom.projectName.value.trim(),
     description: dom.projectDescription.value.trim(),
     budget: Number(dom.projectBudget.value),
+    paid: Number(dom.projectPaid.value || 0),
+    expenses: Number(dom.projectExpenses.value || 0),
     currency: dom.projectCurrency.value,
     status: dom.projectStatus.value,
     progress: Number(dom.projectProgress.value),
+    responsible: dom.projectResponsible.value.trim(),
+    technologies: dom.projectTechnologies.value.trim(),
+    links: dom.projectLinks.value.trim(),
     startDate: dom.projectStartDate.value,
     dueDate: dom.projectDueDate.value,
     notes: dom.projectNotes.value.trim(),
@@ -309,6 +353,113 @@ function handleSubscriptionSubmit(event) {
   saveAndRender("Suscripcion guardada", "Renovaciones actualizadas.");
 }
 
+function handleTaskSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.taskForm)) return;
+  if (!clientExists(dom.taskClient.value)) return notify("Cliente obligatorio", "La tarea debe tener un cliente asociado.");
+  if (dom.taskProject.value && !projectExists(dom.taskProject.value, dom.taskClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
+  const payload = {
+    userId: state.session.userId,
+    title: dom.taskTitle.value.trim(),
+    description: dom.taskDescription.value.trim(),
+    clientId: dom.taskClient.value,
+    projectId: dom.taskProject.value,
+    responsible: dom.taskResponsible.value.trim(),
+    priority: dom.taskPriority.value,
+    status: dom.taskStatus.value,
+    dueDate: dom.taskDueDate.value,
+    checklist: dom.taskChecklist.value.split("\n").map((item) => item.trim()).filter(Boolean),
+    comments: dom.taskComments.value.trim()
+  };
+  if (dom.taskId.value) updateRecord(state.tasks, dom.taskId.value, payload);
+  else state.tasks.push(createRecord(payload));
+  resetTaskForm();
+  saveAndRender("Tarea guardada", "El tablero fue actualizado.");
+}
+
+function handleGoalSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.goalForm)) return;
+  const payload = {
+    userId: state.session.userId,
+    name: dom.goalName.value.trim(),
+    period: dom.goalPeriod.value,
+    type: dom.goalType.value,
+    target: Number(dom.goalTarget.value),
+    current: Number(dom.goalCurrent.value),
+    dueDate: dom.goalDueDate.value,
+    status: Number(dom.goalCurrent.value) >= Number(dom.goalTarget.value) ? "completada" : "en_progreso"
+  };
+  if (dom.goalId.value) updateRecord(state.goals, dom.goalId.value, payload);
+  else state.goals.push(createRecord(payload));
+  resetGoalForm();
+  saveAndRender("Meta guardada", "El progreso fue recalculado.");
+}
+
+function handleRequestSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.requestForm)) return;
+  if (!clientExists(dom.requestClient.value)) return notify("Cliente obligatorio", "El pedido debe pertenecer a un cliente.");
+  if (dom.requestProject.value && !projectExists(dom.requestProject.value, dom.requestClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.requestClient.value,
+    projectId: dom.requestProject.value,
+    description: dom.requestDescription.value.trim(),
+    type: dom.requestType.value,
+    date: dom.requestDate.value,
+    status: dom.requestStatus.value,
+    priority: dom.requestPriority.value,
+    responsible: dom.requestResponsible.value.trim(),
+    dueDate: dom.requestDueDate.value,
+    notes: dom.requestNotes.value.trim()
+  };
+  if (dom.requestId.value) updateRecord(state.requests, dom.requestId.value, payload);
+  else state.requests.push(createRecord(payload));
+  resetRequestForm();
+  saveAndRender("Pedido guardado", "Administracion actualizada.");
+}
+
+function handleNoteSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.noteForm)) return;
+  if (!clientExists(dom.noteClient.value)) return notify("Cliente obligatorio", "La nota debe pertenecer a un cliente.");
+  if (dom.noteProject.value && !projectExists(dom.noteProject.value, dom.noteClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.noteClient.value,
+    projectId: dom.noteProject.value,
+    title: dom.noteTitle.value.trim(),
+    content: dom.noteContent.value.trim(),
+    tone: dom.noteTone.value,
+    date: new Date().toISOString().slice(0, 10)
+  };
+  if (dom.noteId.value) updateRecord(state.notes, dom.noteId.value, payload);
+  else state.notes.push(createRecord(payload));
+  resetNoteForm();
+  saveAndRender("Nota guardada", "La ficha interna fue actualizada.");
+}
+
+function handleActionSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable() || !validateForm(dom.actionForm)) return;
+  if (!clientExists(dom.actionClient.value)) return notify("Cliente obligatorio", "La accion debe pertenecer a un cliente.");
+  if (dom.actionProject.value && !projectExists(dom.actionProject.value, dom.actionClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
+  const payload = {
+    userId: state.session.userId,
+    clientId: dom.actionClient.value,
+    projectId: dom.actionProject.value,
+    title: dom.actionTitle.value.trim(),
+    dueDate: dom.actionDueDate.value,
+    priority: dom.actionPriority.value,
+    status: dom.actionStatus.value
+  };
+  if (dom.actionId.value) updateRecord(state.actions, dom.actionId.value, payload);
+  else state.actions.push(createRecord(payload));
+  resetActionForm();
+  saveAndRender("Accion guardada", "Seguimiento actualizado.");
+}
+
 function saveExchangeRate() {
   if (!assertWritable()) return;
   const value = Number(dom.exchangeRate.value);
@@ -354,6 +505,26 @@ function saveAndRender(title, message) {
   notify(title, message);
 }
 
+function exportCsv() {
+  const userId = state.session.userId;
+  const rows = [
+    ["tipo", "titulo", "clienteId", "proyectoId", "monto", "moneda", "estado", "fecha"],
+    ...state.invoices.filter((item) => item.userId === userId).map((item) => ["factura", item.number, item.clientId, item.projectId, item.amount, item.currency, item.status, item.issueDate]),
+    ...state.payments.filter((item) => item.userId === userId).map((item) => ["pago", item.method, item.clientId, item.projectId, item.amount, item.currency, item.status, item.date]),
+    ...state.movements.filter((item) => item.userId === userId).map((item) => [item.type, item.category, "", "", item.amount, item.currency, "", item.date]),
+    ...state.tasks.filter((item) => item.userId === userId).map((item) => ["tarea", item.title, item.clientId, item.projectId, "", "", item.status, item.dueDate]),
+    ...state.goals.filter((item) => item.userId === userId).map((item) => ["meta", item.name, "", "", item.current, item.type, item.status, item.dueDate])
+  ];
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `swallet-reporte-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  notify("CSV generado", "Reporte exportado correctamente.");
+}
+
 function exposeInlineActions() {
   window.showClientDetail = (id) => {
     state.selectedClientId = state.selectedClientId === id ? "" : id;
@@ -375,6 +546,21 @@ function exposeInlineActions() {
   window.deleteMovement = (id) => deleteGeneric("movements", id, "Movimiento eliminado");
   window.editSubscription = (id) => editGeneric("subscriptions", id, fillSubscriptionForm);
   window.deleteSubscription = (id) => deleteGeneric("subscriptions", id, "Suscripcion eliminada");
+  window.editTask = (id) => editGeneric("tasks", id, fillTaskForm);
+  window.deleteTask = (id) => deleteGeneric("tasks", id, "Tarea eliminada");
+  window.editGoal = (id) => editGeneric("goals", id, fillGoalForm);
+  window.deleteGoal = (id) => deleteGeneric("goals", id, "Meta eliminada");
+  window.editRequest = (id) => editGeneric("requests", id, fillRequestForm);
+  window.deleteRequest = (id) => deleteGeneric("requests", id, "Pedido eliminado");
+  window.editNote = (id) => editGeneric("notes", id, fillNoteForm);
+  window.deleteNote = (id) => deleteGeneric("notes", id, "Nota eliminada");
+  window.editAction = (id) => editGeneric("actions", id, fillActionForm);
+  window.deleteAction = (id) => deleteGeneric("actions", id, "Accion eliminada");
+  window.goSearchResult = (view) => {
+    state.globalSearch = "";
+    renderView(view);
+    renderAll();
+  };
 };
 
 function editGeneric(key, id, fill) {
@@ -396,10 +582,17 @@ function fillClientForm(client) {
   dom.clientCompany.value = client.company;
   dom.clientEmail.value = client.email;
   dom.clientPhone.value = client.phone;
+  dom.clientAddress.value = client.address || "";
+  dom.clientSocials.value = client.socials || "";
+  dom.clientWebsite.value = client.website || "";
   dom.clientService.value = client.service;
   dom.clientAmount.value = client.amount;
   dom.clientCurrency.value = client.currency;
-  dom.clientStatus.value = client.status;
+  dom.clientStatus.value = ({ activo: "cliente_activo", pendiente: "en_negociacion", finalizado: "proyecto_finalizado" }[client.status]) || client.status || "lead";
+  dom.clientPriority.value = client.priority || "media";
+  dom.clientFirstContact.value = client.firstContact || client.startDate || "";
+  dom.clientLastContact.value = client.lastContact || "";
+  dom.clientObservations.value = client.observations || "";
   dom.clientFormTitle.textContent = "Editar cliente";
   renderView("clientes");
 }
@@ -410,9 +603,14 @@ function fillProjectForm(project) {
   dom.projectName.value = project.name;
   dom.projectDescription.value = project.description || "";
   dom.projectBudget.value = project.budget;
+  dom.projectPaid.value = project.paid || "";
+  dom.projectExpenses.value = project.expenses || "";
   dom.projectCurrency.value = project.currency;
-  dom.projectStatus.value = project.status;
+  dom.projectStatus.value = ({ pendiente: "planificacion", en_progreso: "en_desarrollo", revision: "en_revision", entregado: "finalizado", pausado: "esperando_cliente" }[project.status]) || project.status || "planificacion";
   dom.projectProgress.value = project.progress;
+  dom.projectResponsible.value = project.responsible || "";
+  dom.projectTechnologies.value = project.technologies || "";
+  dom.projectLinks.value = project.links || "";
   dom.projectStartDate.value = project.startDate || "";
   dom.projectDueDate.value = project.dueDate || "";
   dom.projectNotes.value = project.notes || "";
@@ -477,6 +675,77 @@ function fillSubscriptionForm(item) {
   dom.subscriptionStatus.value = item.status;
   dom.subscriptionFormTitle.textContent = "Editar suscripcion";
   renderView("suscripciones");
+}
+
+function fillTaskForm(item) {
+  dom.taskId.value = item.id;
+  dom.taskTitle.value = item.title;
+  dom.taskDescription.value = item.description || "";
+  dom.taskClient.value = item.clientId;
+  syncControls();
+  dom.taskProject.value = item.projectId || "";
+  dom.taskResponsible.value = item.responsible || "";
+  dom.taskPriority.value = item.priority || "media";
+  dom.taskStatus.value = item.status || "pendiente";
+  dom.taskDueDate.value = item.dueDate || "";
+  dom.taskChecklist.value = (item.checklist || []).join("\n");
+  dom.taskComments.value = item.comments || "";
+  dom.taskFormTitle.textContent = "Editar tarea";
+  renderView("tareas");
+}
+
+function fillGoalForm(item) {
+  dom.goalId.value = item.id;
+  dom.goalName.value = item.name;
+  dom.goalPeriod.value = item.period;
+  dom.goalType.value = item.type;
+  dom.goalTarget.value = item.target;
+  dom.goalCurrent.value = item.current;
+  dom.goalDueDate.value = item.dueDate;
+  dom.goalFormTitle.textContent = "Editar meta";
+  renderView("metas");
+}
+
+function fillRequestForm(item) {
+  dom.requestId.value = item.id;
+  dom.requestClient.value = item.clientId;
+  syncControls();
+  dom.requestProject.value = item.projectId || "";
+  dom.requestDescription.value = item.description;
+  dom.requestType.value = item.type;
+  dom.requestDate.value = item.date;
+  dom.requestStatus.value = item.status;
+  dom.requestPriority.value = item.priority;
+  dom.requestResponsible.value = item.responsible || "";
+  dom.requestDueDate.value = item.dueDate || "";
+  dom.requestNotes.value = item.notes || "";
+  dom.requestFormTitle.textContent = "Editar pedido";
+  renderView("administracion");
+}
+
+function fillNoteForm(item) {
+  dom.noteId.value = item.id;
+  dom.noteClient.value = item.clientId;
+  syncControls();
+  dom.noteProject.value = item.projectId || "";
+  dom.noteTitle.value = item.title;
+  dom.noteContent.value = item.content;
+  dom.noteTone.value = item.tone || "normal";
+  dom.noteFormTitle.textContent = "Editar nota";
+  renderView("administracion");
+}
+
+function fillActionForm(item) {
+  dom.actionId.value = item.id;
+  dom.actionClient.value = item.clientId;
+  syncControls();
+  dom.actionProject.value = item.projectId || "";
+  dom.actionTitle.value = item.title;
+  dom.actionDueDate.value = item.dueDate;
+  dom.actionPriority.value = item.priority || "media";
+  dom.actionStatus.value = item.status || "pendiente";
+  dom.actionFormTitle.textContent = "Editar accion";
+  renderView("administracion");
 }
 
 function debounce(callback, delay) {

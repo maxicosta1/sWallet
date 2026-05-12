@@ -62,6 +62,14 @@
                     <span class="nav-icon">C</span>
                     Clientes
                 </button>
+                <button class="nav-link" data-view="proyectos" type="button">
+                    <span class="nav-icon">PR</span>
+                    Proyectos
+                </button>
+                <button class="nav-link" data-view="finanzas" type="button">
+                    <span class="nav-icon">$</span>
+                    Finanzas
+                </button>
                 <button class="nav-link" data-view="pagos" type="button">
                     <span class="nav-icon">P</span>
                     Pagos
@@ -69,6 +77,18 @@
                 <button class="nav-link" data-view="facturacion" type="button">
                     <span class="nav-icon">F</span>
                     Facturacion
+                </button>
+                <button class="nav-link" data-view="administracion" type="button">
+                    <span class="nav-icon">A</span>
+                    Administracion
+                </button>
+                <button class="nav-link" data-view="tareas" type="button">
+                    <span class="nav-icon">T</span>
+                    Tareas
+                </button>
+                <button class="nav-link" data-view="metas" type="button">
+                    <span class="nav-icon">G</span>
+                    Metas
                 </button>
                 <button class="nav-link" data-view="movimientos" type="button">
                     <span class="nav-icon">M</span>
@@ -78,13 +98,13 @@
                     <span class="nav-icon">R</span>
                     Reportes
                 </button>
-                <button class="nav-link" data-view="proyectos" type="button">
-                    <span class="nav-icon">PR</span>
-                    Proyectos
-                </button>
                 <button class="nav-link" data-view="suscripciones" type="button">
                     <span class="nav-icon">S</span>
                     Suscripciones
+                </button>
+                <button class="nav-link" data-view="configuracion" type="button">
+                    <span class="nav-icon">CFG</span>
+                    Configuracion
                 </button>
             </nav>
 
@@ -117,6 +137,10 @@
                 <div>
                     <p class="eyebrow">sCode Digital Solutions</p>
                     <h1 id="pageTitle">Dashboard financiero</h1>
+                </div>
+                <div class="global-search">
+                    <input id="globalSearch" type="search" placeholder="Buscar clientes, proyectos, pagos, tareas...">
+                    <div class="search-results" id="globalSearchResults" hidden></div>
                 </div>
                 <div class="topbar-actions">
                     <button class="ghost-button" id="resetDemo" type="button">Reiniciar demo</button>
@@ -235,6 +259,28 @@
                         <div class="stack-list" id="recentActivity"></div>
                     </section>
                 </div>
+
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Control interno</p>
+                                <h2>Progreso general</h2>
+                            </div>
+                        </div>
+                        <div id="companyProgressWidget"></div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Notificaciones</p>
+                                <h2>Alertas internas</h2>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="notificationsList"></div>
+                    </section>
+                </div>
             </section>
 
             <section class="view" id="clientesView" data-view-panel="clientes">
@@ -256,12 +302,23 @@
                                 <label>Email<input id="clientEmail" required type="email" placeholder="cliente@empresa.com"></label>
                                 <label>Telefono<input id="clientPhone" required type="tel" placeholder="+54 9 11 0000 0000"></label>
                             </div>
+                            <div class="form-row">
+                                <label>Direccion<input id="clientAddress" type="text" placeholder="Ciudad, pais"></label>
+                                <label>Redes sociales<input id="clientSocials" type="text" placeholder="@cliente / LinkedIn"></label>
+                                <label>Sitio web<input id="clientWebsite" type="url" placeholder="https://"></label>
+                            </div>
                             <label>Servicio contratado<input id="clientService" required type="text" placeholder="Sitio web, soporte, branding..."></label>
                             <div class="form-row">
                                 <label>Monto acordado<input id="clientAmount" required min="1" step="0.01" type="number"></label>
                                 <label>Moneda<select id="clientCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
-                                <label>Estado<select id="clientStatus" required><option value="activo">Activo</option><option value="pendiente">Pendiente</option><option value="finalizado">Finalizado</option></select></label>
+                                <label>Estado<select id="clientStatus" required><option value="lead">Lead</option><option value="contactado">Contactado</option><option value="presupuesto_enviado">Presupuesto enviado</option><option value="en_negociacion">En negociacion</option><option value="cliente_activo">Cliente activo</option><option value="esperando_respuesta">Esperando respuesta</option><option value="proyecto_finalizado">Proyecto finalizado</option><option value="perdido">Perdido</option></select></label>
+                                <label>Prioridad<select id="clientPriority" required><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
                             </div>
+                            <div class="form-row">
+                                <label>Primer contacto<input id="clientFirstContact" type="date"></label>
+                                <label>Ultimo contacto<input id="clientLastContact" type="date"></label>
+                            </div>
+                            <label>Notas internas<textarea id="clientObservations" rows="3" placeholder="Riesgos, oportunidades, acuerdos, contexto..."></textarea></label>
                             <div class="form-actions">
                                 <button class="ghost-button" id="cancelClientEdit" type="button">Cancelar</button>
                                 <button class="primary-button" type="submit">Guardar cliente</button>
@@ -292,6 +349,15 @@
                         </div>
                     </section>
                 </div>
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Pipeline CRM</p>
+                            <h2>Kanban de clientes</h2>
+                        </div>
+                    </div>
+                    <div class="kanban-board" id="clientKanban"></div>
+                </section>
             </section>
 
             <section class="view" id="pagosView" data-view-panel="pagos">
@@ -418,7 +484,11 @@
                             <p class="eyebrow">Analitica</p>
                             <h2>Filtros</h2>
                         </div>
-                        <button class="ghost-button compact" id="clearFilters" type="button">Limpiar</button>
+                        <div class="panel-actions">
+                            <button class="ghost-button compact" id="exportCsv" type="button">Exportar CSV</button>
+                            <button class="ghost-button compact" id="printReport" type="button">PDF/Imprimir</button>
+                            <button class="ghost-button compact" id="clearFilters" type="button">Limpiar</button>
+                        </div>
                     </div>
                     <div class="filters-grid">
                         <label>Desde<input id="filterFrom" type="date"></label>
@@ -474,6 +544,30 @@
                         </table>
                     </div>
                 </section>
+            </section>
+
+            <section class="view" id="finanzasView" data-view-panel="finanzas">
+                <div class="stats-grid" id="financeStats"></div>
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Caja</p>
+                                <h2>Resumen financiero</h2>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="financeSummary"></div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Rentabilidad</p>
+                                <h2>Proyectos mas rentables</h2>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="profitProjects"></div>
+                    </section>
+                </div>
             </section>
 
             <section class="view" id="facturacionView" data-view-panel="facturacion">
@@ -587,14 +681,21 @@
                             <label>Descripcion<textarea id="projectDescription" rows="3" placeholder="Alcance y notas del proyecto"></textarea></label>
                             <div class="form-row">
                                 <label>Presupuesto<input id="projectBudget" required min="1" step="0.01" type="number"></label>
+                                <label>Monto cobrado<input id="projectPaid" min="0" step="0.01" type="number"></label>
+                                <label>Gastos asociados<input id="projectExpenses" min="0" step="0.01" type="number"></label>
                                 <label>Moneda<select id="projectCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
                             </div>
                             <div class="form-row">
-                                <label>Estado<select id="projectStatus" required><option value="pendiente">Pendiente</option><option value="en_progreso">En progreso</option><option value="revision">Revision</option><option value="entregado">Entregado</option><option value="pausado">Pausado</option><option value="cancelado">Cancelado</option></select></label>
+                                <label>Estado<select id="projectStatus" required><option value="planificacion">Planificacion</option><option value="en_desarrollo">En desarrollo</option><option value="en_revision">En revision</option><option value="esperando_cliente">Esperando al cliente</option><option value="finalizado">Finalizado</option><option value="cancelado">Cancelado</option></select></label>
                                 <label>Progreso %<input id="projectProgress" required min="0" max="100" step="1" type="number"></label>
                                 <label>Inicio<input id="projectStartDate" type="date"></label>
                                 <label>Entrega<input id="projectDueDate" type="date"></label>
                             </div>
+                            <div class="form-row">
+                                <label>Responsable<input id="projectResponsible" type="text" placeholder="Responsable interno"></label>
+                                <label>Tecnologias<input id="projectTechnologies" type="text" placeholder="Next.js, WordPress, Figma..."></label>
+                            </div>
+                            <label>Archivos o links importantes<input id="projectLinks" type="text" placeholder="Drive, Figma, repositorio, deploy..."></label>
                             <label>Notas<textarea id="projectNotes" rows="2" placeholder="Notas internas"></textarea></label>
                             <label>Checklist<textarea id="projectTasks" rows="3" placeholder="Una tarea por linea"></textarea></label>
                             <div class="form-actions">
@@ -621,6 +722,7 @@
                                         <th>Proyecto</th>
                                         <th>Cliente</th>
                                         <th>Presupuesto</th>
+                                        <th>Ganancia</th>
                                         <th>Progreso</th>
                                         <th>Entrega</th>
                                         <th>Estado</th>
@@ -630,6 +732,196 @@
                                 <tbody id="projectsTable"></tbody>
                             </table>
                         </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="administracionView" data-view-panel="administracion">
+                <section class="panel filters-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Operacion interna</p>
+                            <h2>Resumen administrativo</h2>
+                        </div>
+                    </div>
+                    <div class="filters-grid compact-filters">
+                        <label>Cliente<select id="adminClientFilter"></select></label>
+                    </div>
+                </section>
+                <div class="admin-grid" id="adminClientSummaries"></div>
+
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Pedidos</p>
+                                <h2 id="requestFormTitle">Nuevo pedido</h2>
+                            </div>
+                        </div>
+                        <form id="requestForm" class="data-form" novalidate>
+                            <input type="hidden" id="requestId">
+                            <label>Cliente<select id="requestClient" required></select></label>
+                            <label>Proyecto<select id="requestProject"></select></label>
+                            <label>Descripcion<textarea id="requestDescription" required rows="3"></textarea></label>
+                            <div class="form-row">
+                                <label>Tipo<select id="requestType" required><option value="nueva_pagina">Nueva pagina</option><option value="cambio_diseno">Cambio de diseno</option><option value="correccion">Correccion</option><option value="nueva_funcionalidad">Nueva funcionalidad</option><option value="revision">Revision</option><option value="mantenimiento">Mantenimiento</option><option value="consulta">Consulta</option><option value="urgente">Urgente</option></select></label>
+                                <label>Estado<select id="requestStatus" required><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="esperando_respuesta">Esperando respuesta</option><option value="completado">Completado</option><option value="cancelado">Cancelado</option></select></label>
+                                <label>Prioridad<select id="requestPriority" required><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Responsable<input id="requestResponsible" required type="text"></label>
+                                <label>Fecha pedido<input id="requestDate" required type="date"></label>
+                                <label>Entrega estimada<input id="requestDueDate" type="date"></label>
+                            </div>
+                            <label>Notas<textarea id="requestNotes" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelRequestEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar pedido</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Backlog cliente</p>
+                                <h2>Pedidos recientes</h2>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Pedido</th><th>Cliente</th><th>Prioridad</th><th>Estado</th><th>Entrega</th><th>Acciones</th></tr></thead>
+                                <tbody id="requestsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Notas</p><h2 id="noteFormTitle">Nota interna</h2></div></div>
+                        <form id="noteForm" class="data-form" novalidate>
+                            <input type="hidden" id="noteId">
+                            <label>Cliente<select id="noteClient" required></select></label>
+                            <label>Proyecto<select id="noteProject"></select></label>
+                            <label>Titulo<input id="noteTitle" required type="text"></label>
+                            <label>Contenido<textarea id="noteContent" required rows="3"></textarea></label>
+                            <label>Tono<select id="noteTone"><option value="normal">Normal</option><option value="riesgo">Riesgo</option><option value="oportunidad">Oportunidad</option></select></label>
+                            <button class="primary-button" type="submit">Guardar nota</button>
+                        </form>
+                        <div class="stack-list" id="notesList"></div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Proximas acciones</p><h2 id="actionFormTitle">Nueva accion</h2></div></div>
+                        <form id="actionForm" class="data-form" novalidate>
+                            <input type="hidden" id="actionId">
+                            <label>Cliente<select id="actionClient" required></select></label>
+                            <label>Proyecto<select id="actionProject"></select></label>
+                            <label>Accion<input id="actionTitle" required type="text" placeholder="Enviar presupuesto, cobrar cuota..."></label>
+                            <div class="form-row">
+                                <label>Vence<input id="actionDueDate" required type="date"></label>
+                                <label>Prioridad<select id="actionPriority" required><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
+                                <label>Estado<select id="actionStatus" required><option value="pendiente">Pendiente</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></label>
+                            </div>
+                            <button class="primary-button" type="submit">Guardar accion</button>
+                        </form>
+                        <div class="stack-list" id="actionsList"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="tareasView" data-view-panel="tareas">
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Trabajo interno</p>
+                                <h2 id="taskFormTitle">Nueva tarea</h2>
+                            </div>
+                        </div>
+                        <form id="taskForm" class="data-form" novalidate>
+                            <input type="hidden" id="taskId">
+                            <label>Titulo<input id="taskTitle" required type="text"></label>
+                            <label>Descripcion<textarea id="taskDescription" rows="3"></textarea></label>
+                            <label>Cliente<select id="taskClient" required></select></label>
+                            <label>Proyecto<select id="taskProject"></select></label>
+                            <div class="form-row">
+                                <label>Responsable<input id="taskResponsible" required type="text"></label>
+                                <label>Prioridad<select id="taskPriority" required><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></label>
+                                <label>Estado<select id="taskStatus" required><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="en_revision">En revision</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></label>
+                            </div>
+                            <label>Fecha limite<input id="taskDueDate" required type="date"></label>
+                            <label>Checklist<textarea id="taskChecklist" rows="3" placeholder="Una tarea por linea"></textarea></label>
+                            <label>Comentarios<textarea id="taskComments" rows="2"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelTaskEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar tarea</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Tablero</p>
+                                <h2>Tareas por estado</h2>
+                            </div>
+                        </div>
+                        <div class="filters-grid compact-filters">
+                            <label>Filtro<select id="taskFilter"><option value="">Todas</option><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="en_revision">En revision</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></label>
+                        </div>
+                        <div class="kanban-board task-board" id="taskBoard"></div>
+                    </section>
+                </div>
+                <section class="panel">
+                    <div class="panel-header"><div><p class="eyebrow">Detalle</p><h2>Tareas</h2></div></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Tarea</th><th>Cliente</th><th>Proyecto</th><th>Prioridad</th><th>Estado</th><th>Vence</th><th>Acciones</th></tr></thead>
+                            <tbody id="tasksTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section class="view" id="metasView" data-view-panel="metas">
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Objetivos sCode</p><h2 id="goalFormTitle">Nueva meta</h2></div></div>
+                        <form id="goalForm" class="data-form" novalidate>
+                            <input type="hidden" id="goalId">
+                            <label>Nombre<input id="goalName" required type="text"></label>
+                            <div class="form-row">
+                                <label>Periodo<select id="goalPeriod" required><option value="mensual">Mensual</option><option value="trimestral">Trimestral</option><option value="anual">Anual</option></select></label>
+                                <label>Tipo<select id="goalType" required><option value="ingresos">Ingresos</option><option value="ganancia_neta">Ganancia neta</option><option value="clientes_nuevos">Clientes nuevos</option><option value="proyectos_finalizados">Proyectos finalizados</option><option value="presupuestos_enviados">Presupuestos enviados</option><option value="reduccion_gastos">Reduccion de gastos</option><option value="seguimiento_clientes">Seguimiento de clientes</option></select></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Valor objetivo<input id="goalTarget" required min="1" step="0.01" type="number"></label>
+                                <label>Valor actual<input id="goalCurrent" required min="0" step="0.01" type="number"></label>
+                                <label>Fecha limite<input id="goalDueDate" required type="date"></label>
+                            </div>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelGoalEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar meta</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><p class="eyebrow">Seguimiento</p><h2>Metas</h2></div>
+                        </div>
+                        <div class="goal-grid" id="goalsGrid"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="configuracionView" data-view-panel="configuracion">
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Cuenta</p><h2>Sesion actual</h2></div></div>
+                        <div class="stack-list" id="settingsSession"></div>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Datos locales</p><h2>Persistencia</h2></div></div>
+                        <div class="stack-list" id="settingsData"></div>
                     </section>
                 </div>
             </section>

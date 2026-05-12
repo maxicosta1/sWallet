@@ -39,7 +39,7 @@ export function registerInitialUser({ name, email, password }) {
   state.users.push(user);
   state.session = { userId: user.id, createdAt: new Date().toISOString() };
 
-  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length;
+  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length || state.tasks.length || state.goals.length;
   if (hasExistingData) {
     attachUserToExistingData(user.id);
   } else {
@@ -68,7 +68,7 @@ export function logout() {
 }
 
 function attachUserToExistingData(userId) {
-  ["clients", "projects", "invoices", "payments", "movements", "subscriptions"].forEach((key) => {
+  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions"].forEach((key) => {
     state[key] = state[key].map((item) => ({ ...item, userId: item.userId || userId }));
   });
 

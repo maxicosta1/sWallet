@@ -108,6 +108,7 @@ button {
     background: rgba(9, 11, 18, 0.78);
     backdrop-filter: var(--blur);
     z-index: 20;
+    overflow-y: auto;
 }
 
 .brand {
@@ -146,7 +147,7 @@ button {
 
 .nav-menu {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .nav-link {
@@ -269,6 +270,60 @@ button {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.global-search {
+    position: relative;
+    flex: 1 1 360px;
+    max-width: 520px;
+}
+
+.global-search input {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+    outline: none;
+}
+
+.search-results {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    z-index: 18;
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(14, 16, 28, 0.96);
+    box-shadow: var(--shadow);
+    backdrop-filter: var(--blur);
+}
+
+.search-results button {
+    display: grid;
+    gap: 3px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 12px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    text-align: left;
+}
+
+.search-results span,
+.search-results small {
+    color: var(--muted);
+}
+
+.panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .hamburger {
@@ -852,14 +907,22 @@ tr:last-child td {
 .badge.pagado,
 .badge.pagada,
 .badge.activo,
+.badge.cliente_activo,
+.badge.saludable,
+.badge.completada,
 .badge.ingreso,
 .badge.entregado,
+.badge.finalizado,
 .badge.activa {
     color: #dffcef;
     background: rgba(53, 212, 154, 0.16);
 }
 
 .badge.pendiente,
+.badge.lead,
+.badge.contactado,
+.badge.presupuesto_enviado,
+.badge.esperando_respuesta,
 .badge.por_vencer {
     color: #fff2ce;
     background: rgba(245, 196, 81, 0.17);
@@ -871,14 +934,26 @@ tr:last-child td {
 .badge.pausado,
 .badge.cancelado,
 .badge.cancelada,
+.badge.perdido,
+.badge.riesgo,
+.badge.urgente,
 .badge.vencida {
     color: #ffdce3;
     background: rgba(255, 92, 122, 0.16);
 }
 
-.badge.finalizado,
 .badge.revision,
-.badge.en_progreso {
+.badge.en_revision,
+.badge.en_progreso,
+.badge.en_desarrollo,
+.badge.planificacion,
+.badge.en_negociacion,
+.badge.proyecto_finalizado,
+.badge.mantenimiento,
+.badge.neutral,
+.badge.media,
+.badge.alta,
+.badge.oportunidad {
     color: #dfeaff;
     background: rgba(92, 200, 255, 0.14);
 }
@@ -990,6 +1065,181 @@ tr:last-child td {
 .detail-panel p {
     margin: 0 0 8px;
     color: var(--muted);
+}
+
+.detail-grid,
+.admin-lines {
+    display: grid;
+    gap: 8px;
+}
+
+.detail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 12px;
+}
+
+.detail-grid span,
+.admin-card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.detail-grid span {
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    color: var(--muted);
+}
+
+.detail-grid strong {
+    color: var(--text);
+}
+
+.health-pill {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 24px;
+    margin-left: 6px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.health-pill.saludable {
+    color: #dffcef;
+    background: rgba(53, 212, 154, 0.16);
+}
+
+.health-pill.neutral {
+    color: #dfeaff;
+    background: rgba(92, 200, 255, 0.14);
+}
+
+.health-pill.riesgo {
+    color: #ffdce3;
+    background: rgba(255, 92, 122, 0.16);
+}
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    overflow-x: auto;
+}
+
+.kanban-column {
+    min-height: 180px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.kanban-column h3 {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    text-transform: capitalize;
+}
+
+.kanban-cards {
+    display: grid;
+    gap: 10px;
+}
+
+.kanban-card {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+    text-align: left;
+    transition: 180ms ease;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+}
+
+.kanban-card span,
+.kanban-empty {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.admin-grid,
+.goal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.admin-card,
+.goal-card,
+.progress-hero {
+    padding: 16px;
+    border-radius: 18px;
+    background:
+        linear-gradient(145deg, rgba(159, 92, 255, 0.12), rgba(255, 255, 255, 0.035)),
+        rgba(255, 255, 255, 0.04);
+}
+
+.admin-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.admin-card-head span,
+.goal-card span,
+.admin-lines p {
+    color: var(--muted);
+}
+
+.admin-card-head strong,
+.goal-card strong {
+    display: block;
+    margin-top: 3px;
+}
+
+.admin-lines p {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.admin-lines strong {
+    color: var(--text);
+}
+
+.goal-card {
+    display: grid;
+    gap: 12px;
+    border: 1px solid var(--line);
+}
+
+.goal-card p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.progress-hero {
+    display: grid;
+    gap: 12px;
+}
+
+.progress-hero strong {
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
 }
 
 .action-empty {
@@ -1167,6 +1417,13 @@ canvas {
 
     .topbar {
         align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .global-search {
+        order: 3;
+        flex-basis: 100%;
+        max-width: none;
     }
 
     .topbar-actions {
@@ -1203,7 +1460,8 @@ canvas {
 
     .stats-grid,
     .form-row,
-    .filters-grid {
+    .filters-grid,
+    .detail-grid {
         grid-template-columns: 1fr;
     }
 
