@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 248 45% 4%;
+  --foreground: 258 100% 98%;
+  --card: 247 28% 10%;
+  --card-foreground: 258 100% 98%;
+  --muted: 247 18% 15%;
+  --muted-foreground: 252 14% 68%;
+  --border: 255 22% 18%;
+  --input: 255 22% 18%;
+  --ring: 262 100% 68%;
+  --destructive: 348 100% 68%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  background: #06070d;
+}
+
+body {
+  min-height: 100vh;
+  color: hsl(var(--foreground));
+  background:
+    radial-gradient(circle at 42% -12%, rgba(166, 128, 255, 0.36), transparent 34rem),
+    radial-gradient(circle at 90% 8%, rgba(159, 92, 255, 0.2), transparent 30rem),
+    radial-gradient(circle at 12% 80%, rgba(255, 122, 89, 0.1), transparent 26rem),
+    linear-gradient(160deg, #06070d 0%, #101024 48%, #07070d 100%);
+}
+
+::selection {
+  background: rgba(159, 92, 255, 0.42);
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(14, 16, 28, 0.72);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(24px);
+}
+
+.bank-card-surface {
+  background:
+    linear-gradient(180deg, rgba(190, 214, 255, 0.34) 0%, rgba(159, 92, 255, 0.34) 28%, rgba(14, 10, 36, 0.96) 78%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02));
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(159, 92, 255, 0.32);
+}

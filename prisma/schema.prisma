@@ -1,0 +1,345 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  finanzas
+  desarrollador
+  solo_lectura
+}
+
+enum Currency {
+  ARS
+  USD
+}
+
+enum ClientStatus {
+  lead
+  interesado
+  activo
+  en_desarrollo
+  mantenimiento
+  finalizado
+}
+
+enum PaymentStatus {
+  pendiente
+  pagado
+  vencido
+  cancelado
+}
+
+enum PaymentMethod {
+  transferencia
+  efectivo
+  mercadopago
+  paypal
+  wise
+  stripe
+  otro
+}
+
+enum MovementType {
+  ingreso
+  gasto
+  inversion
+}
+
+enum ProjectStatus {
+  pendiente
+  en_progreso
+  revision
+  entregado
+  pausado
+}
+
+enum SubscriptionStatus {
+  activa
+  por_vencer
+  vencida
+  cancelada
+}
+
+enum ActivityType {
+  creado
+  actualizado
+  eliminado
+  pago_registrado
+  nota
+  archivo
+  estado
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(solo_lectura)
+  accounts      Account[]
+  sessions      Session[]
+  activities    ActivityLog[]
+  notes         ClientNote[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Client {
+  id             String        @id @default(cuid())
+  name           String
+  company        String
+  email          String
+  phone          String
+  service        String
+  agreedPrice    Decimal       @db.Decimal(14, 2)
+  currency       Currency
+  status         ClientStatus  @default(lead)
+  startDate      DateTime?
+  observations   String?       @db.Text
+  payments       Payment[]
+  projects       Project[]
+  notes          ClientNote[]
+  attachments    Attachment[]
+  activities     ActivityLog[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  @@index([status])
+  @@index([company])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  clientId    String
+  name        String
+  description String?       @db.Text
+  status      ProjectStatus @default(pendiente)
+  progress    Int           @default(0)
+  budget      Decimal       @db.Decimal(14, 2)
+  currency    Currency
+  startsAt    DateTime?
+  dueAt       DateTime?
+  deliveredAt DateTime?
+  client      Client        @relation(fields: [clientId], references: [id])
+  tasks       ProjectTask[]
+  attachments Attachment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model ProjectTask {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  completed   Boolean  @default(false)
+  position    Int      @default(0)
+  dueAt       DateTime?
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id            String               @id @default(cuid())
+  clientId      String
+  amount        Decimal              @db.Decimal(14, 2)
+  paidAmount    Decimal              @default(0) @db.Decimal(14, 2)
+  currency      Currency
+  date          DateTime
+  dueDate       DateTime
+  status        PaymentStatus        @default(pendiente)
+  method        PaymentMethod        @default(transferencia)
+  isRecurring   Boolean              @default(false)
+  recurringRule String?
+  notes         String?              @db.Text
+  client        Client               @relation(fields: [clientId], references: [id])
+  installments  PaymentInstallment[]
+  attachments   Attachment[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deletedAt     DateTime?
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model PaymentInstallment {
+  id        String   @id @default(cuid())
+  paymentId String
+  amount    Decimal  @db.Decimal(14, 2)
+  currency  Currency
+  paidAt    DateTime
+  method    PaymentMethod @default(transferencia)
+  notes     String?
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Movement {
+  id          String       @id @default(cuid())
+  type        MovementType
+  categoryId  String
+  description String       @db.Text
+  amount      Decimal      @db.Decimal(14, 2)
+  currency    Currency
+  date        DateTime
+  category    Category     @relation(fields: [categoryId], references: [id])
+  attachments Attachment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([type])
+  @@index([date])
+}
+
+model Subscription {
+  id          String             @id @default(cuid())
+  name        String
+  provider    String
+  category    String
+  monthlyCost Decimal            @db.Decimal(14, 2)
+  annualCost  Decimal            @db.Decimal(14, 2)
+  currency    Currency
+  renewsAt    DateTime
+  status      SubscriptionStatus @default(activa)
+  notes       String?            @db.Text
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+
+  @@index([renewsAt])
+  @@index([status])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  color     String
+  icon      String?
+  movements Movement[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Attachment {
+  id         String    @id @default(cuid())
+  fileName   String
+  url        String
+  mimeType   String
+  size       Int
+  clientId   String?
+  projectId  String?
+  paymentId  String?
+  movementId String?
+  client     Client?   @relation(fields: [clientId], references: [id])
+  project    Project?  @relation(fields: [projectId], references: [id])
+  payment    Payment?  @relation(fields: [paymentId], references: [id])
+  movement   Movement? @relation(fields: [movementId], references: [id])
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+}
+
+model ClientNote {
+  id        String   @id @default(cuid())
+  clientId  String
+  userId    String
+  body      String   @db.Text
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model ActivityLog {
+  id        String       @id @default(cuid())
+  userId    String?
+  clientId  String?
+  type      ActivityType
+  title     String
+  body      String?
+  metadata  Json?
+  user      User?        @relation(fields: [userId], references: [id])
+  client    Client?      @relation(fields: [clientId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  base      Currency @default(USD)
+  quote     Currency @default(ARS)
+  rate      Decimal  @db.Decimal(14, 4)
+  source    String   @default("manual")
+  validAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([validAt])
+}
+
+model DashboardWidget {
+  id        String   @id @default(cuid())
+  userId    String?
+  key       String
+  title     String
+  enabled   Boolean  @default(true)
+  position  Int      @default(0)
+  config    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@unique([userId, key])
+}

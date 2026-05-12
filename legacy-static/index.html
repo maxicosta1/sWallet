@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sCode Finance Dashboard</title>
+    <meta name="description" content="Dashboard interno para administrar finanzas, clientes, pagos y movimientos de sCode Digital Solutions.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-mark">s</div>
+                <div>
+                    <strong>sCode</strong>
+                    <span>Finance OS</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu" aria-label="Navegacion principal">
+                <button class="nav-link active" data-view="dashboard" type="button">
+                    <span class="nav-icon">D</span>
+                    Dashboard
+                </button>
+                <button class="nav-link" data-view="clientes" type="button">
+                    <span class="nav-icon">C</span>
+                    Clientes
+                </button>
+                <button class="nav-link" data-view="pagos" type="button">
+                    <span class="nav-icon">P</span>
+                    Pagos
+                </button>
+                <button class="nav-link" data-view="movimientos" type="button">
+                    <span class="nav-icon">M</span>
+                    Movimientos
+                </button>
+                <button class="nav-link" data-view="reportes" type="button">
+                    <span class="nav-icon">R</span>
+                    Reportes
+                </button>
+            </nav>
+
+            <section class="rate-card">
+                <span>Cotizacion USD</span>
+                <label for="exchangeRate">ARS por USD</label>
+                <div class="rate-input">
+                    <input id="exchangeRate" type="number" min="1" step="1" inputmode="decimal">
+                    <button class="ghost-button compact" id="saveRate" type="button">Guardar</button>
+                </div>
+            </section>
+        </aside>
+
+        <div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+        <main class="main-content">
+            <header class="topbar">
+                <button class="hamburger" id="menuToggle" type="button" aria-label="Abrir menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div>
+                    <p class="eyebrow">sCode Digital Solutions</p>
+                    <h1 id="pageTitle">Dashboard financiero</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button class="ghost-button" id="resetDemo" type="button">Reiniciar demo</button>
+                    <button class="primary-button" data-quick-action="payment" type="button">Registrar pago</button>
+                </div>
+            </header>
+
+            <section class="view active" id="dashboardView" data-view-panel="dashboard">
+                <section class="dashboard-hero" aria-label="Resumen principal">
+                    <article class="bank-card">
+                        <div class="bank-card-glow"></div>
+                        <div class="bank-card-top">
+                            <div>
+                                <span class="bank-label">Available balance</span>
+                                <strong id="heroBalance">$0</strong>
+                            </div>
+                            <div class="card-chip" aria-hidden="true"></div>
+                        </div>
+                        <div class="account-pill">Cuenta operativa sCode</div>
+                        <div class="bank-card-bottom">
+                            <div>
+                                <span>ARS</span>
+                                <strong id="heroArs">$0</strong>
+                            </div>
+                            <div>
+                                <span>USD</span>
+                                <strong id="heroUsd">US$0</strong>
+                            </div>
+                            <div>
+                                <span>TC</span>
+                                <strong id="heroRate">$0</strong>
+                            </div>
+                        </div>
+                    </article>
+
+                    <section class="home-actions panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Quick actions</p>
+                                <h2>Operaciones</h2>
+                            </div>
+                        </div>
+                        <div class="action-orbit">
+                            <button class="action-bubble" data-view="pagos" type="button"><span>+</span>Pago</button>
+                            <button class="action-bubble" data-view="movimientos" type="button"><span>IN</span>Ingreso</button>
+                            <button class="action-bubble coral" data-view="movimientos" type="button"><span>OUT</span>Gasto</button>
+                            <button class="action-bubble" data-view="reportes" type="button"><span>~</span>Reporte</button>
+                        </div>
+                        <div class="mini-ledger">
+                            <div>
+                                <span>Ganancia estimada</span>
+                                <strong id="heroForecast">$0</strong>
+                            </div>
+                            <div>
+                                <span>Resultado real</span>
+                                <strong id="heroProfit">$0</strong>
+                            </div>
+                        </div>
+                    </section>
+                </section>
+
+                <div class="stats-grid" id="statsGrid"></div>
+
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Mes actual</p>
+                                <h2>Flujo financiero</h2>
+                            </div>
+                        </div>
+                        <canvas id="miniFlowChart" height="220"></canvas>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Alertas</p>
+                                <h2>Pagos proximos</h2>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="upcomingPayments"></div>
+                    </section>
+                </div>
+
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Riesgo comercial</p>
+                                <h2>Clientes con deuda</h2>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Servicio</th>
+                                        <th>Deuda</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="debtClientsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Historial</p>
+                                <h2>Movimientos recientes</h2>
+                            </div>
+                        </div>
+                        <div class="stack-list" id="recentActivity"></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="clientesView" data-view-panel="clientes">
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">CRM interno</p>
+                                <h2 id="clientFormTitle">Crear cliente</h2>
+                            </div>
+                        </div>
+                        <form id="clientForm" class="data-form" novalidate>
+                            <input type="hidden" id="clientId">
+                            <div class="form-row">
+                                <label>Nombre del cliente<input id="clientName" required type="text" placeholder="Ej: Ana Perez"></label>
+                                <label>Empresa o negocio<input id="clientCompany" required type="text" placeholder="Ej: Bloom Studio"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Email<input id="clientEmail" required type="email" placeholder="cliente@empresa.com"></label>
+                                <label>Telefono<input id="clientPhone" required type="tel" placeholder="+54 9 11 0000 0000"></label>
+                            </div>
+                            <label>Servicio contratado<input id="clientService" required type="text" placeholder="Sitio web, soporte, branding..."></label>
+                            <div class="form-row">
+                                <label>Monto acordado<input id="clientAmount" required min="1" step="0.01" type="number"></label>
+                                <label>Moneda<select id="clientCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                                <label>Estado<select id="clientStatus" required><option value="activo">Activo</option><option value="pendiente">Pendiente</option><option value="finalizado">Finalizado</option></select></label>
+                            </div>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelClientEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar cliente</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Portfolio</p>
+                                <h2>Clientes</h2>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Servicio</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="pagosView" data-view-panel="pagos">
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Cobranza</p>
+                                <h2 id="paymentFormTitle">Registrar pago</h2>
+                            </div>
+                        </div>
+                        <form id="paymentForm" class="data-form" novalidate>
+                            <input type="hidden" id="paymentId">
+                            <label>Cliente<select id="paymentClient" required></select></label>
+                            <div class="form-row">
+                                <label>Monto<input id="paymentAmount" required min="1" step="0.01" type="number"></label>
+                                <label>Moneda<select id="paymentCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Fecha<input id="paymentDate" required type="date"></label>
+                                <label>Vencimiento<input id="paymentDueDate" required type="date"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Estado<select id="paymentStatus" required><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option><option value="vencido">Vencido</option></select></label>
+                                <label>Metodo de pago<input id="paymentMethod" required type="text" placeholder="Transferencia, efectivo, PayPal..."></label>
+                            </div>
+                            <label>Notas<textarea id="paymentNotes" rows="3" placeholder="Detalle interno"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelPaymentEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar pago</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Pipeline</p>
+                                <h2>Pagos</h2>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Vence</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="movimientosView" data-view-panel="movimientos">
+                <div class="content-grid form-and-table">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Caja</p>
+                                <h2 id="movementFormTitle">Registrar movimiento</h2>
+                            </div>
+                        </div>
+                        <form id="movementForm" class="data-form" novalidate>
+                            <input type="hidden" id="movementId">
+                            <div class="segmented-control" role="group" aria-label="Tipo de movimiento">
+                                <label><input type="radio" name="movementType" value="ingreso" checked>Ingreso</label>
+                                <label><input type="radio" name="movementType" value="salida">Salida/Gasto</label>
+                            </div>
+                            <div class="form-row">
+                                <label>Categoria<input id="movementCategory" required type="text" placeholder="Proyecto, software, impuestos..."></label>
+                                <label>Monto<input id="movementAmount" required min="1" step="0.01" type="number"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Moneda<select id="movementCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                                <label>Fecha<input id="movementDate" required type="date"></label>
+                            </div>
+                            <label>Descripcion<textarea id="movementDescription" required rows="3" placeholder="Detalle del movimiento"></textarea></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="cancelMovementEdit" type="button">Cancelar</button>
+                                <button class="primary-button" type="submit">Guardar movimiento</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Historial</p>
+                                <h2>Movimientos</h2>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Categoria</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Descripcion</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="movementsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view" id="reportesView" data-view-panel="reportes">
+                <section class="panel filters-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Analitica</p>
+                            <h2>Filtros</h2>
+                        </div>
+                        <button class="ghost-button compact" id="clearFilters" type="button">Limpiar</button>
+                    </div>
+                    <div class="filters-grid">
+                        <label>Desde<input id="filterFrom" type="date"></label>
+                        <label>Hasta<input id="filterTo" type="date"></label>
+                        <label>Cliente<select id="filterClient"></select></label>
+                        <label>Moneda<select id="filterCurrency"><option value="">Todas</option><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                        <label>Estado<select id="filterStatus"><option value="">Todos</option><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option><option value="vencido">Vencido</option></select></label>
+                    </div>
+                </section>
+
+                <div class="content-grid two-columns">
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Mensual</p>
+                                <h2>Ingresos vs egresos</h2>
+                            </div>
+                        </div>
+                        <canvas id="monthlyChart" height="260"></canvas>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Forecast</p>
+                                <h2>Saldo estimado</h2>
+                            </div>
+                        </div>
+                        <canvas id="balanceChart" height="260"></canvas>
+                    </section>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Detalle</p>
+                            <h2>Movimientos recientes</h2>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Origen</th>
+                                    <th>Cliente/Categoria</th>
+                                    <th>Monto</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+    <script src="app.js"></script>
+</body>
+</html>

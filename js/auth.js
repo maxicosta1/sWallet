@@ -1,0 +1,93 @@
+import { createRecord, seedDemoData, state } from "./state.js";
+import { saveState } from "./storage.js";
+
+export function mockHash(value) {
+  return btoa(unescape(encodeURIComponent(String(value))));
+}
+
+export function hasUsers() {
+  return state.users.length > 0;
+}
+
+export function currentUser() {
+  if (!state.session?.userId) return null;
+  return state.users.find((user) => user.id === state.session.userId) || null;
+}
+
+export function isAuthenticated() {
+  return Boolean(currentUser());
+}
+
+export function canWrite() {
+  const user = currentUser();
+  return user?.role === "admin" || user?.role === "finanzas";
+}
+
+export function canDelete() {
+  return currentUser()?.role === "admin";
+}
+
+export function registerInitialUser({ name, email, password }) {
+  if (hasUsers()) throw new Error("El registro inicial ya fue creado.");
+  const user = createRecord({
+    name,
+    email: email.toLowerCase(),
+    passwordHashMock: mockHash(password),
+    role: "admin"
+  });
+
+  state.users.push(user);
+  state.session = { userId: user.id, createdAt: new Date().toISOString() };
+
+  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length;
+  if (hasExistingData) {
+    attachUserToExistingData(user.id);
+  } else {
+    Object.assign(state, seedDemoData(user.id));
+    state.users = [user];
+    state.session = { userId: user.id, createdAt: new Date().toISOString() };
+  }
+
+  saveState();
+  return user;
+}
+
+export function login({ email, password }) {
+  const user = state.users.find((item) => item.email === email.toLowerCase());
+  if (!user || user.passwordHashMock !== mockHash(password)) {
+    throw new Error("Email o contrasena incorrectos.");
+  }
+  state.session = { userId: user.id, createdAt: new Date().toISOString() };
+  saveState();
+  return user;
+}
+
+export function logout() {
+  state.session = null;
+  saveState();
+}
+
+function attachUserToExistingData(userId) {
+  ["clients", "projects", "invoices", "payments", "movements", "subscriptions"].forEach((key) => {
+    state[key] = state[key].map((item) => ({ ...item, userId: item.userId || userId }));
+  });
+
+  if (!state.invoices.length && state.payments.length) {
+    state.invoices = state.payments.map((payment, index) => createRecord({
+      userId,
+      clientId: payment.clientId,
+      projectId: payment.projectId || "",
+      number: `F-${String(index + 1).padStart(4, "0")}`,
+      amount: payment.amount,
+      currency: payment.currency,
+      issueDate: payment.date,
+      dueDate: payment.dueDate || payment.date,
+      status: payment.status === "pagado" ? "pagada" : payment.status === "vencido" ? "vencida" : "pendiente",
+      notes: payment.notes || "Factura migrada desde pagos existentes."
+    }));
+    state.payments = state.payments.map((payment, index) => ({
+      ...payment,
+      invoiceId: state.invoices[index]?.id || payment.invoiceId || ""
+    }));
+  }
+}
