@@ -52,3 +52,5 @@ npm run db:studio
 ## Prototipo anterior
 
 El prototipo HTML/CSS/JS vanilla quedó archivado en `legacy-static/`.
+
+link: https://maxicosta1.github.io/sWallet/
