@@ -558,6 +558,254 @@ button {
         rgba(12, 13, 23, 0.72);
 }
 
+#dashboardView {
+    color: #19191d;
+}
+
+.dashboard-board {
+    display: grid;
+    gap: 16px;
+    padding: clamp(14px, 2vw, 22px);
+    border-radius: 30px;
+    background: #d4d4d4;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.dashboard-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.period-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.48);
+}
+
+.period-tabs button,
+.date-range-pill,
+.google-calendar-button {
+    min-height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    color: #202024;
+    background: #f6f6f6;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.period-tabs button.active,
+.google-calendar-button {
+    color: #fff;
+    background: #77777d;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+.dashboard-kpis {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.82fr) minmax(0, 2.18fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.dashboard-balance-card {
+    min-height: 142px;
+    padding: 20px;
+    border-radius: 20px;
+    color: #fff;
+}
+
+.dashboard-balance-card #heroBalance {
+    font-size: clamp(1.55rem, 2.8vw, 2.45rem);
+}
+
+.dashboard-balance-card .account-pill {
+    min-height: 30px;
+    margin-top: 12px;
+    padding: 0 12px;
+    font-size: 0.76rem;
+}
+
+.dashboard-balance-card .bank-card-bottom {
+    margin-top: 20px;
+}
+
+.dashboard-balance-card .bank-card-bottom strong {
+    font-size: 0.86rem;
+}
+
+#dashboardView .dashboard-stats {
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 0;
+}
+
+#dashboardView .stat-card,
+#dashboardView .panel {
+    border: 0;
+    color: #202024;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(12px);
+}
+
+#dashboardView .stat-card {
+    min-height: 108px;
+    padding: 16px;
+    border-radius: 18px;
+}
+
+#dashboardView .stat-card:first-child {
+    color: #fff;
+    background:
+        linear-gradient(135deg, rgba(18, 18, 18, 0.94), rgba(36, 36, 38, 0.86)),
+        #1d1d1f;
+}
+
+#dashboardView .stat-card span,
+#dashboardView .stat-card small,
+#dashboardView .panel .eyebrow,
+#dashboardView .list-item span,
+#dashboardView .calendar-sync-item span,
+#dashboardView .table-wrap th,
+#dashboardView .progress-hero span {
+    color: #68686f;
+}
+
+#dashboardView .stat-card:first-child span,
+#dashboardView .stat-card:first-child small {
+    color: rgba(255, 255, 255, 0.76);
+}
+
+#dashboardView .stat-card strong {
+    margin-top: 10px;
+    color: inherit;
+    font-size: clamp(1.14rem, 1.7vw, 1.62rem);
+}
+
+.dashboard-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+    gap: 16px;
+}
+
+.dashboard-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+#dashboardView .panel {
+    border-radius: 22px;
+}
+
+#dashboardView .panel h2 {
+    color: #1b1b1e;
+}
+
+#dashboardView .ghost-button {
+    color: #202024;
+    border-color: rgba(0, 0, 0, 0.08);
+    background: #efeff0;
+}
+
+#dashboardView .list-item,
+.calendar-sync-item {
+    border-color: rgba(0, 0, 0, 0.06);
+    color: #202024;
+    background: rgba(245, 245, 245, 0.78);
+}
+
+#dashboardView .list-item strong,
+.calendar-sync-item strong,
+#dashboardView td {
+    color: #202024;
+}
+
+.calendar-card {
+    display: grid;
+    gap: 12px;
+}
+
+.mini-calendar {
+    display: grid;
+    gap: 12px;
+}
+
+.calendar-weekdays,
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.calendar-weekdays span {
+    color: #77777d;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-align: center;
+}
+
+.calendar-day {
+    position: relative;
+    min-height: 46px;
+    border: 0;
+    border-radius: 14px;
+    color: #222226;
+    background: #f4f4f4;
+    font-weight: 900;
+}
+
+.calendar-day.muted {
+    background: transparent;
+}
+
+.calendar-day.today {
+    color: #fff;
+    background: linear-gradient(180deg, #8f8f96, #67676e);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.calendar-day.has-event:not(.today) {
+    background: rgba(159, 92, 255, 0.12);
+}
+
+.calendar-day i {
+    position: absolute;
+    right: 7px;
+    bottom: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    color: transparent;
+    background: var(--primary);
+}
+
+.calendar-sync-list {
+    display: grid;
+    gap: 8px;
+}
+
+.calendar-sync-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+}
+
+.dashboard-ledger {
+    margin-top: 12px;
+}
+
 .action-orbit {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1255,6 +1503,67 @@ tr:last-child td {
     display: none !important;
 }
 
+.modal-active {
+    overflow: hidden;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 38;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(159, 92, 255, 0.2), transparent 32rem),
+        rgba(0, 0, 0, 0.66);
+    opacity: 0;
+    backdrop-filter: blur(10px);
+    transition: opacity 180ms ease;
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+}
+
+.modal-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 45;
+    display: none;
+    width: min(820px, calc(100vw - 30px));
+    max-height: calc(100vh - 30px);
+    overflow: auto;
+    transform: translate(-50%, -48%) scale(0.98);
+    box-shadow: 0 34px 100px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(159, 92, 255, 0.18);
+}
+
+.modal-panel.modal-open {
+    display: block;
+    animation: modalIn 180ms ease forwards;
+}
+
+.modal-panel .panel-header {
+    padding-right: 46px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    font-weight: 900;
+}
+
+.modal-close:hover {
+    border-color: var(--line-strong);
+    background: rgba(159, 92, 255, 0.18);
+}
+
 .stack-list {
     display: grid;
     gap: 12px;
@@ -1359,7 +1668,28 @@ canvas {
     }
 }
 
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
 @media (max-width: 1180px) {
+    .dashboard-kpis,
+    .dashboard-main-grid,
+    .dashboard-secondary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .dashboard-hero {
         grid-template-columns: 1fr;
     }
@@ -1433,6 +1763,44 @@ canvas {
 }
 
 @media (max-width: 640px) {
+    .dashboard-board {
+        padding: 12px;
+        border-radius: 22px;
+    }
+
+    .dashboard-controls {
+        justify-content: flex-start;
+    }
+
+    .period-tabs,
+    .date-range-pill,
+    .google-calendar-button {
+        width: 100%;
+    }
+
+    .period-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .period-tabs button {
+        padding: 0 8px;
+    }
+
+    #dashboardView .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-day {
+        min-height: 38px;
+        border-radius: 12px;
+    }
+
+    .calendar-sync-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     .dashboard-hero {
         grid-template-columns: 1fr;
     }
@@ -1491,5 +1859,31 @@ canvas {
         left: 16px;
         right: 16px;
         bottom: 16px;
+    }
+
+    .modal-panel {
+        top: auto;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+        max-height: calc(100vh - 24px);
+        transform: translateY(10px);
+        border-radius: 22px 22px 18px 18px;
+    }
+
+    .modal-panel.modal-open {
+        animation: mobileModalIn 180ms ease forwards;
+    }
+}
+
+@keyframes mobileModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

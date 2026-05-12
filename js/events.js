@@ -37,8 +37,22 @@ export function bindEvents() {
   document.querySelectorAll(".action-bubble").forEach((button) => {
     button.addEventListener("click", () => renderView(button.dataset.view));
   });
+  document.querySelectorAll("[data-view]:not(.nav-link):not(.action-bubble)").forEach((button) => {
+    button.addEventListener("click", () => renderView(button.dataset.view));
+  });
 
-  document.querySelector("[data-quick-action='payment']").addEventListener("click", () => renderView("pagos"));
+  prepareModals();
+  document.querySelectorAll("[data-open-modal]").forEach((button) => {
+    button.addEventListener("click", () => {
+      resetForModal(button.dataset.openModal);
+      openModal(button.dataset.openModal);
+    });
+  });
+  document.querySelector("[data-quick-action='payment']").addEventListener("click", () => {
+    renderView("pagos");
+    resetPaymentForm();
+    openModal("paymentModal");
+  });
   dom.menuToggle.addEventListener("click", () => {
     dom.sidebar.classList.add("open");
     dom.mobileBackdrop.classList.add("show");
@@ -61,16 +75,24 @@ export function bindEvents() {
   dom.noteForm.addEventListener("submit", handleNoteSubmit);
   dom.actionForm.addEventListener("submit", handleActionSubmit);
 
-  dom.cancelClientEdit.addEventListener("click", resetClientForm);
-  dom.cancelPaymentEdit.addEventListener("click", resetPaymentForm);
-  dom.cancelProjectEdit.addEventListener("click", resetProjectForm);
-  dom.cancelInvoiceEdit.addEventListener("click", resetInvoiceForm);
-  dom.cancelMovementEdit.addEventListener("click", resetMovementForm);
-  dom.cancelSubscriptionEdit.addEventListener("click", resetSubscriptionForm);
-  dom.cancelTaskEdit.addEventListener("click", resetTaskForm);
-  dom.cancelGoalEdit.addEventListener("click", resetGoalForm);
-  dom.cancelRequestEdit.addEventListener("click", resetRequestForm);
-  dom.goCreateClient.addEventListener("click", () => renderView("clientes"));
+  dom.cancelClientEdit.addEventListener("click", () => { resetClientForm(); closeModal(); });
+  dom.cancelPaymentEdit.addEventListener("click", () => { resetPaymentForm(); closeModal(); });
+  dom.cancelProjectEdit.addEventListener("click", () => { resetProjectForm(); closeModal(); });
+  dom.cancelInvoiceEdit.addEventListener("click", () => { resetInvoiceForm(); closeModal(); });
+  dom.cancelMovementEdit.addEventListener("click", () => { resetMovementForm(); closeModal(); });
+  dom.cancelSubscriptionEdit.addEventListener("click", () => { resetSubscriptionForm(); closeModal(); });
+  dom.cancelTaskEdit.addEventListener("click", () => { resetTaskForm(); closeModal(); });
+  dom.cancelGoalEdit.addEventListener("click", () => { resetGoalForm(); closeModal(); });
+  dom.cancelRequestEdit.addEventListener("click", () => { resetRequestForm(); closeModal(); });
+  dom.goCreateClient.addEventListener("click", () => {
+    renderView("clientes");
+    resetClientForm();
+    openModal("clientModal");
+  });
+  dom.modalBackdrop.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeModal();
+  });
 
   dom.invoiceClient.addEventListener("change", syncControls);
   [dom.taskClient, dom.requestClient, dom.noteClient, dom.actionClient].forEach((control) => control.addEventListener("change", syncControls));
@@ -149,6 +171,70 @@ export function bindEvents() {
 
   window.addEventListener("resize", debounce(renderAll, 150));
   exposeInlineActions();
+}
+
+function prepareModals() {
+  document.querySelectorAll("[data-modal]").forEach((panel) => {
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-hidden", "true");
+    if (!panel.querySelector("[data-close-modal]")) {
+      const button = document.createElement("button");
+      button.className = "modal-close";
+      button.type = "button";
+      button.dataset.closeModal = "";
+      button.setAttribute("aria-label", "Cerrar modal");
+      button.textContent = "x";
+      panel.prepend(button);
+    }
+  });
+  document.querySelectorAll("[data-close-modal]").forEach((button) => {
+    button.addEventListener("click", closeModal);
+  });
+}
+
+function openModal(id) {
+  const panel = document.getElementById(id);
+  if (!panel) return;
+  document.querySelectorAll("[data-modal]").forEach((item) => {
+    item.classList.remove("modal-open");
+    item.setAttribute("aria-hidden", "true");
+  });
+  panel.classList.add("modal-open");
+  panel.setAttribute("aria-hidden", "false");
+  dom.modalBackdrop.hidden = false;
+  dom.modalBackdrop.classList.add("show");
+  document.body.classList.add("modal-active");
+  panel.querySelector("input:not([type='hidden']), select, textarea")?.focus();
+}
+
+function closeModal() {
+  document.querySelectorAll("[data-modal]").forEach((panel) => {
+    panel.classList.remove("modal-open");
+    panel.setAttribute("aria-hidden", "true");
+  });
+  if (dom.modalBackdrop) {
+    dom.modalBackdrop.classList.remove("show");
+    dom.modalBackdrop.hidden = true;
+  }
+  document.body.classList.remove("modal-active");
+}
+
+function resetForModal(id) {
+  const resets = {
+    clientModal: resetClientForm,
+    paymentModal: resetPaymentForm,
+    projectModal: resetProjectForm,
+    invoiceModal: resetInvoiceForm,
+    movementModal: resetMovementForm,
+    subscriptionModal: resetSubscriptionForm,
+    taskModal: resetTaskForm,
+    goalModal: resetGoalForm,
+    requestModal: resetRequestForm,
+    noteModal: resetNoteForm,
+    actionModal: resetActionForm
+  };
+  resets[id]?.();
 }
 
 function handleRegister(event) {
@@ -500,6 +586,7 @@ function updateRecord(collection, id, payload) {
 }
 
 function saveAndRender(title, message) {
+  closeModal();
   saveState();
   renderAll();
   notify(title, message);
@@ -595,6 +682,7 @@ function fillClientForm(client) {
   dom.clientObservations.value = client.observations || "";
   dom.clientFormTitle.textContent = "Editar cliente";
   renderView("clientes");
+  openModal("clientModal");
 }
 
 function fillProjectForm(project) {
@@ -617,6 +705,7 @@ function fillProjectForm(project) {
   dom.projectTasks.value = (project.tasks || []).join("\n");
   dom.projectFormTitle.textContent = "Editar proyecto";
   renderView("proyectos");
+  openModal("projectModal");
 }
 
 function fillInvoiceForm(invoice) {
@@ -633,6 +722,7 @@ function fillInvoiceForm(invoice) {
   dom.invoiceNotes.value = invoice.notes || "";
   dom.invoiceFormTitle.textContent = "Editar factura";
   renderView("facturacion");
+  openModal("invoiceModal");
 }
 
 function fillPaymentForm(payment) {
@@ -649,6 +739,7 @@ function fillPaymentForm(payment) {
   dom.paymentNotes.value = payment.notes || "";
   dom.paymentFormTitle.textContent = "Editar pago";
   renderView("pagos");
+  openModal("paymentModal");
 }
 
 function fillMovementForm(item) {
@@ -661,6 +752,7 @@ function fillMovementForm(item) {
   dom.movementDescription.value = item.description;
   dom.movementFormTitle.textContent = "Editar movimiento";
   renderView("movimientos");
+  openModal("movementModal");
 }
 
 function fillSubscriptionForm(item) {
@@ -675,6 +767,7 @@ function fillSubscriptionForm(item) {
   dom.subscriptionStatus.value = item.status;
   dom.subscriptionFormTitle.textContent = "Editar suscripcion";
   renderView("suscripciones");
+  openModal("subscriptionModal");
 }
 
 function fillTaskForm(item) {
@@ -692,6 +785,7 @@ function fillTaskForm(item) {
   dom.taskComments.value = item.comments || "";
   dom.taskFormTitle.textContent = "Editar tarea";
   renderView("tareas");
+  openModal("taskModal");
 }
 
 function fillGoalForm(item) {
@@ -704,6 +798,7 @@ function fillGoalForm(item) {
   dom.goalDueDate.value = item.dueDate;
   dom.goalFormTitle.textContent = "Editar meta";
   renderView("metas");
+  openModal("goalModal");
 }
 
 function fillRequestForm(item) {
@@ -721,6 +816,7 @@ function fillRequestForm(item) {
   dom.requestNotes.value = item.notes || "";
   dom.requestFormTitle.textContent = "Editar pedido";
   renderView("administracion");
+  openModal("requestModal");
 }
 
 function fillNoteForm(item) {
@@ -733,6 +829,7 @@ function fillNoteForm(item) {
   dom.noteTone.value = item.tone || "normal";
   dom.noteFormTitle.textContent = "Editar nota";
   renderView("administracion");
+  openModal("noteModal");
 }
 
 function fillActionForm(item) {
@@ -746,6 +843,7 @@ function fillActionForm(item) {
   dom.actionStatus.value = item.status || "pendiente";
   dom.actionFormTitle.textContent = "Editar accion";
   renderView("administracion");
+  openModal("actionModal");
 }
 
 function debounce(callback, delay) {

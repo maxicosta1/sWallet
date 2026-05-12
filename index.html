@@ -149,84 +149,99 @@
             </header>
 
             <section class="view active" id="dashboardView" data-view-panel="dashboard">
-                <section class="dashboard-hero" aria-label="Resumen principal">
-                    <article class="bank-card">
-                        <div class="bank-card-glow"></div>
-                        <div class="bank-card-top">
-                            <div>
-                                <span class="bank-label">Available balance</span>
-                                <strong id="heroBalance">$0</strong>
-                            </div>
-                            <div class="card-chip" aria-hidden="true"></div>
+                <div class="dashboard-board">
+                    <section class="dashboard-controls">
+                        <div class="period-tabs" aria-label="Rango de dashboard">
+                            <button type="button">Dia</button>
+                            <button type="button">Semana</button>
+                            <button class="active" type="button">Mes</button>
+                            <button type="button">Ano</button>
                         </div>
-                        <div class="account-pill">Cuenta operativa sCode</div>
-                        <div class="bank-card-bottom">
-                            <div>
-                                <span>ARS</span>
-                                <strong id="heroArs">$0</strong>
-                            </div>
-                            <div>
-                                <span>USD</span>
-                                <strong id="heroUsd">US$0</strong>
-                            </div>
-                            <div>
-                                <span>TC</span>
-                                <strong id="heroRate">$0</strong>
-                            </div>
-                        </div>
-                    </article>
-
-                    <section class="home-actions panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Quick actions</p>
-                                <h2>Operaciones</h2>
-                            </div>
-                        </div>
-                        <div class="action-orbit">
-                            <button class="action-bubble" data-view="pagos" type="button"><span>+</span>Pago</button>
-                            <button class="action-bubble" data-view="movimientos" type="button"><span>IN</span>Ingreso</button>
-                            <button class="action-bubble coral" data-view="movimientos" type="button"><span>OUT</span>Gasto</button>
-                            <button class="action-bubble" data-view="reportes" type="button"><span>~</span>Reporte</button>
-                        </div>
-                        <div class="mini-ledger">
-                            <div>
-                                <span>Ganancia estimada</span>
-                                <strong id="heroForecast">$0</strong>
-                            </div>
-                            <div>
-                                <span>Resultado real</span>
-                                <strong id="heroProfit">$0</strong>
-                            </div>
-                        </div>
-                    </section>
-                </section>
-
-                <div class="stats-grid" id="statsGrid"></div>
-
-                <div class="content-grid two-columns">
-                    <section class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Mes actual</p>
-                                <h2>Flujo financiero</h2>
-                            </div>
-                        </div>
-                        <canvas id="miniFlowChart" height="220"></canvas>
+                        <div class="date-range-pill" id="dashboardDateRange">Mes actual</div>
+                        <a class="google-calendar-button" id="googleCalendarMain" target="_blank" rel="noopener">Google Calendar</a>
                     </section>
 
-                    <section class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Alertas</p>
-                                <h2>Pagos proximos</h2>
+                    <section class="dashboard-kpis">
+                        <article class="bank-card dashboard-balance-card">
+                            <div class="bank-card-glow"></div>
+                            <div class="bank-card-top">
+                                <div>
+                                    <span class="bank-label">Saldo disponible</span>
+                                    <strong id="heroBalance">$0</strong>
+                                </div>
+                                <div class="card-chip" aria-hidden="true"></div>
                             </div>
-                        </div>
-                        <div class="stack-list" id="upcomingPayments"></div>
+                            <div class="account-pill">Cuenta operativa sCode</div>
+                            <div class="bank-card-bottom">
+                                <div><span>ARS</span><strong id="heroArs">$0</strong></div>
+                                <div><span>USD</span><strong id="heroUsd">US$0</strong></div>
+                                <div><span>TC</span><strong id="heroRate">$0</strong></div>
+                            </div>
+                        </article>
+                        <div class="stats-grid dashboard-stats" id="statsGrid"></div>
                     </section>
-                </div>
 
-                <div class="content-grid two-columns">
+                    <section class="dashboard-main-grid">
+                        <section class="panel dashboard-chart-card">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="eyebrow">Mes actual</p>
+                                    <h2>Ingresos vs gastos</h2>
+                                </div>
+                                <button class="ghost-button compact" data-view="reportes" type="button">Ver reportes</button>
+                            </div>
+                            <canvas id="miniFlowChart" height="260"></canvas>
+                        </section>
+
+                        <section class="panel calendar-card">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="eyebrow">Agenda sCode</p>
+                                    <h2 id="calendarMonthTitle">Calendario</h2>
+                                </div>
+                                <a class="ghost-button compact" id="googleCalendarSecondary" target="_blank" rel="noopener">Vincular</a>
+                            </div>
+                            <div class="mini-calendar" id="financeCalendar"></div>
+                            <div class="calendar-sync-list" id="googleCalendarList"></div>
+                        </section>
+                    </section>
+
+                    <section class="dashboard-secondary-grid">
+                        <section class="panel">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="eyebrow">Control interno</p>
+                                    <h2>Progreso general</h2>
+                                </div>
+                            </div>
+                            <div id="companyProgressWidget"></div>
+                            <div class="mini-ledger dashboard-ledger">
+                                <div><span>Ganancia estimada</span><strong id="heroForecast">$0</strong></div>
+                                <div><span>Resultado real</span><strong id="heroProfit">$0</strong></div>
+                            </div>
+                        </section>
+
+                        <section class="panel">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="eyebrow">Alertas</p>
+                                    <h2>Pagos proximos</h2>
+                                </div>
+                            </div>
+                            <div class="stack-list" id="upcomingPayments"></div>
+                        </section>
+
+                        <section class="panel">
+                            <div class="panel-header">
+                                <div>
+                                    <p class="eyebrow">Notificaciones</p>
+                                    <h2>Alertas internas</h2>
+                                </div>
+                            </div>
+                            <div class="stack-list" id="notificationsList"></div>
+                        </section>
+                    </section>
+
                     <section class="panel">
                         <div class="panel-header">
                             <div>
@@ -236,14 +251,7 @@
                         </div>
                         <div class="table-wrap">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th>Cliente</th>
-                                        <th>Servicio</th>
-                                        <th>Deuda</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
+                                <thead><tr><th>Cliente</th><th>Servicio</th><th>Deuda</th><th>Estado</th></tr></thead>
                                 <tbody id="debtClientsTable"></tbody>
                             </table>
                         </div>
@@ -259,33 +267,11 @@
                         <div class="stack-list" id="recentActivity"></div>
                     </section>
                 </div>
-
-                <div class="content-grid two-columns">
-                    <section class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Control interno</p>
-                                <h2>Progreso general</h2>
-                            </div>
-                        </div>
-                        <div id="companyProgressWidget"></div>
-                    </section>
-
-                    <section class="panel">
-                        <div class="panel-header">
-                            <div>
-                                <p class="eyebrow">Notificaciones</p>
-                                <h2>Alertas internas</h2>
-                            </div>
-                        </div>
-                        <div class="stack-list" id="notificationsList"></div>
-                    </section>
-                </div>
             </section>
 
             <section class="view" id="clientesView" data-view-panel="clientes">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="clientModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">CRM interno</p>
@@ -332,6 +318,7 @@
                                 <p class="eyebrow">Portfolio</p>
                                 <h2>Clientes</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="clientModal" type="button">Nuevo cliente</button>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -362,7 +349,7 @@
 
             <section class="view" id="pagosView" data-view-panel="pagos">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="paymentModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Cobranza</p>
@@ -400,6 +387,7 @@
                                 <p class="eyebrow">Pipeline</p>
                                 <h2>Pagos</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="paymentModal" type="button">Nuevo pago</button>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -422,7 +410,7 @@
 
             <section class="view" id="movimientosView" data-view-panel="movimientos">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="movementModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Caja</p>
@@ -457,6 +445,7 @@
                                 <p class="eyebrow">Historial</p>
                                 <h2>Movimientos</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="movementModal" type="button">Nuevo movimiento</button>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -593,7 +582,7 @@
                 <div class="stats-grid billing-totals" id="billingTotals"></div>
 
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="invoiceModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Factura</p>
@@ -641,6 +630,7 @@
                             <p class="eyebrow">Detalle</p>
                             <h2>Facturas</h2>
                         </div>
+                        <button class="primary-button compact write-action" data-open-modal="invoiceModal" type="button">Nueva factura</button>
                     </div>
                     <div class="table-wrap">
                         <table>
@@ -663,7 +653,7 @@
 
             <section class="view" id="proyectosView" data-view-panel="proyectos">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="projectModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Delivery</p>
@@ -711,6 +701,7 @@
                                 <p class="eyebrow">Operaciones</p>
                                 <h2>Proyectos</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="projectModal" type="button">Nuevo proyecto</button>
                         </div>
                         <div class="filters-grid compact-filters">
                             <label>Filtrar por cliente<select id="projectFilterClient"></select></label>
@@ -751,7 +742,7 @@
                 <div class="admin-grid" id="adminClientSummaries"></div>
 
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="requestModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Pedidos</p>
@@ -786,6 +777,7 @@
                                 <p class="eyebrow">Backlog cliente</p>
                                 <h2>Pedidos recientes</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="requestModal" type="button">Nuevo pedido</button>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -797,7 +789,7 @@
                 </div>
 
                 <div class="content-grid two-columns">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="noteModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Notas</p><h2 id="noteFormTitle">Nota interna</h2></div></div>
                         <form id="noteForm" class="data-form" novalidate>
                             <input type="hidden" id="noteId">
@@ -808,9 +800,12 @@
                             <label>Tono<select id="noteTone"><option value="normal">Normal</option><option value="riesgo">Riesgo</option><option value="oportunidad">Oportunidad</option></select></label>
                             <button class="primary-button" type="submit">Guardar nota</button>
                         </form>
-                        <div class="stack-list" id="notesList"></div>
                     </section>
                     <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Notas</p><h2>Notas internas</h2></div><button class="primary-button compact write-action" data-open-modal="noteModal" type="button">Nueva nota</button></div>
+                        <div class="stack-list" id="notesList"></div>
+                    </section>
+                    <section class="panel modal-panel" id="actionModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Proximas acciones</p><h2 id="actionFormTitle">Nueva accion</h2></div></div>
                         <form id="actionForm" class="data-form" novalidate>
                             <input type="hidden" id="actionId">
@@ -824,6 +819,9 @@
                             </div>
                             <button class="primary-button" type="submit">Guardar accion</button>
                         </form>
+                    </section>
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Proximas acciones</p><h2>Seguimiento</h2></div><button class="primary-button compact write-action" data-open-modal="actionModal" type="button">Nueva accion</button></div>
                         <div class="stack-list" id="actionsList"></div>
                     </section>
                 </div>
@@ -831,7 +829,7 @@
 
             <section class="view" id="tareasView" data-view-panel="tareas">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="taskModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Trabajo interno</p>
@@ -872,7 +870,7 @@
                     </section>
                 </div>
                 <section class="panel">
-                    <div class="panel-header"><div><p class="eyebrow">Detalle</p><h2>Tareas</h2></div></div>
+                    <div class="panel-header"><div><p class="eyebrow">Detalle</p><h2>Tareas</h2></div><button class="primary-button compact write-action" data-open-modal="taskModal" type="button">Nueva tarea</button></div>
                     <div class="table-wrap">
                         <table>
                             <thead><tr><th>Tarea</th><th>Cliente</th><th>Proyecto</th><th>Prioridad</th><th>Estado</th><th>Vence</th><th>Acciones</th></tr></thead>
@@ -884,7 +882,7 @@
 
             <section class="view" id="metasView" data-view-panel="metas">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="goalModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Objetivos sCode</p><h2 id="goalFormTitle">Nueva meta</h2></div></div>
                         <form id="goalForm" class="data-form" novalidate>
                             <input type="hidden" id="goalId">
@@ -907,6 +905,7 @@
                     <section class="panel">
                         <div class="panel-header">
                             <div><p class="eyebrow">Seguimiento</p><h2>Metas</h2></div>
+                            <button class="primary-button compact write-action" data-open-modal="goalModal" type="button">Nueva meta</button>
                         </div>
                         <div class="goal-grid" id="goalsGrid"></div>
                     </section>
@@ -928,7 +927,7 @@
 
             <section class="view" id="suscripcionesView" data-view-panel="suscripciones">
                 <div class="content-grid form-and-table">
-                    <section class="panel">
+                    <section class="panel modal-panel" id="subscriptionModal" data-modal>
                         <div class="panel-header">
                             <div>
                                 <p class="eyebrow">Servicios</p>
@@ -964,6 +963,7 @@
                                 <p class="eyebrow">Renovaciones</p>
                                 <h2>Suscripciones</h2>
                             </div>
+                            <button class="primary-button compact write-action" data-open-modal="subscriptionModal" type="button">Nueva suscripcion</button>
                         </div>
                         <div class="table-wrap">
                             <table>
@@ -987,6 +987,7 @@
         </main>
     </div>
 
+    <div class="modal-backdrop" id="modalBackdrop" hidden></div>
     <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="app.js"></script>
 </body>

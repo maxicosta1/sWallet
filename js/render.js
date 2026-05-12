@@ -79,6 +79,7 @@ export function renderAll() {
   renderDashboardLists();
   renderGlobalSearch();
   renderNotifications();
+  renderDashboardCalendar();
   renderClients();
   renderClientKanban();
   renderProjects();
@@ -117,6 +118,7 @@ export function syncControls() {
 function renderBankingHero() {
   const month = totalsForMonth();
   const totals = globalTotals();
+  const now = new Date();
   dom.heroBalance.textContent = formatARS(totals.balanceARS);
   dom.heroArs.textContent = formatMoney(totals.ars, "ARS");
   dom.heroUsd.textContent = formatMoney(totals.usd, "USD");
@@ -124,6 +126,11 @@ function renderBankingHero() {
   dom.heroForecast.textContent = formatARS(month.estimated);
   dom.heroProfit.textContent = formatARS(month.profit);
   dom.heroProfit.className = month.profit >= 0 ? "amount-positive" : "amount-negative";
+  if (dom.dashboardDateRange) {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    dom.dashboardDateRange.textContent = `${formatDate(start)} - ${formatDate(end)}`;
+  }
 }
 
 function renderStats() {
@@ -234,6 +241,54 @@ function renderGlobalSearch() {
       <small>${escapeHTML(item.detail)}</small>
     </button>
   `).join("") : emptyState("Sin resultados.");
+}
+
+function renderDashboardCalendar() {
+  if (!dom.financeCalendar) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const startOffset = (first.getDay() + 6) % 7;
+  const monthEvents = getCalendarEvents().filter((event) => {
+    const date = parseDate(event.date);
+    return date.getMonth() === month && date.getFullYear() === year;
+  });
+  const days = Array.from({ length: startOffset + last.getDate() }, (_, index) => {
+    const day = index - startOffset + 1;
+    if (day < 1) return `<span class="calendar-day muted"></span>`;
+    const date = new Date(year, month, day);
+    const dateKey = toInputDate(date);
+    const events = monthEvents.filter((event) => event.date === dateKey);
+    const isToday = toInputDate(now) === dateKey;
+    return `
+      <button class="calendar-day ${isToday ? "today" : ""} ${events.length ? "has-event" : ""}" type="button" title="${events.map((event) => escapeHTML(event.title)).join(" / ")}">
+        <span>${day}</span>
+        ${events.length ? `<i>${events.length}</i>` : ""}
+      </button>
+    `;
+  });
+
+  dom.calendarMonthTitle.textContent = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(now);
+  dom.financeCalendar.innerHTML = `
+    <div class="calendar-weekdays"><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span></div>
+    <div class="calendar-days">${days.join("")}</div>
+  `;
+
+  const events = getCalendarEvents().slice(0, 5);
+  const calendarUrl = "https://calendar.google.com/calendar/u/0/r";
+  if (dom.googleCalendarMain) dom.googleCalendarMain.href = calendarUrl;
+  if (dom.googleCalendarSecondary) dom.googleCalendarSecondary.href = calendarUrl;
+  dom.googleCalendarList.innerHTML = events.length ? events.map((event) => `
+    <article class="calendar-sync-item">
+      <div>
+        <strong>${escapeHTML(event.title)}</strong>
+        <span>${formatDate(event.date)} - ${escapeHTML(event.detail)}</span>
+      </div>
+      <a class="ghost-button compact" href="${googleCalendarUrl(event)}" target="_blank" rel="noopener">Agregar</a>
+    </article>
+  `).join("") : emptyState("Sin vencimientos para vincular.");
 }
 
 function renderClients() {
@@ -840,6 +895,62 @@ function matchesReportFilters(item) {
   if (state.filters.currency && item.currency !== state.filters.currency) return false;
   if (state.filters.status && item.status !== state.filters.status) return false;
   return true;
+}
+
+function getCalendarEvents() {
+  const invoiceEvents = filteredInvoices({})
+    .filter((invoice) => ["pendiente", "vencida"].includes(normalizedInvoiceStatus(invoice)))
+    .map((invoice) => ({
+      title: `Cobrar ${invoice.number}`,
+      detail: getClient(invoice.clientId)?.company || "Cliente",
+      date: invoice.dueDate,
+      description: `Factura ${invoice.number} - ${formatMoney(invoice.amount, invoice.currency)}`
+    }));
+  const taskEvents = tasks()
+    .filter((task) => !["completada", "cancelada"].includes(task.status))
+    .map((task) => ({
+      title: task.title,
+      detail: getClient(task.clientId)?.company || task.responsible || "Tarea",
+      date: task.dueDate,
+      description: task.description || task.comments || "Tarea interna sCode"
+    }));
+  const actionEvents = actions()
+    .filter((action) => action.status !== "completada")
+    .map((action) => ({
+      title: action.title,
+      detail: getClient(action.clientId)?.company || "Seguimiento",
+      date: action.dueDate,
+      description: "Proxima accion interna sCode"
+    }));
+  const projectEvents = projects()
+    .filter((project) => project.dueDate && !["finalizado", "entregado", "cancelado"].includes(project.status))
+    .map((project) => ({
+      title: `Entrega ${project.name}`,
+      detail: getClient(project.clientId)?.company || "Proyecto",
+      date: project.dueDate,
+      description: project.description || "Entrega de proyecto sCode"
+    }));
+  return invoiceEvents.concat(taskEvents, actionEvents, projectEvents)
+    .filter((event) => event.date)
+    .sort((a, b) => parseDate(a.date) - parseDate(b.date));
+}
+
+function googleCalendarUrl(event) {
+  const start = parseDate(event.date);
+  const end = new Date(start.getTime() + DAY_MS);
+  const dates = `${calendarDate(start)}/${calendarDate(end)}`;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `sWallet - ${event.title}`,
+    dates,
+    details: `${event.description}\n${event.detail}`,
+    location: "sCode Digital Solutions"
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function calendarDate(date) {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function drawAllCharts() {
