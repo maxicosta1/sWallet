@@ -2611,3 +2611,54 @@ table {
         min-width: 680px;
     }
 }
+
+/* Desktop layout fix */
+@media (min-width: 861px) {
+    .main-content {
+        width: calc(100vw - 290px);
+        max-width: calc(100vw - 290px);
+        margin-left: 290px;
+        overflow-x: clip;
+    }
+
+    .dashboard-board {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .dashboard-kpis {
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .dashboard-balance-card {
+        width: 100%;
+        max-width: 360px;
+        min-height: 228px;
+        align-self: start;
+    }
+
+    .dashboard-balance-card #heroBalance {
+        font-size: clamp(1.42rem, 2vw, 2.05rem);
+    }
+
+    .dashboard-balance-card .bank-card-bottom {
+        margin-top: 18px;
+    }
+
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+    }
+}
+
+@media (min-width: 861px) and (max-width: 1320px) {
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    .dashboard-main-grid,
+    .dashboard-secondary-grid {
+        grid-template-columns: 1fr;
+    }
+}
