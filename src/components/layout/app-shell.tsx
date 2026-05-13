@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bell,
   BriefcaseBusiness,
+  CircleUserRound,
   CreditCard,
   FolderKanban,
   LayoutDashboard,
@@ -36,6 +37,8 @@ const navItems = [
 export function AppShell({ children, session }: { children: React.ReactNode; session: Session }) {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, closeSidebar } = useUiStore();
+  const displayName = session.user.name?.split(" ")[0] ?? session.user.email?.split("@")[0] ?? "equipo";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -88,8 +91,8 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
 
       {sidebarOpen ? <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={closeSidebar} aria-label="Cerrar menú" /> : null}
 
-      <main className="min-w-0 px-4 py-5 md:px-7 lg:px-8">
-        <header className="mb-6 flex items-center justify-between gap-4">
+      <main className="min-w-0 px-4 py-4 md:px-7 md:py-5 lg:px-8">
+        <header className="mb-6 hidden items-center justify-between gap-4 md:flex">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleSidebar}>
               <Menu className="h-5 w-5" />
@@ -107,6 +110,46 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
             </Button>
+          </div>
+        </header>
+        <header className="mb-5 md:hidden">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-12 w-16 rounded-full border-white/10 bg-[#15151c] shadow-glass"
+              onClick={toggleSidebar}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-16 rounded-full border-white/10 bg-[#15151c] shadow-glass"
+                aria-label="Buscar"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+              <div className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-sm font-black text-white shadow-glass">
+                {session.user.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={session.user.image} alt="" className="h-full w-full rounded-full object-cover" />
+                ) : initials ? (
+                  initials
+                ) : (
+                  <CircleUserRound className="h-5 w-5" />
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="mt-7">
+            <p className="text-xs font-black uppercase text-primary">sCode Digital Solutions</p>
+            <h1 className="mt-2 text-[clamp(2.4rem,13vw,3.6rem)] font-light leading-[0.92] tracking-normal text-white">
+              Bienvenido
+              <span className="block font-black">{displayName}!</span>
+            </h1>
           </div>
         </header>
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>

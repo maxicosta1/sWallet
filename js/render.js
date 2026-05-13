@@ -90,6 +90,7 @@ export function renderAuth() {
 export function renderAll() {
   renderAuth();
   if (!isAuthenticated()) return;
+  updatePageTitle(state.activeView);
   syncControls();
   renderBankingHero();
   renderStats();
@@ -130,9 +131,16 @@ export function renderView(view) {
   state.activeView = view;
   document.querySelectorAll(".view").forEach((panel) => panel.classList.toggle("active", panel.dataset.viewPanel === view));
   document.querySelectorAll(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.view === view));
-  dom.pageTitle.textContent = titles[view] || "Dashboard financiero";
+  updatePageTitle(view);
   closeMobileMenu();
   drawAllCharts();
+}
+
+function updatePageTitle(view) {
+  const title = titles[view] || "Dashboard financiero";
+  const firstName = currentUser()?.name?.split(" ")[0] || "equipo";
+  dom.pageTitle.textContent = title;
+  dom.pageTitle.dataset.mobileTitle = view === "dashboard" ? `Bienvenido ${firstName}!` : title;
 }
 
 export function syncControls() {
