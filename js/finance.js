@@ -8,11 +8,11 @@ export function scoped(collection) {
 }
 
 export function clients() {
-  return scoped("clients");
+  return state.clients;
 }
 
 export function projects() {
-  return scoped("projects").filter((project) => clientExists(project.clientId));
+  return state.projects.filter((project) => clientExists(project.clientId));
 }
 
 export function invoices() {

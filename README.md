@@ -2,6 +2,8 @@
 
 Sistema interno estatico para administrar sCode Digital Solutions desde Live Server.
 
+> Fase 3 backend: el frontend actual sigue funcionando igual. La carpeta `backend/` ya tiene auth real y CRUD de clientes/proyectos en Express + PostgreSQL, pero todavia no reemplaza `localStorage`.
+
 ## Ejecutar
 
 Abrir `index.html` con Live Server. La primera vez muestra registro de admin; luego se accede con el usuario creado. Los datos se guardan en `localStorage` bajo `scodeFinanceApp`.
@@ -66,6 +68,12 @@ Los formularios validan campos obligatorios, emails, URLs, montos minimos/maximo
 Las colecciones ya estan separadas por dominio y guardan `userId`. Para migrar a backend, reemplazar `js/storage.js` por servicios HTTP/API manteniendo la misma forma de datos.
 
 La base local usa `schemaVersion` y migraciones automaticas en `js/storage.js`, asi que los backups viejos se normalizan al cargar/importar.
+
+Documentacion tecnica nueva:
+
+- `docs/LOCAL_STORAGE_CONTRACT.md`: shape actual de `scodeFinanceApp` y entidades detectadas.
+- `docs/BACKEND_MIGRATION_PLAN.md`: arquitectura objetivo, fases y validaciones.
+- `backend/README.md`: backend Express inicial, aislado del frontend.
 
 ## Verificacion Tecnica
 

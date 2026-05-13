@@ -1,4 +1,6 @@
 import { canDelete, canWrite, login, logout, registerInitialUser } from "./auth.js";
+import { clientService } from "./api/clientService.js";
+import { projectService } from "./api/projectService.js";
 import { filteredInvoices, projectExists, clientExists } from "./finance.js";
 import { createRecord, state } from "./state.js";
 import { saveState, resetStorage } from "./storage.js";
@@ -33,8 +35,8 @@ import {
 export function bindEvents() {
   dom.registerForm.addEventListener("submit", handleRegister);
   dom.loginForm.addEventListener("submit", handleLogin);
-  dom.logoutButton.addEventListener("click", () => {
-    logout();
+  dom.logoutButton.addEventListener("click", async () => {
+    await logout();
     renderAll();
   });
 
@@ -269,10 +271,11 @@ function resetForModal(id) {
   resets[id]?.();
 }
 
-function handleRegister(event) {
+async function handleRegister(event) {
   event.preventDefault();
   try {
-    registerInitialUser({
+    setFormBusy(dom.registerForm, true);
+    await registerInitialUser({
       name: dom.registerName.value.trim(),
       email: dom.registerEmail.value.trim(),
       password: dom.registerPassword.value
@@ -282,13 +285,16 @@ function handleRegister(event) {
   } catch (error) {
     dom.registerError.textContent = error.message;
     dom.registerError.hidden = false;
+  } finally {
+    setFormBusy(dom.registerForm, false);
   }
 }
 
-function handleLogin(event) {
+async function handleLogin(event) {
   event.preventDefault();
   try {
-    login({
+    setFormBusy(dom.loginForm, true);
+    await login({
       email: dom.loginEmail.value.trim(),
       password: dom.loginPassword.value
     });
@@ -298,6 +304,8 @@ function handleLogin(event) {
   } catch (error) {
     dom.loginError.textContent = error.message;
     dom.loginError.hidden = false;
+  } finally {
+    setFormBusy(dom.loginForm, false);
   }
 }
 
@@ -317,7 +325,7 @@ function assertDelete() {
   return true;
 }
 
-function handleClientSubmit(event) {
+async function handleClientSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.clientForm)) return;
   const payload = {
@@ -339,13 +347,22 @@ function handleClientSubmit(event) {
     startDate: dom.clientFirstContact.value || new Date().toISOString().slice(0, 10),
     observations: dom.clientObservations.value.trim()
   };
-  if (dom.clientId.value) updateRecord(state.clients, dom.clientId.value, payload);
-  else state.clients.push(createRecord(payload));
-  saveAndRender("Cliente guardado", "Los datos quedaron disponibles.");
-  resetClientForm();
+  try {
+    setFormBusy(dom.clientForm, true);
+    const client = dom.clientId.value
+      ? await clientService.update(dom.clientId.value, payload)
+      : await clientService.create(payload);
+    upsertRecord(state.clients, client);
+    saveAndRender("Cliente guardado", "Persistido en PostgreSQL.");
+    resetClientForm();
+  } catch (error) {
+    notify("No se pudo guardar cliente", error.message);
+  } finally {
+    setFormBusy(dom.clientForm, false);
+  }
 }
 
-function handleProjectSubmit(event) {
+async function handleProjectSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.projectForm)) return;
   if (!clientExists(dom.projectClient.value)) {
@@ -371,10 +388,19 @@ function handleProjectSubmit(event) {
     notes: dom.projectNotes.value.trim(),
     tasks: dom.projectTasks.value.split("\n").map((task) => task.trim()).filter(Boolean)
   };
-  if (dom.projectId.value) updateRecord(state.projects, dom.projectId.value, payload);
-  else state.projects.push(createRecord(payload));
-  resetProjectForm();
-  saveAndRender("Proyecto guardado", "Quedo asociado al cliente.");
+  try {
+    setFormBusy(dom.projectForm, true);
+    const project = dom.projectId.value
+      ? await projectService.update(dom.projectId.value, payload)
+      : await projectService.create(payload);
+    upsertRecord(state.projects, project);
+    resetProjectForm();
+    saveAndRender("Proyecto guardado", "Persistido en PostgreSQL.");
+  } catch (error) {
+    notify("No se pudo guardar proyecto", error.message);
+  } finally {
+    setFormBusy(dom.projectForm, false);
+  }
 }
 
 function handleInvoiceSubmit(event) {
@@ -769,6 +795,12 @@ function updateRecord(collection, id, payload) {
   collection[index] = { ...collection[index], ...payload, updatedAt: new Date().toISOString() };
 }
 
+function upsertRecord(collection, record) {
+  const index = collection.findIndex((item) => item.id === record.id);
+  if (index === -1) collection.unshift(record);
+  else collection[index] = record;
+}
+
 function saveAndRender(title, message) {
   closeModal();
   saveState();
@@ -809,9 +841,9 @@ function exposeInlineActions() {
     renderAll();
   };
   window.editClient = (id) => editGeneric("clients", id, fillClientForm);
-  window.deleteClient = (id) => deleteGeneric("clients", id, "Cliente eliminado");
+  window.deleteClient = deleteClient;
   window.editProject = (id) => editGeneric("projects", id, fillProjectForm);
-  window.deleteProject = (id) => deleteGeneric("projects", id, "Proyecto eliminado");
+  window.deleteProject = deleteProject;
   window.editInvoice = (id) => editGeneric("invoices", id, fillInvoiceForm);
   window.deleteInvoice = (id) => deleteGeneric("invoices", id, "Factura eliminada");
   window.editPayment = (id) => editGeneric("payments", id, fillPaymentForm);
@@ -864,6 +896,36 @@ function deleteGeneric(key, id, message) {
   if (!confirm("Confirmas eliminar este registro?")) return;
   state[key] = state[key].filter((record) => record.id !== id);
   saveAndRender(message, "Los datos fueron actualizados.");
+}
+
+async function deleteClient(id) {
+  if (!assertDelete()) return;
+  if (!confirm("Confirmas eliminar este registro?")) return;
+  try {
+    await clientService.remove(id);
+    state.clients = state.clients.filter((record) => record.id !== id);
+    saveAndRender("Cliente eliminado", "PostgreSQL fue actualizado.");
+  } catch (error) {
+    notify("No se pudo eliminar cliente", error.message);
+  }
+}
+
+async function deleteProject(id) {
+  if (!assertDelete()) return;
+  if (!confirm("Confirmas eliminar este registro?")) return;
+  try {
+    await projectService.remove(id);
+    state.projects = state.projects.filter((record) => record.id !== id);
+    saveAndRender("Proyecto eliminado", "PostgreSQL fue actualizado.");
+  } catch (error) {
+    notify("No se pudo eliminar proyecto", error.message);
+  }
+}
+
+function setFormBusy(form, busy) {
+  form.querySelectorAll("button, input, select, textarea").forEach((control) => {
+    control.disabled = busy;
+  });
 }
 
 function duplicateBudget(id) {

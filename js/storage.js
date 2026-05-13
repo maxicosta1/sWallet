@@ -1,9 +1,6 @@
 import { SCHEMA_VERSION, state, STORAGE_KEY } from "./state.js";
 
 const persistedArrays = [
-  "users",
-  "clients",
-  "projects",
   "invoices",
   "payments",
   "movements",
@@ -33,12 +30,15 @@ export function loadState() {
     state.schemaVersion = parsed.schemaVersion;
     state.savedAt = parsed.savedAt || "";
     state.session = parsed.session || null;
+    state.users = Array.isArray(parsed.users) ? parsed.users : [];
+    state.clients = Array.isArray(parsed.clients) ? parsed.clients : [];
+    state.projects = Array.isArray(parsed.projects) ? parsed.projects : [];
     persistedArrays.forEach((key) => {
       state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
     });
     state.companySettings = { ...state.companySettings, ...(parsed.companySettings || {}) };
     state.exchangeRate = Number(parsed.exchangeRate) || 1200;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+    saveState();
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
@@ -52,7 +52,6 @@ export function saveState() {
   }, {
     schemaVersion: SCHEMA_VERSION,
     savedAt: state.savedAt,
-    session: state.session,
     companySettings: state.companySettings,
     exchangeRate: state.exchangeRate
   });
@@ -63,7 +62,6 @@ export function exportSnapshot() {
   return localStorage.getItem(STORAGE_KEY) || JSON.stringify({
     schemaVersion: SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
-    session: state.session,
     companySettings: state.companySettings,
     exchangeRate: state.exchangeRate
   });

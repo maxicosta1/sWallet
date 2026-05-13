@@ -77,7 +77,7 @@ export function renderAuth() {
 
   if (!authenticated) {
     dom.registerPanel.hidden = hasUsers();
-    dom.loginPanel.hidden = !hasUsers();
+    dom.loginPanel.hidden = false;
     return;
   }
 

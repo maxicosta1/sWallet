@@ -1,4 +1,7 @@
-import { createRecord, seedDemoData, state } from "./state.js";
+import { authService } from "./api/authService.js";
+import { clientService } from "./api/clientService.js";
+import { projectService } from "./api/projectService.js";
+import { state } from "./state.js";
 import { saveState } from "./storage.js";
 
 export function mockHash(value) {
@@ -28,75 +31,78 @@ export function canDelete() {
   return user?.role === "admin" || user?.permissions?.includes("delete");
 }
 
-export function registerInitialUser({ name, email, password, username = "admin" }) {
-  if (hasUsers()) throw new Error("El registro inicial ya fue creado.");
-  const user = createRecord({
-    name,
-    username,
-    email: email.toLowerCase(),
-    passwordHashMock: mockHash(password),
-    role: "admin",
-    status: "activo",
-    permissions: ["clients", "finance", "projects", "reports", "settings", "write", "delete"],
+export async function registerInitialUser({ name, email, password, username = "admin" }) {
+  await authService.bootstrap({ name, email, password, username });
+  return login({ email, password });
+}
+
+export async function login({ email, password }) {
+  const session = await authService.login({ email, password });
+  setAuthenticatedUser(session.user);
+  await loadApiCollections();
+  saveState();
+  return session.user;
+}
+
+export async function logout() {
+  await authService.logout();
+  clearAuthState();
+  saveState();
+}
+
+export async function restoreSession() {
+  try {
+    const user = await authService.me();
+    setAuthenticatedUser(user);
+    await loadApiCollections();
+  } catch {
+    try {
+      const session = await authService.refresh();
+      if (!session?.user) {
+        clearAuthState();
+        return;
+      }
+      setAuthenticatedUser(session.user);
+      await loadApiCollections();
+    } catch {
+      clearAuthState();
+    }
+  }
+}
+
+export async function loadApiCollections() {
+  const [clients, projects] = await Promise.all([
+    clientService.list(),
+    projectService.list()
+  ]);
+  state.clients = clients;
+  state.projects = projects;
+}
+
+function setAuthenticatedUser(user) {
+  const normalized = normalizeUser(user);
+  state.users = [normalized];
+  state.session = { userId: normalized.id, createdAt: new Date().toISOString() };
+}
+
+function clearAuthState() {
+  state.session = null;
+  state.users = [];
+  state.clients = [];
+  state.projects = [];
+}
+
+function normalizeUser(user) {
+  return {
+    permissions: [],
     avatar: "",
     phone: "",
-    area: "Administracion",
-    notes: ""
-  });
-
-  state.users.push(user);
-  state.session = { userId: user.id, createdAt: new Date().toISOString() };
-
-  const hasExistingData = state.clients.length || state.projects.length || state.invoices.length || state.payments.length || state.tasks.length || state.goals.length || state.opportunities.length || state.budgets.length;
-  if (hasExistingData) {
-    attachUserToExistingData(user.id);
-  } else {
-    Object.assign(state, seedDemoData(user.id));
-    state.users = [user];
-    state.session = { userId: user.id, createdAt: new Date().toISOString() };
-  }
-
-  saveState();
-  return user;
+    area: "",
+    notes: "",
+    ...user,
+    name: user.name || user.email,
+    username: user.username || String(user.email || "").split("@")[0],
+    status: user.status || "activo"
+  };
 }
 
-export function login({ email, password }) {
-  const credential = email.toLowerCase();
-  const user = state.users.find((item) => item.email === credential || String(item.username || "").toLowerCase() === credential);
-  if (!user || user.passwordHashMock !== mockHash(password) || user.status === "inactivo") {
-    throw new Error("Email o contrasena incorrectos.");
-  }
-  state.session = { userId: user.id, createdAt: new Date().toISOString() };
-  saveState();
-  return user;
-}
-
-export function logout() {
-  state.session = null;
-  saveState();
-}
-
-function attachUserToExistingData(userId) {
-  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions", "opportunities", "budgets", "calendarEvents", "documents", "supportPlans", "teamMembers", "marketingCampaigns", "clientPortalItems", "activityLogs"].forEach((key) => {
-    state[key] = state[key].map((item) => ({ ...item, userId: item.userId || userId }));
-  });
-
-  if (!state.invoices.length && state.payments.length) {
-    state.invoices = state.payments.map((payment, index) => createRecord({
-      userId,
-      clientId: payment.clientId,
-      projectId: payment.projectId || "",
-      number: `F-${String(index + 1).padStart(4, "0")}`,
-      amount: payment.amount,
-      currency: payment.currency,
-      issueDate: payment.date,
-      dueDate: payment.dueDate || payment.date,
-      status: payment.status === "pagado" ? "pagada" : payment.status === "vencido" ? "vencida" : "pendiente",
-      notes: payment.notes || "Factura migrada desde pagos existentes."
-    }));
-    state.payments = state.payments.map((payment, index) => ({
-      ...payment,
-      invoiceId: state.invoices[index]?.id || payment.invoiceId || ""
-    }));
-  }
-}
