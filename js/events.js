@@ -1,7 +1,7 @@
-import { canDelete, canWrite, currentUser, login, logout, mockHash, registerInitialUser } from "./auth.js";
+import { canDelete, canWrite, login, logout, registerInitialUser } from "./auth.js";
 import { filteredInvoices, projectExists, clientExists } from "./finance.js";
 import { createRecord, state } from "./state.js";
-import { exportSnapshot, importSnapshot, saveState, resetStorage } from "./storage.js";
+import { saveState, resetStorage } from "./storage.js";
 import {
   closeMobileMenu,
   dom,
@@ -29,8 +29,6 @@ import {
   resetTaskForm,
   syncControls
 } from "./render.js";
-
-let lastModalTrigger = null;
 
 export function bindEvents() {
   dom.registerForm.addEventListener("submit", handleRegister);
@@ -90,8 +88,6 @@ export function bindEvents() {
   dom.supportForm.addEventListener("submit", handleSupportSubmit);
   dom.teamForm.addEventListener("submit", handleTeamSubmit);
   dom.marketingForm.addEventListener("submit", handleMarketingSubmit);
-  dom.companySettingsForm.addEventListener("submit", handleCompanySettingsSubmit);
-  dom.authUserForm.addEventListener("submit", handleAuthUserSubmit);
 
   dom.cancelClientEdit.addEventListener("click", () => { resetClientForm(); closeModal(); });
   dom.cancelPaymentEdit.addEventListener("click", () => { resetPaymentForm(); closeModal(); });
@@ -117,7 +113,6 @@ export function bindEvents() {
   dom.modalBackdrop.addEventListener("click", closeModal);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeModal();
-    if (event.key === "Tab") keepFocusInsideModal(event);
   });
 
   dom.invoiceClient.addEventListener("change", syncControls);
@@ -142,8 +137,6 @@ export function bindEvents() {
     renderAll();
   });
 
-  bindModuleFilters();
-
   dom.globalSearch.addEventListener("input", () => {
     state.globalSearch = dom.globalSearch.value;
     renderAll();
@@ -151,10 +144,6 @@ export function bindEvents() {
 
   dom.exportCsv.addEventListener("click", exportCsv);
   dom.printReport.addEventListener("click", () => window.print());
-  dom.exportBackup.addEventListener("click", exportBackup);
-  dom.importBackupButton.addEventListener("click", () => dom.importBackupFile.click());
-  dom.importBackupFile.addEventListener("change", importBackup);
-  dom.clearActivityLog.addEventListener("click", clearActivityLog);
 
   [dom.filterFrom, dom.filterTo, dom.filterClient, dom.filterCurrency, dom.filterStatus].forEach((control) => {
     control.addEventListener("input", () => {
@@ -214,12 +203,6 @@ function prepareModals() {
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-modal", "true");
     panel.setAttribute("aria-hidden", "true");
-    panel.setAttribute("tabindex", "-1");
-    const title = panel.querySelector("h2");
-    if (title) {
-      title.id ||= `${panel.id}Title`;
-      panel.setAttribute("aria-labelledby", title.id);
-    }
     if (!panel.querySelector("[data-close-modal]")) {
       const button = document.createElement("button");
       button.className = "modal-close";
@@ -238,7 +221,6 @@ function prepareModals() {
 function openModal(id) {
   const panel = document.getElementById(id);
   if (!panel) return;
-  lastModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   document.querySelectorAll("[data-modal]").forEach((item) => {
     item.classList.remove("modal-open");
     item.setAttribute("aria-hidden", "true");
@@ -248,10 +230,7 @@ function openModal(id) {
   dom.modalBackdrop.hidden = false;
   dom.modalBackdrop.classList.add("show");
   document.body.classList.add("modal-active");
-  requestAnimationFrame(() => {
-    const target = getFocusableElements(panel)[0] || panel;
-    target.focus();
-  });
+  panel.querySelector("input:not([type='hidden']), select, textarea")?.focus();
 }
 
 function closeModal() {
@@ -264,33 +243,6 @@ function closeModal() {
     dom.modalBackdrop.hidden = true;
   }
   document.body.classList.remove("modal-active");
-  if (lastModalTrigger?.isConnected) lastModalTrigger.focus();
-  lastModalTrigger = null;
-}
-
-function keepFocusInsideModal(event) {
-  const panel = document.querySelector("[data-modal].modal-open");
-  if (!panel) return;
-  const focusable = getFocusableElements(panel);
-  if (!focusable.length) {
-    event.preventDefault();
-    panel.focus();
-    return;
-  }
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
-}
-
-function getFocusableElements(root) {
-  return [...root.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")]
-    .filter((node) => !node.disabled && !node.hidden && node.offsetParent !== null);
 }
 
 function resetForModal(id) {
@@ -368,9 +320,6 @@ function assertDelete() {
 function handleClientSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.clientForm)) return;
-  if (!ensureUnique(state.clients, "email", dom.clientEmail.value.trim(), dom.clientId.value, "Cliente duplicado", "Ya existe un cliente con ese email.")) return;
-  if (dom.clientWebsite.value && !isValidUrl(dom.clientWebsite.value)) return fieldError(dom.clientWebsite, "URL invalida", "Ingresa una web valida con http:// o https://.");
-  if (dom.clientLastContact.value && dom.clientFirstContact.value && parseDateValue(dom.clientLastContact.value) < parseDateValue(dom.clientFirstContact.value)) return fieldError(dom.clientLastContact, "Fecha invalida", "El ultimo contacto no puede ser anterior al primer contacto.");
   const payload = {
     userId: state.session.userId,
     name: dom.clientName.value.trim(),
@@ -403,9 +352,6 @@ function handleProjectSubmit(event) {
     notify("Cliente obligatorio", "Selecciona un cliente existente para crear el proyecto.");
     return;
   }
-  if (!ensureUnique(state.projects, "name", dom.projectName.value.trim(), dom.projectId.value, "Proyecto duplicado", "Ya existe un proyecto con ese nombre.")) return;
-  if (dom.projectDueDate.value && dom.projectStartDate.value && parseDateValue(dom.projectDueDate.value) < parseDateValue(dom.projectStartDate.value)) return fieldError(dom.projectDueDate, "Fecha invalida", "La entrega no puede ser anterior al inicio.");
-  if (Number(dom.projectPaid.value || 0) > Number(dom.projectBudget.value || 0)) return fieldError(dom.projectPaid, "Monto invalido", "El monto cobrado no puede superar el presupuesto.");
   const payload = {
     userId: state.session.userId,
     clientId: dom.projectClient.value,
@@ -442,8 +388,6 @@ function handleInvoiceSubmit(event) {
     notify("Proyecto invalido", "El proyecto seleccionado no pertenece al cliente.");
     return;
   }
-  if (!ensureUnique(state.invoices, "number", dom.invoiceNumber.value.trim(), dom.invoiceId.value, "Factura duplicada", "Ya existe una factura con ese numero.")) return;
-  if (parseDateValue(dom.invoiceDueDate.value) < parseDateValue(dom.invoiceIssueDate.value)) return fieldError(dom.invoiceDueDate, "Fecha invalida", "El vencimiento no puede ser anterior a la emision.");
   const payload = {
     userId: state.session.userId,
     clientId: dom.invoiceClient.value,
@@ -483,7 +427,6 @@ function handlePaymentSubmit(event) {
     notify("Cliente obligatorio", "El pago debe estar asociado a un cliente existente.");
     return;
   }
-  if (payload.dueDate && payload.date && parseDateValue(payload.dueDate) < parseDateValue(payload.date) && payload.status !== "pagado") return fieldError(dom.paymentDueDate, "Fecha invalida", "El vencimiento no puede ser anterior a la fecha del pago salvo que ya este pagado.");
   if (dom.paymentId.value) updateRecord(state.payments, dom.paymentId.value, payload);
   else state.payments.push(createRecord(payload));
   resetPaymentForm();
@@ -511,7 +454,6 @@ function handleMovementSubmit(event) {
 function handleSubscriptionSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.subscriptionForm)) return;
-  if (!ensureUnique(state.subscriptions, "name", dom.subscriptionName.value.trim(), dom.subscriptionId.value, "Suscripcion duplicada", "Ya existe una suscripcion con ese nombre.")) return;
   const payload = {
     userId: state.session.userId,
     name: dom.subscriptionName.value.trim(),
@@ -534,7 +476,6 @@ function handleTaskSubmit(event) {
   if (!assertWritable() || !validateForm(dom.taskForm)) return;
   if (!clientExists(dom.taskClient.value)) return notify("Cliente obligatorio", "La tarea debe tener un cliente asociado.");
   if (dom.taskProject.value && !projectExists(dom.taskProject.value, dom.taskClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
-  if (parseDateValue(dom.taskDueDate.value) < startOfToday() && !["completada", "cancelada"].includes(dom.taskStatus.value)) return fieldError(dom.taskDueDate, "Fecha vencida", "La tarea queda vencida. Confirma usando estado completada/cancelada o cambia la fecha.");
   const payload = {
     userId: state.session.userId,
     title: dom.taskTitle.value.trim(),
@@ -557,7 +498,6 @@ function handleTaskSubmit(event) {
 function handleGoalSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.goalForm)) return;
-  if (Number(dom.goalCurrent.value) > Number(dom.goalTarget.value) * 1.5) return fieldError(dom.goalCurrent, "Valor sospechoso", "El valor actual supera demasiado el objetivo. Revisa el dato antes de guardar.");
   const payload = {
     userId: state.session.userId,
     name: dom.goalName.value.trim(),
@@ -665,7 +605,6 @@ function handleBudgetSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.budgetForm)) return;
   if (!clientExists(dom.budgetClient.value)) return notify("Cliente obligatorio", "El presupuesto debe estar asociado a un cliente.");
-  if (parseDateValue(dom.budgetValidUntil.value) < startOfToday() && dom.budgetStatus.value !== "vencido") return fieldError(dom.budgetValidUntil, "Presupuesto vencido", "La fecha de validez ya paso. Usa estado vencido o cambia la fecha.");
   const payload = {
     userId: state.session.userId,
     clientId: dom.budgetClient.value,
@@ -688,7 +627,6 @@ function handleCalendarEventSubmit(event) {
   if (!assertWritable() || !validateForm(dom.calendarEventForm)) return;
   if (dom.calendarEventClient.value && !clientExists(dom.calendarEventClient.value)) return notify("Cliente invalido", "Selecciona un cliente existente.");
   if (dom.calendarEventProject.value && !projectExists(dom.calendarEventProject.value, dom.calendarEventClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente.");
-  if (dom.calendarEventStart.value && dom.calendarEventEnd.value && dom.calendarEventEnd.value <= dom.calendarEventStart.value) return fieldError(dom.calendarEventEnd, "Horario invalido", "La hora de fin debe ser posterior al inicio.");
   const payload = {
     userId: state.session.userId,
     title: dom.calendarEventTitle.value.trim(),
@@ -712,7 +650,6 @@ function handleDocumentSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.documentForm)) return;
   if (dom.documentProject.value && !projectExists(dom.documentProject.value, dom.documentClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente seleccionado.");
-  if (dom.documentLink.value && !isValidUrl(dom.documentLink.value)) return fieldError(dom.documentLink, "URL invalida", "Usa un link valido con http:// o https://.");
   const payload = {
     userId: state.session.userId,
     name: dom.documentName.value.trim(),
@@ -734,8 +671,6 @@ function handleSupportSubmit(event) {
   if (!assertWritable() || !validateForm(dom.supportForm)) return;
   if (!clientExists(dom.supportClient.value)) return notify("Cliente obligatorio", "El mantenimiento debe tener cliente.");
   if (dom.supportProject.value && !projectExists(dom.supportProject.value, dom.supportClient.value)) return notify("Proyecto invalido", "El proyecto no pertenece al cliente.");
-  if (dom.supportUrl.value && !isValidUrl(dom.supportUrl.value)) return fieldError(dom.supportUrl, "URL invalida", "Usa una URL valida con http:// o https://.");
-  if (dom.supportHostingRenewal.value && dom.supportDomainRenewal.value && parseDateValue(dom.supportHostingRenewal.value) < parseDateValue(dom.supportDomainRenewal.value) && !confirm("La renovacion de hosting queda antes que la del dominio. Guardar igual?")) return;
   const payload = {
     userId: state.session.userId,
     clientId: dom.supportClient.value,
@@ -760,7 +695,6 @@ function handleSupportSubmit(event) {
 function handleTeamSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.teamForm)) return;
-  if (!isValidEmail(dom.teamEmail.value)) return fieldError(dom.teamEmail, "Email invalido", "Ingresa un email valido.");
   const payload = {
     userId: state.session.userId,
     name: dom.teamName.value.trim(),
@@ -796,52 +730,6 @@ function handleMarketingSubmit(event) {
   saveAndRender("Campana guardada", "Marketing actualizado.");
 }
 
-function handleCompanySettingsSubmit(event) {
-  event.preventDefault();
-  if (!assertWritable() || !validateForm(dom.companySettingsForm)) return;
-  if (dom.companyEmail.value && !isValidEmail(dom.companyEmail.value)) return fieldError(dom.companyEmail, "Email invalido", "Ingresa un email valido.");
-  if (dom.companyWebsite.value && !isValidUrl(dom.companyWebsite.value)) return fieldError(dom.companyWebsite, "URL invalida", "Ingresa una web valida con http:// o https://.");
-  state.companySettings = {
-    name: dom.companyName.value.trim(),
-    legalName: dom.companyLegalName.value.trim(),
-    email: dom.companyEmail.value.trim(),
-    website: dom.companyWebsite.value.trim(),
-    primaryColor: dom.companyPrimaryColor.value,
-    mainCurrency: dom.companyMainCurrency.value,
-    secondaryCurrency: dom.companySecondaryCurrency.value,
-    reminderDays: Number(dom.companyReminderDays.value || 5),
-    services: dom.companyServices.value.trim(),
-    financeCategories: dom.companyFinanceCategories.value.trim()
-  };
-  saveAndRender("Configuracion guardada", "Preferencias de empresa actualizadas.");
-}
-
-function handleAuthUserSubmit(event) {
-  event.preventDefault();
-  if (!assertDelete() || !validateForm(dom.authUserForm)) return;
-  if (!isValidEmail(dom.authUserEmail.value)) return fieldError(dom.authUserEmail, "Email invalido", "Ingresa un email valido.");
-  if (dom.authUserAvatar.value && !isValidUrl(dom.authUserAvatar.value)) return fieldError(dom.authUserAvatar, "Foto invalida", "Usa una URL valida con http:// o https://.");
-  const email = dom.authUserEmail.value.trim().toLowerCase();
-  const username = dom.authUserUsername.value.trim().toLowerCase();
-  if (state.users.some((user) => user.email === email)) return notify("Usuario duplicado", "Ya existe un usuario con ese email.");
-  if (state.users.some((user) => String(user.username || "").toLowerCase() === username)) return notify("Usuario duplicado", "Ya existe un usuario con ese nombre de usuario.");
-  state.users.push(createRecord({
-    name: dom.authUserName.value.trim(),
-    username,
-    email,
-    passwordHashMock: mockHash(dom.authUserPassword.value),
-    role: dom.authUserRole.value,
-    status: dom.authUserStatus.value,
-    permissions: [...dom.authUserPermissions.selectedOptions].map((option) => option.value),
-    avatar: dom.authUserAvatar.value.trim(),
-    phone: dom.authUserPhone.value.trim(),
-    area: dom.authUserArea.value.trim(),
-    notes: dom.authUserNotes.value.trim()
-  }));
-  dom.authUserForm.reset();
-  saveAndRender("Usuario creado", "El nuevo acceso quedo disponible.");
-}
-
 function saveExchangeRate() {
   if (!assertWritable()) return;
   const value = Number(dom.exchangeRate.value);
@@ -866,113 +754,13 @@ function syncPaymentFromInvoice() {
 function validateForm(form) {
   form.querySelectorAll(".field-error").forEach((control) => control.classList.remove("field-error"));
   const invalid = [...form.querySelectorAll("[required]")].filter((control) => !String(control.value || "").trim());
-  const invalidNumbers = [...form.querySelectorAll("input[type='number']")].filter((control) => {
-    if (!String(control.value || "").trim()) return false;
-    const min = control.min === "" ? null : Number(control.min);
-    const max = control.max === "" ? null : Number(control.max);
-    const value = Number(control.value);
-    return !Number.isFinite(value) || (min !== null && value < min) || (max !== null && value > max);
-  });
-  const invalidEmails = [...form.querySelectorAll("input[type='email']")].filter((control) => control.value && !isValidEmail(control.value));
-  const invalidUrls = [...form.querySelectorAll("input[type='url']")].filter((control) => control.value && !isValidUrl(control.value));
-  const allInvalid = invalid.concat(invalidNumbers, invalidEmails, invalidUrls);
-  allInvalid.forEach((control) => control.classList.add("field-error"));
-  if (allInvalid.length) {
-    notify("Datos invalidos", "Revisa campos obligatorios, emails, URLs y montos.");
-    allInvalid[0].focus();
+  invalid.forEach((control) => control.classList.add("field-error"));
+  if (invalid.length) {
+    notify("Campos incompletos", "Completa los campos marcados para continuar.");
+    invalid[0].focus();
     return false;
   }
   return true;
-}
-
-function fieldError(control, title, message) {
-  control?.classList.add("field-error");
-  control?.focus();
-  notify(title, message);
-  return false;
-}
-
-function ensureUnique(collection, key, value, currentId, title, message) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized) return true;
-  const duplicated = collection.some((item) => item.id !== currentId && String(item[key] || "").trim().toLowerCase() === normalized && (!item.userId || item.userId === state.session.userId));
-  if (!duplicated) return true;
-  notify(title, message);
-  return false;
-}
-
-function isValidEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
-}
-
-function isValidUrl(value) {
-  try {
-    const url = new URL(String(value || "").trim());
-    return ["http:", "https:"].includes(url.protocol);
-  } catch {
-    return false;
-  }
-}
-
-function parseDateValue(value) {
-  const [year, month, day] = String(value || "").split("-").map(Number);
-  return new Date(year, month - 1, day || 1);
-}
-
-function startOfToday() {
-  const today = new Date();
-  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
-}
-
-function bindModuleFilters() {
-  const groups = [
-    {
-      controls: [dom.crmFilterClient, dom.crmFilterStatus, dom.crmFilterTerm],
-      clear: dom.clearCrmFilters,
-      stateKey: "crmFilters",
-      values: () => ({ clientId: dom.crmFilterClient.value, status: dom.crmFilterStatus.value, term: dom.crmFilterTerm.value }),
-      empty: { clientId: "", status: "", term: "" }
-    },
-    {
-      controls: [dom.budgetFilterClient, dom.budgetFilterStatus, dom.budgetFilterTerm],
-      clear: dom.clearBudgetFilters,
-      stateKey: "budgetFilters",
-      values: () => ({ clientId: dom.budgetFilterClient.value, status: dom.budgetFilterStatus.value, term: dom.budgetFilterTerm.value }),
-      empty: { clientId: "", status: "", term: "" }
-    },
-    {
-      controls: [dom.documentFilterClient, dom.documentFilterType, dom.documentFilterTerm],
-      clear: dom.clearDocumentFilters,
-      stateKey: "documentFilters",
-      values: () => ({ clientId: dom.documentFilterClient.value, type: dom.documentFilterType.value, term: dom.documentFilterTerm.value }),
-      empty: { clientId: "", type: "", term: "" }
-    },
-    {
-      controls: [dom.supportFilterClient, dom.supportFilterStatus, dom.supportFilterTerm],
-      clear: dom.clearSupportFilters,
-      stateKey: "supportFilters",
-      values: () => ({ clientId: dom.supportFilterClient.value, status: dom.supportFilterStatus.value, term: dom.supportFilterTerm.value }),
-      empty: { clientId: "", status: "", term: "" }
-    },
-    {
-      controls: [dom.marketingFilterStatus, dom.marketingFilterTerm],
-      clear: dom.clearMarketingFilters,
-      stateKey: "marketingFilters",
-      values: () => ({ status: dom.marketingFilterStatus.value, term: dom.marketingFilterTerm.value }),
-      empty: { status: "", term: "" }
-    }
-  ];
-
-  groups.forEach((group) => {
-    group.controls.forEach((control) => control?.addEventListener("input", () => {
-      state[group.stateKey] = group.values();
-      renderAll();
-    }));
-    group.clear?.addEventListener("click", () => {
-      state[group.stateKey] = { ...group.empty };
-      renderAll();
-    });
-  });
 }
 
 function updateRecord(collection, id, payload) {
@@ -982,24 +770,10 @@ function updateRecord(collection, id, payload) {
 }
 
 function saveAndRender(title, message) {
-  addActivity(title, message);
   closeModal();
   saveState();
   renderAll();
   notify(title, message);
-}
-
-function addActivity(title, message) {
-  if (!state.session?.userId) return;
-  state.activityLogs.unshift(createRecord({
-    userId: state.session.userId,
-    actorId: state.session.userId,
-    title,
-    message,
-    view: state.activeView,
-    date: new Date().toISOString()
-  }));
-  state.activityLogs = state.activityLogs.slice(0, 200);
 }
 
 function exportCsv() {
@@ -1023,40 +797,6 @@ function exportCsv() {
   link.click();
   URL.revokeObjectURL(url);
   notify("CSV generado", "Reporte exportado correctamente.");
-}
-
-function exportBackup() {
-  const url = URL.createObjectURL(new Blob([exportSnapshot()], { type: "application/json;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `swallet-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-  notify("Backup generado", "Se exporto la base local completa.");
-}
-
-function importBackup(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      importSnapshot(String(reader.result || ""));
-      notify("Backup importado", "La app se recargara con los datos importados.");
-      setTimeout(() => location.reload(), 700);
-    } catch (error) {
-      notify("Backup invalido", error.message || "No se pudo importar el archivo.");
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = "";
-}
-
-function clearActivityLog() {
-  if (!assertDelete()) return;
-  if (!confirm("Confirmas limpiar el historial de auditoria?")) return;
-  state.activityLogs = state.activityLogs.filter((item) => item.userId && item.userId !== state.session.userId);
-  saveAndRender("Auditoria limpia", "Se elimino el historial de la sesion actual.");
 }
 
 function exposeInlineActions() {
@@ -1092,13 +832,10 @@ function exposeInlineActions() {
   window.deleteAction = (id) => deleteGeneric("actions", id, "Accion eliminada");
   window.editOpportunity = (id) => editGeneric("opportunities", id, fillOpportunityForm);
   window.deleteOpportunity = (id) => deleteGeneric("opportunities", id, "Oportunidad eliminada");
-  window.convertOpportunityToProject = convertOpportunityToProject;
   window.editBudget = (id) => editGeneric("budgets", id, fillBudgetForm);
   window.deleteBudget = (id) => deleteGeneric("budgets", id, "Presupuesto eliminado");
   window.duplicateBudget = duplicateBudget;
   window.convertBudgetToProject = convertBudgetToProject;
-  window.setBudgetStatus = setBudgetStatus;
-  window.printBudget = printBudget;
   window.editCalendarEvent = (id) => editGeneric("calendarEvents", id, fillCalendarEventForm);
   window.deleteCalendarEvent = (id) => deleteGeneric("calendarEvents", id, "Evento eliminado");
   window.editDocument = (id) => editGeneric("documents", id, fillDocumentForm);
@@ -1109,9 +846,6 @@ function exposeInlineActions() {
   window.deleteTeamMember = (id) => deleteGeneric("teamMembers", id, "Miembro eliminado");
   window.editMarketingCampaign = (id) => editGeneric("marketingCampaigns", id, fillMarketingForm);
   window.deleteMarketingCampaign = (id) => deleteGeneric("marketingCampaigns", id, "Campana eliminada");
-  window.updateAuthUserRole = (id, role) => updateAuthUser(id, { role });
-  window.updateAuthUserStatus = (id, status) => updateAuthUser(id, { status });
-  window.deleteAuthUser = deleteAuthUser;
   window.goSearchResult = (view) => {
     state.globalSearch = "";
     renderView(view);
@@ -1132,28 +866,6 @@ function deleteGeneric(key, id, message) {
   saveAndRender(message, "Los datos fueron actualizados.");
 }
 
-function updateAuthUser(id, payload) {
-  if (!assertDelete()) return;
-  if (id === currentUser()?.id) {
-    notify("Accion bloqueada", "No podes cambiar tu propio rol o estado desde esta tabla.");
-    renderAll();
-    return;
-  }
-  updateRecord(state.users, id, payload);
-  saveAndRender("Usuario actualizado", "Permisos actualizados.");
-}
-
-function deleteAuthUser(id) {
-  if (!assertDelete()) return;
-  if (id === currentUser()?.id) {
-    notify("Accion bloqueada", "No podes eliminar la sesion actual.");
-    return;
-  }
-  if (!confirm("Confirmas eliminar este usuario?")) return;
-  state.users = state.users.filter((user) => user.id !== id);
-  saveAndRender("Usuario eliminado", "El acceso fue revocado.");
-}
-
 function duplicateBudget(id) {
   if (!assertWritable()) return;
   const budget = state.budgets.find((item) => item.id === id);
@@ -1165,48 +877,6 @@ function duplicateBudget(id) {
     status: "borrador"
   }));
   saveAndRender("Presupuesto duplicado", "Se creo una copia editable.");
-}
-
-function setBudgetStatus(id, status) {
-  if (!assertWritable()) return;
-  updateRecord(state.budgets, id, { status });
-  saveAndRender("Presupuesto actualizado", `Estado: ${status.replaceAll("_", " ")}.`);
-}
-
-function printBudget(id) {
-  const budget = state.budgets.find((item) => item.id === id);
-  if (!budget) return;
-  const client = state.clients.find((item) => item.id === budget.clientId);
-  const services = String(budget.services || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, rawAmount] = line.split(":");
-      const amount = Number(rawAmount || 0);
-      return `<tr><td>${escapeHTML(name || line)}</td><td>${Number.isFinite(amount) ? amount.toLocaleString("es-AR") : "-"}</td></tr>`;
-    })
-    .join("");
-  const html = `
-    <!doctype html><html><head><title>Presupuesto sCode</title><style>
-      body{font-family:Arial,sans-serif;color:#171420;margin:40px;background:#fff}
-      .brand{color:#9f5cff;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-      h1{font-size:34px;margin:10px 0 0} .box{border:1px solid #e8ddff;border-radius:18px;padding:22px;margin:22px 0}
-      table{width:100%;border-collapse:collapse}td,th{padding:12px;border-bottom:1px solid #eee;text-align:left}
-      .total{font-size:28px;font-weight:800;color:#9f5cff}.muted{color:#696176}
-      @media print{button{display:none}}
-    </style></head><body>
-      <p class="brand">sCode Digital Solutions</p>
-      <h1>${escapeHTML(budget.projectName)}</h1>
-      <p class="muted">Cliente: ${escapeHTML(client?.company || "Sin cliente")} - Valido hasta ${escapeHTML(budget.validUntil || "-")}</p>
-      <section class="box"><h2>Servicios incluidos</h2><table><tbody>${services}</tbody></table></section>
-      <section class="box"><p>Descuento: ${Number(budget.discount || 0).toLocaleString("es-AR")} ${escapeHTML(budget.currency)}</p><p class="total">Total: ${budgetTotal(budget).toLocaleString("es-AR")} ${escapeHTML(budget.currency)}</p><p>${escapeHTML(budget.notes || "")}</p></section>
-      <button onclick="window.print()">Imprimir / PDF</button>
-    </body></html>`;
-  const popup = window.open("", "_blank");
-  if (!popup) return notify("Popup bloqueado", "Permiti ventanas emergentes para imprimir el presupuesto.");
-  popup.document.write(html);
-  popup.document.close();
 }
 
 function convertBudgetToProject(id) {
@@ -1236,33 +906,6 @@ function convertBudgetToProject(id) {
   saveAndRender("Proyecto creado", "El presupuesto aprobado paso a delivery.");
 }
 
-function convertOpportunityToProject(id) {
-  if (!assertWritable()) return;
-  const opportunity = state.opportunities.find((item) => item.id === id);
-  if (!opportunity || !clientExists(opportunity.clientId)) return notify("No se pudo convertir", "La oportunidad no tiene un cliente valido.");
-  state.projects.push(createRecord({
-    userId: state.session.userId,
-    clientId: opportunity.clientId,
-    name: opportunity.title,
-    description: opportunity.notes || opportunity.service || "Proyecto creado desde CRM.",
-    budget: Number(opportunity.value || 0),
-    paid: 0,
-    expenses: 0,
-    currency: opportunity.currency || "ARS",
-    status: "planificacion",
-    progress: 0,
-    responsible: opportunity.responsible || "",
-    technologies: "",
-    links: "",
-    startDate: new Date().toISOString().slice(0, 10),
-    dueDate: "",
-    notes: opportunity.nextAction || "",
-    tasks: []
-  }));
-  updateRecord(state.opportunities, id, { status: "aprobado", probability: 100 });
-  saveAndRender("Proyecto creado", "La oportunidad aprobada paso a delivery.");
-}
-
 function budgetTotal(budget) {
   const subtotal = String(budget.services || "")
     .split("\n")
@@ -1270,16 +913,6 @@ function budgetTotal(budget) {
     .filter((value) => Number.isFinite(value))
     .reduce((total, value) => total + value, 0);
   return Math.max(subtotal - Number(budget.discount || 0), 0);
-}
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[char]));
 }
 
 function fillClientForm(client) {
@@ -1448,7 +1081,7 @@ function fillNoteForm(item) {
   dom.noteTone.value = item.tone || "normal";
   dom.noteFormTitle.textContent = "Editar nota";
   renderView("administracion");
-  openModal("noteModal");
+  openModal("noteModal"); 
 }
 
 function fillActionForm(item) {
