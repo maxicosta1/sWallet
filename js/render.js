@@ -15,6 +15,7 @@ import {
   globalTotals,
   goalProgressPercent,
   goals,
+  invoices,
   invoiceAmountARS,
   movements,
   notifications,
@@ -35,7 +36,7 @@ import {
   totalsForMonth,
   upcomingPayments
 } from "./finance.js";
-import { parseDate, state, toInputDate, DAY_MS } from "./state.js";
+import { parseDate, SCHEMA_VERSION, state, toInputDate, DAY_MS } from "./state.js";
 
 export const dom = {};
 
@@ -118,6 +119,7 @@ export function renderAll() {
   renderSettings();
   renderReports();
   drawAllCharts();
+  applyCompanyTheme();
 }
 
 export function renderView(view) {
@@ -136,7 +138,21 @@ export function renderView(view) {
 export function syncControls() {
   populateClientSelects();
   populateProjectSelects();
+  syncFilterControls();
   dom.exchangeRate.value = state.exchangeRate;
+}
+
+function syncFilterControls() {
+  if (dom.crmFilterStatus) dom.crmFilterStatus.value = state.crmFilters.status;
+  if (dom.crmFilterTerm) dom.crmFilterTerm.value = state.crmFilters.term;
+  if (dom.budgetFilterStatus) dom.budgetFilterStatus.value = state.budgetFilters.status;
+  if (dom.budgetFilterTerm) dom.budgetFilterTerm.value = state.budgetFilters.term;
+  if (dom.documentFilterType) dom.documentFilterType.value = state.documentFilters.type;
+  if (dom.documentFilterTerm) dom.documentFilterTerm.value = state.documentFilters.term;
+  if (dom.supportFilterStatus) dom.supportFilterStatus.value = state.supportFilters.status;
+  if (dom.supportFilterTerm) dom.supportFilterTerm.value = state.supportFilters.term;
+  if (dom.marketingFilterStatus) dom.marketingFilterStatus.value = state.marketingFilters.status;
+  if (dom.marketingFilterTerm) dom.marketingFilterTerm.value = state.marketingFilters.term;
 }
 
 function renderBankingHero() {
@@ -241,6 +257,29 @@ function renderDashboardLists() {
       </div>
     `;
   }
+
+  renderTodaySummary();
+}
+
+function renderTodaySummary() {
+  if (!dom.todaySummary) return;
+  const todayKey = toInputDate(new Date());
+  const todayEvents = calendarEvents().filter((event) => event.date === todayKey);
+  const overdueTasks = tasks().filter((task) => !["completada", "cancelada"].includes(task.status) && parseDate(task.dueDate) < new Date());
+  const dueInvoices = upcomingPayments().filter((invoice) => normalizedInvoiceStatus(invoice) === "vencida" || invoice.dueDate === todayKey);
+  const followUps = actions().filter((action) => action.status !== "completada" && action.dueDate <= todayKey);
+  const rows = [
+    ...todayEvents.map((event) => ({ title: event.title, detail: `${labelize(event.type)} - ${event.startTime || "sin hora"}`, tone: event.priority || "neutral" })),
+    ...overdueTasks.slice(0, 3).map((task) => ({ title: task.title, detail: `Tarea vencida - ${getClient(task.clientId)?.company || task.responsible || ""}`, tone: "vencida" })),
+    ...dueInvoices.slice(0, 3).map((invoice) => ({ title: invoice.number, detail: `Cobrar ${getClient(invoice.clientId)?.company || "cliente"}`, tone: normalizedInvoiceStatus(invoice) })),
+    ...followUps.slice(0, 3).map((action) => ({ title: action.title, detail: `Seguimiento - ${getClient(action.clientId)?.company || ""}`, tone: action.priority || "pendiente" }))
+  ].slice(0, 6);
+  dom.todaySummary.innerHTML = rows.length ? rows.map((item) => `
+    <article class="list-item">
+      <div><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(item.detail)}</span></div>
+      <span class="badge ${item.tone}">${labelize(item.tone)}</span>
+    </article>
+  `).join("") : emptyState("Hoy no hay urgencias cargadas.");
 }
 
 function renderNotifications() {
@@ -562,14 +601,116 @@ function renderGoals() {
 function renderSettings() {
   if (!dom.settingsSession) return;
   const user = currentUser();
+  syncCompanySettingsForm();
   dom.settingsSession.innerHTML = `
     <article class="list-item"><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
     <article class="list-item"><div><strong>Permisos</strong><span>${canWrite() ? "Puede crear y editar" : "Solo visualizacion"}</span></div><span class="badge ${canDelete() ? "admin" : "neutral"}">${canDelete() ? "admin" : "limitado"}</span></article>
   `;
+  if (dom.authUsersTable) {
+    dom.authUsersTable.innerHTML = state.users.length ? state.users.map((item) => `
+      <tr>
+        <td><div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>${escapeHTML(item.email)}${item.id === user.id ? " - sesion actual" : ""}</span></div></td>
+        <td>
+          <select class="table-select write-action" onchange="updateAuthUserRole('${item.id}', this.value)" ${item.id === user.id ? "disabled" : ""}>
+            <option value="admin" ${item.role === "admin" ? "selected" : ""}>Admin</option>
+            <option value="finanzas" ${item.role === "finanzas" ? "selected" : ""}>Finanzas</option>
+            <option value="solo_lectura" ${item.role === "solo_lectura" ? "selected" : ""}>Solo lectura</option>
+          </select>
+          <span class="badge ${item.role}">${labelize(item.role)}</span>
+        </td>
+        <td>
+          <select class="table-select write-action" onchange="updateAuthUserStatus('${item.id}', this.value)" ${item.id === user.id ? "disabled" : ""}>
+            <option value="activo" ${(item.status || "activo") === "activo" ? "selected" : ""}>Activo</option>
+            <option value="inactivo" ${item.status === "inactivo" ? "selected" : ""}>Inactivo</option>
+          </select>
+          <span class="badge ${item.status || "activo"}">${labelize(item.status || "activo")}</span>
+        </td>
+        <td><button class="danger-button compact delete-action" type="button" onclick="deleteAuthUser('${item.id}')" ${item.id === user.id ? "disabled" : ""}>Eliminar</button></td>
+      </tr>
+    `).join("") : tableEmpty(4, "No hay usuarios creados.");
+  }
+  const diagnostics = dataIntegrityIssues();
   dom.settingsData.innerHTML = `
     <article class="list-item"><div><strong>Datos locales</strong><span>${clients().length} clientes, ${projects().length} proyectos, ${tasks().length} tareas, ${budgets().length} presupuestos, ${calendarEvents().length} eventos</span></div><span class="badge saludable">localStorage</span></article>
+    <article class="list-item"><div><strong>Version de datos</strong><span>Schema actual ${SCHEMA_VERSION}${state.savedAt ? ` - ultimo guardado ${formatDate(state.savedAt)}` : ""}</span></div><span class="badge neutral">v${state.schemaVersion || SCHEMA_VERSION}</span></article>
     <article class="list-item"><div><strong>Cotizacion</strong><span>1 USD = ${formatARS(state.exchangeRate)}</span></div><span class="badge neutral">editable</span></article>
+    <article class="list-item"><div><strong>Backup</strong><span>Exporta o importa toda la base local de sWallet.</span></div><span class="badge neutral">JSON</span></article>
+    <article class="list-item"><div><strong>Diagnostico</strong><span>${diagnostics.length ? `${diagnostics.length} alerta(s) de integridad detectada(s)` : "Relaciones principales correctas"}</span></div><span class="badge ${diagnostics.length ? "urgente" : "saludable"}">${diagnostics.length ? "revisar" : "OK"}</span></article>
+    ${diagnostics.slice(0, 8).map((item) => `<article class="list-item audit-item"><div><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(item.detail)}</span></div><span class="badge ${item.tone}">${escapeHTML(item.label)}</span></article>`).join("")}
   `;
+  if (dom.activityLogList) {
+    const rows = state.activityLogs
+      .filter((item) => !item.userId || item.userId === user.id)
+      .slice(0, 40);
+    dom.activityLogList.innerHTML = rows.length ? rows.map((item) => `
+      <article class="list-item audit-item">
+        <div>
+          <strong>${escapeHTML(item.title)}</strong>
+          <span>${formatDate(item.date || item.createdAt)} - ${escapeHTML(item.message || "")}</span>
+        </div>
+        <span class="badge neutral">${escapeHTML(item.view || "sistema")}</span>
+      </article>
+    `).join("") : emptyState("Todavia no hay actividad registrada.");
+  }
+}
+
+function dataIntegrityIssues() {
+  const issues = [];
+  const clientIds = new Set(clients().map((client) => client.id));
+  const projectIds = new Set(projects().map((project) => project.id));
+  const invoiceIds = new Set(invoices().map((invoice) => invoice.id));
+
+  projects().forEach((project) => {
+    if (!clientIds.has(project.clientId)) issues.push({ title: "Proyecto sin cliente valido", detail: project.name || project.id, label: "proyecto", tone: "urgente" });
+  });
+
+  invoices().forEach((invoice) => {
+    if (!clientIds.has(invoice.clientId)) issues.push({ title: "Factura sin cliente valido", detail: invoice.number || invoice.id, label: "factura", tone: "urgente" });
+    if (invoice.projectId && !projectIds.has(invoice.projectId)) issues.push({ title: "Factura con proyecto inexistente", detail: invoice.number || invoice.id, label: "factura", tone: "alta" });
+    if (invoice.projectId && getProject(invoice.projectId)?.clientId !== invoice.clientId) issues.push({ title: "Factura con proyecto de otro cliente", detail: invoice.number || invoice.id, label: "factura", tone: "alta" });
+  });
+
+  payments().forEach((payment) => {
+    if (!clientIds.has(payment.clientId)) issues.push({ title: "Pago sin cliente valido", detail: payment.notes || payment.id, label: "pago", tone: "urgente" });
+    if (payment.invoiceId && !invoiceIds.has(payment.invoiceId)) issues.push({ title: "Pago con factura inexistente", detail: payment.notes || payment.id, label: "pago", tone: "alta" });
+    if (payment.projectId && !projectIds.has(payment.projectId)) issues.push({ title: "Pago con proyecto inexistente", detail: payment.notes || payment.id, label: "pago", tone: "alta" });
+  });
+
+  tasks().forEach((task) => {
+    if (!clientIds.has(task.clientId)) issues.push({ title: "Tarea sin cliente valido", detail: task.title || task.id, label: "tarea", tone: "alta" });
+    if (task.projectId && getProject(task.projectId)?.clientId !== task.clientId) issues.push({ title: "Tarea con proyecto de otro cliente", detail: task.title || task.id, label: "tarea", tone: "alta" });
+  });
+
+  documents().forEach((documentItem) => {
+    if (documentItem.projectId && getProject(documentItem.projectId)?.clientId !== documentItem.clientId) issues.push({ title: "Documento con proyecto de otro cliente", detail: documentItem.name || documentItem.id, label: "documento", tone: "media" });
+  });
+
+  supportPlans().forEach((plan) => {
+    if (!clientIds.has(plan.clientId)) issues.push({ title: "Mantenimiento sin cliente valido", detail: plan.plan || plan.id, label: "soporte", tone: "alta" });
+    if (plan.projectId && getProject(plan.projectId)?.clientId !== plan.clientId) issues.push({ title: "Mantenimiento con proyecto de otro cliente", detail: plan.plan || plan.id, label: "soporte", tone: "media" });
+  });
+
+  return issues;
+}
+
+function syncCompanySettingsForm() {
+  if (!dom.companySettingsForm) return;
+  const settings = state.companySettings;
+  dom.companyName.value = settings.name || "";
+  dom.companyLegalName.value = settings.legalName || "";
+  dom.companyEmail.value = settings.email || "";
+  dom.companyWebsite.value = settings.website || "";
+  dom.companyPrimaryColor.value = settings.primaryColor || "#9f5cff";
+  dom.companyMainCurrency.value = settings.mainCurrency || "ARS";
+  dom.companySecondaryCurrency.value = settings.secondaryCurrency || "USD";
+  dom.companyReminderDays.value = settings.reminderDays || 5;
+  dom.companyServices.value = settings.services || "";
+  dom.companyFinanceCategories.value = settings.financeCategories || "";
+}
+
+function applyCompanyTheme() {
+  const color = state.companySettings?.primaryColor || "#9f5cff";
+  document.documentElement.style.setProperty("--primary", color);
 }
 
 function renderInvoices() {
@@ -681,8 +822,13 @@ function renderMovements() {
 function renderCRM() {
   if (!dom.crmPipeline) return;
   const stages = ["lead_nuevo", "contactado", "respondio", "reunion_agendada", "presupuesto_enviado", "negociacion", "aprobado", "rechazado", "perdido"];
+  const filters = state.crmFilters;
   dom.crmPipeline.innerHTML = stages.map((stage) => {
-    const rows = opportunities().filter((item) => item.status === stage);
+    const rows = opportunities()
+      .filter((item) => item.status === stage)
+      .filter((item) => !filters.clientId || item.clientId === filters.clientId)
+      .filter((item) => !filters.status || item.status === filters.status)
+      .filter((item) => matchesTerm([item.title, item.service, item.nextAction, item.responsible, item.notes], filters.term));
     return `
       <section class="kanban-column">
         <header><strong>${labelize(stage)}</strong><span>${rows.length}</span></header>
@@ -694,6 +840,7 @@ function renderCRM() {
             <small>${escapeHTML(item.nextAction || "Sin proxima accion")}</small>
             <div class="actions-cell">
               <button class="ghost-button compact write-action" type="button" onclick="editOpportunity('${item.id}')">Editar</button>
+              <button class="primary-button compact write-action" type="button" onclick="convertOpportunityToProject('${item.id}')">Proyecto</button>
               <button class="danger-button compact delete-action" type="button" onclick="deleteOpportunity('${item.id}')">Eliminar</button>
             </div>
           </article>
@@ -705,7 +852,12 @@ function renderCRM() {
 
 function renderBudgets() {
   if (!dom.budgetsTable) return;
-  const rows = budgets().sort((a, b) => parseDate(b.createdAt) - parseDate(a.createdAt));
+  const filters = state.budgetFilters;
+  const rows = budgets()
+    .filter((item) => !filters.clientId || item.clientId === filters.clientId)
+    .filter((item) => !filters.status || item.status === filters.status)
+    .filter((item) => matchesTerm([item.projectName, item.services, item.notes], filters.term))
+    .sort((a, b) => parseDate(b.createdAt) - parseDate(a.createdAt));
   dom.budgetsTable.innerHTML = rows.length ? rows.map((item) => {
     const total = budgetTotal(item);
     return `
@@ -718,6 +870,9 @@ function renderBudgets() {
         <td>
           <div class="actions-cell">
             <button class="ghost-button compact write-action" type="button" onclick="editBudget('${item.id}')">Editar</button>
+            <button class="ghost-button compact" type="button" onclick="printBudget('${item.id}')">Imprimir</button>
+            <button class="ghost-button compact write-action" type="button" onclick="setBudgetStatus('${item.id}', 'enviado')">Enviar</button>
+            <button class="ghost-button compact write-action" type="button" onclick="setBudgetStatus('${item.id}', 'rechazado')">Rechazar</button>
             <button class="ghost-button compact write-action" type="button" onclick="duplicateBudget('${item.id}')">Duplicar</button>
             <button class="primary-button compact write-action" type="button" onclick="convertBudgetToProject('${item.id}')">Proyecto</button>
             <button class="danger-button compact delete-action" type="button" onclick="deleteBudget('${item.id}')">Eliminar</button>
@@ -754,7 +909,11 @@ function renderCalendarModule() {
 
 function renderDocuments() {
   if (!dom.documentsGrid) return;
-  const rows = documents();
+  const filters = state.documentFilters;
+  const rows = documents()
+    .filter((item) => !filters.clientId || item.clientId === filters.clientId)
+    .filter((item) => !filters.type || String(item.type || "").toLowerCase().includes(filters.type.toLowerCase()))
+    .filter((item) => matchesTerm([item.name, item.type, item.tags, item.description], filters.term));
   dom.documentsGrid.innerHTML = rows.length ? rows.map((item) => `
     <article class="resource-card">
       <span class="badge ${item.type}">${labelize(item.type)}</span>
@@ -772,7 +931,12 @@ function renderDocuments() {
 
 function renderSupport() {
   if (!dom.supportTable) return;
-  const rows = supportPlans().sort((a, b) => parseDate(a.hostingRenewal || a.domainRenewal) - parseDate(b.hostingRenewal || b.domainRenewal));
+  const filters = state.supportFilters;
+  const rows = supportPlans()
+    .filter((item) => !filters.clientId || item.clientId === filters.clientId)
+    .filter((item) => !filters.status || item.status === filters.status)
+    .filter((item) => matchesTerm([item.url, item.domain, item.hosting, item.plan, item.notes], filters.term))
+    .sort((a, b) => parseDate(a.hostingRenewal || a.domainRenewal) - parseDate(b.hostingRenewal || b.domainRenewal));
   dom.supportTable.innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td><div class="entity-title"><strong>${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</strong><span>${escapeHTML(item.url || item.domain || "")}</span></div></td>
@@ -801,7 +965,11 @@ function renderTeam() {
 
 function renderMarketing() {
   if (!dom.marketingTable) return;
-  const rows = marketingCampaigns().sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  const filters = state.marketingFilters;
+  const rows = marketingCampaigns()
+    .filter((item) => !filters.status || item.status === filters.status)
+    .filter((item) => matchesTerm([item.name, item.target, item.message], filters.term))
+    .sort((a, b) => parseDate(b.date) - parseDate(a.date));
   dom.marketingTable.innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td><div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>${escapeHTML(item.target)}</span></div></td>
@@ -827,21 +995,108 @@ function renderClientPortal() {
   }
   const clientProjects = projects().filter((project) => project.clientId === client.id);
   const clientInvoices = filteredInvoices({ clientId: client.id, projectId: "", status: "", currency: "", from: "", to: "", quick: "" });
+  const clientPayments = payments().filter((payment) => payment.clientId === client.id && payment.status === "pagado");
+  const clientTasks = tasks().filter((task) => task.clientId === client.id);
+  const clientRequests = requests().filter((request) => request.clientId === client.id);
+  const clientEvents = calendarEvents()
+    .filter((event) => event.clientId === client.id && event.date && parseDate(event.date) >= new Date(Date.now() - DAY_MS))
+    .sort((a, b) => parseDate(a.date) - parseDate(b.date))
+    .slice(0, 5);
   const files = documents().filter((doc) => doc.clientId === client.id).concat(clientPortalItems().filter((item) => item.clientId === client.id));
+  const pendingAmount = clientInvoices.reduce((total, invoice) => total + Math.max(Number(invoice.amount || 0) - paidForInvoice(invoice.id), 0), 0);
+  const billedAmount = clientInvoices.reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const paidAmount = clientPayments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const averageProgress = clientProjects.length ? Math.round(clientProjects.reduce((total, project) => total + Number(project.progress || 0), 0) / clientProjects.length) : 0;
+  const openTasks = clientTasks.filter((task) => !["completada", "cancelada"].includes(task.status));
+  const openRequests = clientRequests.filter((request) => !["completado", "cancelado"].includes(request.status));
+  const primaryCurrency = client.currency || clientInvoices[0]?.currency || "ARS";
+  const health = clientHealth(client.id);
+  const nextDue = clientInvoices
+    .filter((invoice) => normalizedInvoiceStatus(invoice) !== "pagada" && invoice.dueDate)
+    .sort((a, b) => parseDate(a.dueDate) - parseDate(b.dueDate))[0];
   dom.portalOverview.innerHTML = `
     <section class="portal-preview">
-      <div>
-        <p class="eyebrow">Portal simulado</p>
-        <h2>${escapeHTML(client.company)}</h2>
-        <p>${escapeHTML(client.service || "Servicios sCode")}</p>
+      <div class="portal-hero">
+        <div>
+          <p class="eyebrow">Portal cliente simulado</p>
+          <h2>${escapeHTML(client.company || client.name)}</h2>
+          <p>${escapeHTML(client.service || "Servicios sCode")} · ${escapeHTML(client.email || "Sin email cargado")}</p>
+        </div>
+        <div class="portal-hero-actions">
+          <span class="badge ${health}">${labelize(health)}</span>
+          <span class="badge ${normalizeClientStatus(client.status)}">${labelize(normalizeClientStatus(client.status))}</span>
+        </div>
       </div>
       <div class="stats-grid compact-stats">
         <article class="stat-card"><span>Proyectos</span><strong>${clientProjects.length}</strong><small>Asociados</small></article>
-        <article class="stat-card"><span>Pagos pendientes</span><strong>${clientInvoices.filter((invoice) => normalizedInvoiceStatus(invoice) !== "pagada").length}</strong><small>Visibles para seguimiento</small></article>
+        <article class="stat-card"><span>Avance promedio</span><strong>${averageProgress}%</strong><small>Delivery visible</small></article>
+        <article class="stat-card"><span>Facturado</span><strong>${formatMoney(billedAmount, primaryCurrency)}</strong><small>Total del cliente</small></article>
+        <article class="stat-card"><span>Pendiente</span><strong>${formatMoney(pendingAmount, primaryCurrency)}</strong><small>${nextDue ? `Proximo ${formatDate(nextDue.dueDate)}` : "Sin vencimientos"}</small></article>
         <article class="stat-card"><span>Archivos</span><strong>${files.length}</strong><small>Documentos y links</small></article>
       </div>
-      <div class="resource-grid">
-        ${clientProjects.map((project) => `<article class="resource-card"><strong>${escapeHTML(project.name)}</strong><p>${escapeHTML(project.description || "")}</p><div class="progress-bar"><i style="width:${Number(project.progress || 0)}%"></i></div></article>`).join("") || emptyState("Sin proyectos para mostrar.")}
+      <div class="portal-layout">
+        <article class="portal-section portal-main-card">
+          <div class="section-title-row"><div><p class="eyebrow">Proyecto y avance</p><h3>Estado de entregas</h3></div><span>${clientProjects.length} items</span></div>
+          <div class="portal-project-list">
+            ${clientProjects.length ? clientProjects.map((project) => {
+              const financials = projectFinancials(project.id);
+              return `
+                <article class="portal-project-card">
+                  <div class="section-title-row">
+                    <div><strong>${escapeHTML(project.name)}</strong><span>${escapeHTML(labelize(project.status))}</span></div>
+                    <span class="badge ${project.status}">${Number(project.progress || 0)}%</span>
+                  </div>
+                  <p>${escapeHTML(project.description || "Sin descripcion cargada.")}</p>
+                  <div class="progress-bar"><i style="width:${Number(project.progress || 0)}%"></i></div>
+                  <div class="portal-mini-metrics">
+                    <span>Presupuesto <strong>${formatMoney(project.budget || 0, project.currency || primaryCurrency)}</strong></span>
+                    <span>Cobrado <strong>${formatMoney(financials.paid || 0, project.currency || primaryCurrency)}</strong></span>
+                    <span>Pendiente <strong>${formatMoney(financials.pending || 0, project.currency || primaryCurrency)}</strong></span>
+                  </div>
+                </article>
+              `;
+            }).join("") : emptyState("Sin proyectos para mostrar.")}
+          </div>
+        </article>
+
+        <aside class="portal-section">
+          <div class="section-title-row"><div><p class="eyebrow">Resumen financiero</p><h3>Cuenta del cliente</h3></div></div>
+          <div class="portal-account-card">
+            <span>Total cobrado</span>
+            <strong>${formatMoney(paidAmount, primaryCurrency)}</strong>
+            <small>Saldo pendiente ${formatMoney(pendingAmount, primaryCurrency)}</small>
+          </div>
+          <div class="portal-list">
+            ${clientInvoices.length ? clientInvoices.slice(0, 5).map((invoice) => {
+              const status = normalizedInvoiceStatus(invoice);
+              const paid = paidForInvoice(invoice.id);
+              return `<article class="portal-list-item"><div><strong>${escapeHTML(invoice.number)}</strong><span>${escapeHTML(getProject(invoice.projectId)?.name || "General")} · vence ${formatDate(invoice.dueDate)}</span></div><div><b>${formatMoney(Math.max(Number(invoice.amount || 0) - paid, 0), invoice.currency)}</b><span class="badge ${status}">${labelize(status)}</span></div></article>`;
+            }).join("") : emptyState("Sin facturas visibles.")}
+          </div>
+        </aside>
+
+        <article class="portal-section">
+          <div class="section-title-row"><div><p class="eyebrow">Trabajo abierto</p><h3>Tareas y pedidos</h3></div><span>${openTasks.length + openRequests.length} pendientes</span></div>
+          <div class="portal-list">
+            ${openTasks.slice(0, 4).map((task) => `<article class="portal-list-item"><div><strong>${escapeHTML(task.title)}</strong><span>Tarea · ${escapeHTML(getProject(task.projectId)?.name || "General")}</span></div><span class="badge ${task.priority}">${labelize(task.priority)}</span></article>`).join("")}
+            ${openRequests.slice(0, 4).map((request) => `<article class="portal-list-item"><div><strong>${escapeHTML(request.description)}</strong><span>Pedido · ${escapeHTML(labelize(request.type))}</span></div><span class="badge ${request.status}">${labelize(request.status)}</span></article>`).join("")}
+            ${openTasks.length + openRequests.length ? "" : emptyState("No hay tareas ni pedidos abiertos.")}
+          </div>
+        </article>
+
+        <article class="portal-section">
+          <div class="section-title-row"><div><p class="eyebrow">Agenda</p><h3>Proximos hitos</h3></div></div>
+          <div class="portal-list">
+            ${clientEvents.length ? clientEvents.map((event) => `<article class="portal-list-item"><div><strong>${escapeHTML(event.title)}</strong><span>${formatDate(event.date)} · ${escapeHTML(event.startTime || "sin hora")}</span></div><span class="badge ${event.type}">${labelize(event.type)}</span></article>`).join("") : emptyState("Sin eventos proximos.")}
+          </div>
+        </article>
+
+        <article class="portal-section portal-files">
+          <div class="section-title-row"><div><p class="eyebrow">Documentos</p><h3>Archivos y links</h3></div></div>
+          <div class="resource-grid">
+            ${files.length ? files.slice(0, 8).map((file) => `<article class="resource-card"><span class="badge ${file.type || "avance"}">${labelize(file.type || "link")}</span><strong>${escapeHTML(file.name || file.title)}</strong><p>${escapeHTML(file.description || file.notes || "Recurso disponible para el cliente.")}</p>${file.link ? `<a class="ghost-button compact" href="${escapeAttribute(file.link)}" target="_blank" rel="noreferrer">Abrir</a>` : ""}</article>`).join("") : emptyState("Sin documentos o links cargados.")}
+          </div>
+        </article>
       </div>
     </section>
   `;
@@ -869,6 +1124,13 @@ function renderSubscriptions() {
 
 function renderReports() {
   const rows = getActivityRows().filter(matchesReportFilters);
+  if (dom.reportInsights) dom.reportInsights.innerHTML = reportInsights().map((item) => `
+    <article class="resource-card insight-card">
+      <span class="badge ${item.tone}">${escapeHTML(item.label)}</span>
+      <strong>${escapeHTML(item.title)}</strong>
+      <p>${escapeHTML(item.detail)}</p>
+    </article>
+  `).join("");
   dom.reportsTable.innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td>${escapeHTML(item.origin)}</td>
@@ -881,11 +1143,55 @@ function renderReports() {
   `).join("") : tableEmpty(6, "No hay resultados con los filtros actuales.");
 }
 
+function reportInsights() {
+  const month = totalsForMonth();
+  const overdue = filteredInvoices({ clientId: "", projectId: "", status: "vencida", currency: "", from: "", to: "", quick: "" });
+  const activeProjects = projects().filter((project) => !["finalizado", "entregado", "cancelado"].includes(project.status));
+  const lateProjects = activeProjects.filter((project) => project.dueDate && parseDate(project.dueDate) < new Date());
+  const pendingTasks = tasks().filter((task) => !["completada", "cancelada"].includes(task.status));
+  const wonOpportunities = opportunities().filter((item) => item.status === "aprobado").length;
+  const totalOpportunities = Math.max(opportunities().length, 1);
+  const sentBudgets = budgets().filter((budget) => budget.status === "enviado").length;
+  const insights = [
+    {
+      label: "Finanzas",
+      title: month.profit >= 0 ? "Resultado positivo del mes" : "Resultado negativo del mes",
+      detail: `Ganancia real estimada: ${formatARS(month.profit)}.`,
+      tone: month.profit >= 0 ? "saludable" : "vencida"
+    },
+    {
+      label: "Cobranza",
+      title: overdue.length ? "Hay pagos vencidos" : "Cobranza sin vencidos criticos",
+      detail: overdue.length ? `${overdue.length} factura(s) requieren seguimiento.` : "No hay facturas vencidas en los filtros actuales.",
+      tone: overdue.length ? "vencida" : "saludable"
+    },
+    {
+      label: "Delivery",
+      title: lateProjects.length ? "Proyectos atrasados detectados" : "Delivery bajo control",
+      detail: `${activeProjects.length} proyectos activos, ${lateProjects.length} atrasados.`,
+      tone: lateProjects.length ? "vencida" : "neutral"
+    },
+    {
+      label: "Equipo",
+      title: `${pendingTasks.length} tareas abiertas`,
+      detail: "Usar el tablero de tareas para ordenar responsables y urgencias.",
+      tone: pendingTasks.length > 6 ? "coral" : "neutral"
+    },
+    {
+      label: "Comercial",
+      title: `Conversion CRM ${Math.round((wonOpportunities / totalOpportunities) * 100)}%`,
+      detail: `${sentBudgets} presupuesto(s) enviados esperando respuesta.`,
+      tone: sentBudgets ? "pendiente" : "neutral"
+    }
+  ];
+  return insights;
+}
+
 function populateClientSelects() {
   const options = [`<option value="">Todos</option>`].concat(clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`));
   const requiredOptions = clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`).join("");
 
-  ["filterClient", "billingFilterClient", "projectFilterClient", "adminClientFilter", "portalClient"].forEach((id) => {
+  ["filterClient", "billingFilterClient", "projectFilterClient", "adminClientFilter", "portalClient", "crmFilterClient", "budgetFilterClient", "documentFilterClient", "supportFilterClient"].forEach((id) => {
     if (!dom[id]) return;
     const value = dom[id].value;
     dom[id].innerHTML = options.join("");
@@ -903,6 +1209,10 @@ function populateClientSelects() {
   if (dom.projectFilterClient) dom.projectFilterClient.value = state.projectFilterClientId;
   if (dom.adminClientFilter) dom.adminClientFilter.value = state.adminFilterClientId;
   if (dom.portalClient) dom.portalClient.value = state.selectedPortalClientId;
+  if (dom.crmFilterClient) dom.crmFilterClient.value = state.crmFilters.clientId;
+  if (dom.budgetFilterClient) dom.budgetFilterClient.value = state.budgetFilters.clientId;
+  if (dom.documentFilterClient) dom.documentFilterClient.value = state.documentFilters.clientId;
+  if (dom.supportFilterClient) dom.supportFilterClient.value = state.supportFilters.clientId;
 }
 
 function populateProjectSelects() {
@@ -1265,6 +1575,12 @@ function budgetTotal(budget) {
 
 function conversionRate(part, total) {
   return total ? Math.round((Number(part || 0) / Number(total || 1)) * 100) : 0;
+}
+
+function matchesTerm(values, term) {
+  const value = String(term || "").trim().toLowerCase();
+  if (!value) return true;
+  return values.filter(Boolean).join(" ").toLowerCase().includes(value);
 }
 
 function calendarDate(date) {

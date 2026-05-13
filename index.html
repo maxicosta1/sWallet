@@ -256,6 +256,16 @@
                         <section class="panel">
                             <div class="panel-header">
                                 <div>
+                                    <p class="eyebrow">Hoy</p>
+                                    <h2>Agenda operativa</h2>
+                                </div>
+                            </div>
+                            <div class="stack-list" id="todaySummary"></div>
+                        </section>
+
+                        <section class="panel">
+                            <div class="panel-header">
+                                <div>
                                     <p class="eyebrow">Alertas</p>
                                     <h2>Pagos proximos</h2>
                                 </div>
@@ -541,6 +551,16 @@
                         <canvas id="balanceChart" height="260"></canvas>
                     </section>
                 </div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Insights</p>
+                            <h2>Lecturas automaticas</h2>
+                        </div>
+                    </div>
+                    <div class="insight-grid" id="reportInsights"></div>
+                </section>
 
                 <section class="panel">
                     <div class="panel-header">
@@ -945,6 +965,14 @@
             </section>
 
             <section class="view" id="crmView" data-view-panel="crm">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Pipeline</p><h2>Filtros comerciales</h2></div><button class="ghost-button compact" id="clearCrmFilters" type="button">Limpiar</button></div>
+                    <div class="filters-grid compact-filters">
+                        <label>Cliente<select id="crmFilterClient"></select></label>
+                        <label>Estado<select id="crmFilterStatus"><option value="">Todos</option><option value="lead_nuevo">Lead nuevo</option><option value="contactado">Contactado</option><option value="respondio">Respondio</option><option value="reunion_agendada">Reunion agendada</option><option value="presupuesto_enviado">Presupuesto enviado</option><option value="negociacion">Negociacion</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="perdido">Perdido</option></select></label>
+                        <label>Buscar<input id="crmFilterTerm" type="search" placeholder="Servicio, responsable, proxima accion..."></label>
+                    </div>
+                </section>
                 <div class="content-grid form-and-table">
                     <section class="panel modal-panel" id="opportunityModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Pipeline comercial</p><h2 id="opportunityFormTitle">Nueva oportunidad</h2></div></div>
@@ -978,6 +1006,14 @@
             </section>
 
             <section class="view" id="presupuestosView" data-view-panel="presupuestos">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Propuestas</p><h2>Filtros de presupuestos</h2></div><button class="ghost-button compact" id="clearBudgetFilters" type="button">Limpiar</button></div>
+                    <div class="filters-grid compact-filters">
+                        <label>Cliente<select id="budgetFilterClient"></select></label>
+                        <label>Estado<select id="budgetFilterStatus"><option value="">Todos</option><option value="borrador">Borrador</option><option value="enviado">Enviado</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="vencido">Vencido</option></select></label>
+                        <label>Buscar<input id="budgetFilterTerm" type="search" placeholder="Proyecto, servicios, notas..."></label>
+                    </div>
+                </section>
                 <div class="content-grid form-and-table">
                     <section class="panel modal-panel" id="budgetModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Presupuestos</p><h2 id="budgetFormTitle">Nuevo presupuesto</h2></div></div>
@@ -1041,6 +1077,14 @@
             </section>
 
             <section class="view" id="documentosView" data-view-panel="documentos">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Biblioteca</p><h2>Filtros de documentos</h2></div><button class="ghost-button compact" id="clearDocumentFilters" type="button">Limpiar</button></div>
+                    <div class="filters-grid compact-filters">
+                        <label>Cliente<select id="documentFilterClient"></select></label>
+                        <label>Tipo<input id="documentFilterType" type="search" placeholder="contrato, brief..."></label>
+                        <label>Buscar<input id="documentFilterTerm" type="search" placeholder="Nombre, etiquetas, descripcion..."></label>
+                    </div>
+                </section>
                 <div class="content-grid form-and-table">
                     <section class="panel modal-panel" id="documentModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Biblioteca</p><h2 id="documentFormTitle">Nuevo documento</h2></div></div>
@@ -1064,6 +1108,14 @@
             </section>
 
             <section class="view" id="soporteView" data-view-panel="soporte">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Mantenimiento</p><h2>Filtros de soporte</h2></div><button class="ghost-button compact" id="clearSupportFilters" type="button">Limpiar</button></div>
+                    <div class="filters-grid compact-filters">
+                        <label>Cliente<select id="supportFilterClient"></select></label>
+                        <label>Estado<select id="supportFilterStatus"><option value="">Todos</option><option value="activo">Activo</option><option value="pendiente">Pendiente</option><option value="pausado">Pausado</option><option value="finalizado">Finalizado</option></select></label>
+                        <label>Buscar<input id="supportFilterTerm" type="search" placeholder="Dominio, hosting, plan..."></label>
+                    </div>
+                </section>
                 <div class="content-grid form-and-table">
                     <section class="panel modal-panel" id="supportModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Mantenimiento</p><h2 id="supportFormTitle">Nuevo mantenimiento</h2></div></div>
@@ -1101,6 +1153,13 @@
             </section>
 
             <section class="view" id="marketingView" data-view-panel="marketing">
+                <section class="panel filters-panel">
+                    <div class="panel-header"><div><p class="eyebrow">Adquisicion</p><h2>Filtros de marketing</h2></div><button class="ghost-button compact" id="clearMarketingFilters" type="button">Limpiar</button></div>
+                    <div class="filters-grid compact-filters">
+                        <label>Estado<select id="marketingFilterStatus"><option value="">Todos</option><option value="activa">Activa</option><option value="pausada">Pausada</option><option value="cerrada">Cerrada</option></select></label>
+                        <label>Buscar<input id="marketingFilterTerm" type="search" placeholder="Rubro, mensaje, campana..."></label>
+                    </div>
+                </section>
                 <div class="content-grid form-and-table">
                     <section class="panel modal-panel" id="marketingModal" data-modal>
                         <div class="panel-header"><div><p class="eyebrow">Marketing</p><h2 id="marketingFormTitle">Nueva campana</h2></div></div>
@@ -1130,12 +1189,71 @@
             <section class="view" id="configuracionView" data-view-panel="configuracion">
                 <div class="content-grid two-columns">
                     <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Empresa</p><h2>Datos de sCode</h2></div></div>
+                        <form id="companySettingsForm" class="data-form" novalidate>
+                            <div class="form-row">
+                                <label>Nombre comercial<input id="companyName" required type="text"></label>
+                                <label>Razon social<input id="companyLegalName" type="text"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Email<input id="companyEmail" type="email"></label>
+                                <label>Web<input id="companyWebsite" type="url"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Color principal<input id="companyPrimaryColor" required type="color"></label>
+                                <label>Moneda principal<select id="companyMainCurrency"><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
+                                <label>Moneda secundaria<select id="companySecondaryCurrency"><option value="USD">USD</option><option value="ARS">ARS</option></select></label>
+                                <label>Alertar antes de<input id="companyReminderDays" min="1" max="30" type="number"></label>
+                            </div>
+                            <label>Servicios ofrecidos<textarea id="companyServices" rows="5" placeholder="Un servicio por linea"></textarea></label>
+                            <label>Categorias financieras<textarea id="companyFinanceCategories" rows="5" placeholder="Una categoria por linea"></textarea></label>
+                            <button class="primary-button" type="submit">Guardar configuracion</button>
+                        </form>
+                    </section>
+
+                    <section class="panel">
                         <div class="panel-header"><div><p class="eyebrow">Cuenta</p><h2>Sesion actual</h2></div></div>
                         <div class="stack-list" id="settingsSession"></div>
                     </section>
+
+                    <section class="panel">
+                        <div class="panel-header"><div><p class="eyebrow">Accesos</p><h2>Usuarios y roles</h2></div></div>
+                        <form id="authUserForm" class="data-form" novalidate>
+                            <div class="form-row">
+                                <label>Nombre<input id="authUserName" required type="text"></label>
+                                <label>Email<input id="authUserEmail" required type="email"></label>
+                            </div>
+                            <div class="form-row">
+                                <label>Contrasena temporal<input id="authUserPassword" required minlength="6" type="password"></label>
+                                <label>Rol<select id="authUserRole" required><option value="admin">Admin</option><option value="finanzas">Finanzas</option><option value="solo_lectura">Solo lectura</option></select></label>
+                                <label>Estado<select id="authUserStatus" required><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label>
+                            </div>
+                            <button class="primary-button write-action" type="submit">Crear usuario</button>
+                        </form>
+                        <div class="table-wrap settings-users-table">
+                            <table>
+                                <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                <tbody id="authUsersTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
                     <section class="panel">
                         <div class="panel-header"><div><p class="eyebrow">Datos locales</p><h2>Persistencia</h2></div></div>
                         <div class="stack-list" id="settingsData"></div>
+                        <div class="backup-actions">
+                            <button class="ghost-button" id="exportBackup" type="button">Exportar backup JSON</button>
+                            <button class="ghost-button" id="importBackupButton" type="button">Importar backup</button>
+                            <input id="importBackupFile" type="file" accept="application/json,.json" hidden>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-header">
+                            <div><p class="eyebrow">Auditoria</p><h2>Historial de cambios</h2></div>
+                            <button class="ghost-button compact delete-action" id="clearActivityLog" type="button">Limpiar historial</button>
+                        </div>
+                        <div class="stack-list audit-list" id="activityLogList"></div>
                     </section>
                 </div>
             </section>

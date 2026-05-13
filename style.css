@@ -2120,6 +2120,12 @@ td,
     gap: 16px;
 }
 
+.insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
 .resource-card,
 .portal-preview {
     border: 1px solid rgba(98, 74, 143, 0.12);
@@ -2129,6 +2135,150 @@ td,
         linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 255, 0.78)),
         rgba(255, 255, 255, 0.82);
     box-shadow: 0 18px 48px rgba(67, 45, 110, 0.08);
+}
+
+.portal-preview {
+    display: grid;
+    gap: 18px;
+}
+
+.portal-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 20% 10%, rgba(159, 92, 255, 0.18), transparent 34%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(244, 238, 255, 0.86));
+    border: 1px solid rgba(159, 92, 255, 0.14);
+}
+
+.portal-hero h2 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 5vw, 54px);
+    letter-spacing: 0;
+    color: var(--text);
+}
+
+.portal-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.portal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.portal-section {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid rgba(98, 74, 143, 0.12);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.portal-main-card,
+.portal-files {
+    grid-column: span 1;
+}
+
+.portal-project-list,
+.portal-list {
+    display: grid;
+    gap: 12px;
+}
+
+.portal-project-card,
+.portal-list-item,
+.portal-account-card {
+    border: 1px solid rgba(98, 74, 143, 0.1);
+    border-radius: 18px;
+    padding: 14px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(250, 247, 255, 0.78));
+}
+
+.portal-project-card {
+    display: grid;
+    gap: 12px;
+}
+
+.portal-project-card p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.portal-mini-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.portal-mini-metrics span {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(159, 92, 255, 0.06);
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.portal-mini-metrics strong {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.portal-account-card {
+    color: #ffffff;
+    background:
+        radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.32), transparent 24%),
+        linear-gradient(135deg, #9f5cff, #6f3edc 58%, #261a49);
+    box-shadow: 0 18px 44px rgba(159, 92, 255, 0.22);
+}
+
+.portal-account-card span,
+.portal-account-card small {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.portal-account-card strong {
+    display: block;
+    margin: 8px 0;
+    font-size: clamp(26px, 4vw, 42px);
+    color: #ffffff;
+}
+
+.portal-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.portal-list-item > div {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.portal-list-item strong,
+.portal-list-item span {
+    overflow-wrap: anywhere;
+}
+
+.portal-list-item span {
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .resource-card {
@@ -2143,6 +2293,10 @@ td,
     margin: 0;
 }
 
+.insight-card {
+    min-height: 150px;
+}
+
 .full-calendar {
     min-height: 360px;
 }
@@ -2155,8 +2309,305 @@ td,
     min-height: 120px;
 }
 
+@media (max-width: 980px) {
+    .portal-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .portal-hero,
+    .portal-list-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .portal-hero-actions {
+        justify-content: flex-start;
+    }
+
+    .portal-mini-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+.backup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.settings-users-table {
+    margin-top: 18px;
+}
+
+.audit-list {
+    max-height: 460px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.audit-item strong {
+    color: var(--text);
+}
+
+.table-select {
+    min-height: 34px;
+    width: min(160px, 100%);
+    padding: 4px 10px;
+    font-size: 0.82rem;
+}
+
+#companyPrimaryColor {
+    min-height: 46px;
+    padding: 6px;
+}
+
 @media (max-width: 900px) {
     .wide-board {
         grid-template-columns: repeat(9, minmax(190px, 76vw));
+    }
+}
+
+/* QA visual polish */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    background:
+        radial-gradient(circle at 30% -10%, rgba(159, 92, 255, 0.16), transparent 32rem),
+        radial-gradient(circle at 96% 8%, rgba(255, 122, 89, 0.08), transparent 24rem),
+        linear-gradient(145deg, #fbf9ff 0%, #f4efff 48%, #ffffff 100%);
+}
+
+.main-content {
+    max-width: none;
+}
+
+.topbar {
+    position: relative;
+    z-index: 5;
+}
+
+.topbar-actions,
+.panel-actions,
+.actions-cell,
+.form-actions {
+    min-width: 0;
+}
+
+.primary-button {
+    color: #ffffff;
+}
+
+.danger-button {
+    color: #b32242;
+}
+
+.auth-card {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(159, 92, 255, 0.18), transparent 18rem),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(247, 242, 255, 0.84));
+}
+
+.form-error {
+    color: #b32242;
+    background: rgba(255, 92, 122, 0.1);
+}
+
+.global-search input,
+.search-results,
+.search-results button {
+    background: rgba(255, 255, 255, 0.94);
+}
+
+.search-results {
+    border-color: var(--line);
+}
+
+.search-results button:hover {
+    background: rgba(159, 92, 255, 0.09);
+}
+
+.sidebar {
+    box-shadow: 14px 0 42px rgba(77, 48, 120, 0.08);
+}
+
+.rate-card,
+.session-card {
+    box-shadow: none;
+}
+
+.dashboard-board {
+    overflow: visible;
+}
+
+.dashboard-controls {
+    justify-content: space-between;
+}
+
+.dashboard-kpis {
+    grid-template-columns: minmax(245px, 0.58fr) minmax(0, 2.42fr);
+}
+
+.dashboard-balance-card {
+    min-height: 240px;
+}
+
+.dashboard-balance-card #heroBalance {
+    font-size: clamp(1.45rem, 2.55vw, 2.22rem);
+}
+
+.dashboard-balance-card .bank-card-bottom {
+    gap: 8px;
+}
+
+.dashboard-balance-card .bank-card-bottom strong {
+    font-size: clamp(0.76rem, 1.1vw, 0.92rem);
+}
+
+#dashboardView .dashboard-stats {
+    align-items: stretch;
+}
+
+#dashboardView .stat-card {
+    min-height: 116px;
+}
+
+#dashboardView .stat-card strong {
+    line-height: 1.08;
+}
+
+.stats-grid {
+    align-items: stretch;
+}
+
+.stat-card,
+.panel,
+.resource-card,
+.portal-section,
+.admin-card,
+.goal-card,
+.kanban-column {
+    min-width: 0;
+}
+
+.stat-card strong,
+.panel h2,
+.resource-card strong,
+.entity-title strong,
+.list-item strong {
+    overflow-wrap: anywhere;
+}
+
+.content-grid,
+.stats-grid,
+.filters-grid,
+.form-row,
+.resource-grid,
+.insight-grid {
+    min-width: 0;
+}
+
+.table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    min-width: 760px;
+}
+
+.settings-users-table table,
+.dashboard-ledger table {
+    min-width: 620px;
+}
+
+.modal-panel {
+    max-width: min(760px, calc(100vw - 32px));
+}
+
+.modal-panel .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+@media (max-width: 1180px) {
+    .dashboard-controls {
+        justify-content: flex-start;
+    }
+
+    .dashboard-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-balance-card {
+        max-width: 520px;
+    }
+}
+
+@media (max-width: 860px) {
+    .main-content {
+        padding: 16px;
+    }
+
+    .topbar {
+        gap: 12px;
+    }
+
+    .topbar h1 {
+        font-size: clamp(1.55rem, 8vw, 2.25rem);
+    }
+
+    .sidebar {
+        background: rgba(255, 255, 255, 0.96);
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-board,
+    .panel,
+    .portal-preview {
+        padding: 14px;
+    }
+
+    .dashboard-balance-card {
+        max-width: none;
+    }
+
+    .date-range-pill,
+    .google-calendar-button,
+    .period-tabs button {
+        font-size: 0.82rem;
+    }
+
+    #dashboardView .stat-card {
+        min-height: 104px;
+    }
+
+    .actions-cell {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .actions-cell button {
+        width: 100%;
+    }
+
+    .resource-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-panel .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    table {
+        min-width: 680px;
     }
 }

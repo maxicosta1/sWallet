@@ -1,7 +1,10 @@
 export const STORAGE_KEY = "scodeFinanceApp";
+export const SCHEMA_VERSION = 3;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const state = {
+  schemaVersion: SCHEMA_VERSION,
+  savedAt: "",
   users: [],
   session: null,
   clients: [],
@@ -23,6 +26,19 @@ export const state = {
   teamMembers: [],
   marketingCampaigns: [],
   clientPortalItems: [],
+  activityLogs: [],
+  companySettings: {
+    name: "sCode Digital Solutions",
+    legalName: "sCode Digital Solutions",
+    email: "admin@scode.com",
+    website: "https://scode.com",
+    primaryColor: "#9f5cff",
+    mainCurrency: "ARS",
+    secondaryCurrency: "USD",
+    reminderDays: 5,
+    services: "Landing page premium\nWeb institucional\nEcommerce\nSistema web\nMantenimiento mensual\nSEO tecnico",
+    financeCategories: "Desarrollo web\nMantenimiento\nHosting\nDominio\nPublicidad\nHerramientas\nImpuestos\nOtros"
+  },
   exchangeRate: 1200,
   activeView: "dashboard",
   globalSearch: "",
@@ -48,6 +64,11 @@ export const state = {
   taskFilter: "",
   goalFilter: "",
   adminFilterClientId: "",
+  crmFilters: { clientId: "", status: "", term: "" },
+  budgetFilters: { clientId: "", status: "", term: "" },
+  documentFilters: { clientId: "", type: "", term: "" },
+  supportFilters: { clientId: "", status: "", term: "" },
+  marketingFilters: { status: "", term: "" },
   selectedPortalClientId: ""
 };
 

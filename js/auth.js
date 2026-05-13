@@ -33,7 +33,8 @@ export function registerInitialUser({ name, email, password }) {
     name,
     email: email.toLowerCase(),
     passwordHashMock: mockHash(password),
-    role: "admin"
+    role: "admin",
+    status: "activo"
   });
 
   state.users.push(user);
@@ -54,7 +55,7 @@ export function registerInitialUser({ name, email, password }) {
 
 export function login({ email, password }) {
   const user = state.users.find((item) => item.email === email.toLowerCase());
-  if (!user || user.passwordHashMock !== mockHash(password)) {
+  if (!user || user.passwordHashMock !== mockHash(password) || user.status === "inactivo") {
     throw new Error("Email o contrasena incorrectos.");
   }
   state.session = { userId: user.id, createdAt: new Date().toISOString() };
@@ -68,7 +69,7 @@ export function logout() {
 }
 
 function attachUserToExistingData(userId) {
-  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions", "opportunities", "budgets", "calendarEvents", "documents", "supportPlans", "teamMembers", "marketingCampaigns", "clientPortalItems"].forEach((key) => {
+  ["clients", "projects", "invoices", "payments", "movements", "subscriptions", "tasks", "goals", "requests", "notes", "actions", "opportunities", "budgets", "calendarEvents", "documents", "supportPlans", "teamMembers", "marketingCampaigns", "clientPortalItems", "activityLogs"].forEach((key) => {
     state[key] = state[key].map((item) => ({ ...item, userId: item.userId || userId }));
   });
 
