@@ -1,5 +1,5 @@
 export const STORAGE_KEY = "scodeFinanceApp";
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const state = {

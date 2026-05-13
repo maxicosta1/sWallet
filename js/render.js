@@ -603,13 +603,19 @@ function renderSettings() {
   const user = currentUser();
   syncCompanySettingsForm();
   dom.settingsSession.innerHTML = `
-    <article class="list-item"><div><strong>${escapeHTML(user.name)}</strong><span>${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
+    <article class="list-item"><div><strong>${escapeHTML(user.name)}</strong><span>@${escapeHTML(user.username || "usuario")} - ${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
     <article class="list-item"><div><strong>Permisos</strong><span>${canWrite() ? "Puede crear y editar" : "Solo visualizacion"}</span></div><span class="badge ${canDelete() ? "admin" : "neutral"}">${canDelete() ? "admin" : "limitado"}</span></article>
   `;
   if (dom.authUsersTable) {
     dom.authUsersTable.innerHTML = state.users.length ? state.users.map((item) => `
       <tr>
-        <td><div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>${escapeHTML(item.email)}${item.id === user.id ? " - sesion actual" : ""}</span></div></td>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar">${item.avatar ? `<img src="${escapeAttribute(item.avatar)}" alt="">` : escapeHTML((item.name || "U").slice(0, 1).toUpperCase())}</div>
+            <div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>@${escapeHTML(item.username || "-")}${item.id === user.id ? " - sesion actual" : ""}</span></div>
+          </div>
+        </td>
+        <td><div class="entity-title"><strong>${escapeHTML(item.email)}</strong><span>${escapeHTML(item.area || "Sin area")} ${item.phone ? `- ${escapeHTML(item.phone)}` : ""}</span></div></td>
         <td>
           <select class="table-select write-action" onchange="updateAuthUserRole('${item.id}', this.value)" ${item.id === user.id ? "disabled" : ""}>
             <option value="admin" ${item.role === "admin" ? "selected" : ""}>Admin</option>
@@ -618,6 +624,7 @@ function renderSettings() {
           </select>
           <span class="badge ${item.role}">${labelize(item.role)}</span>
         </td>
+        <td><div class="permission-tags">${(item.permissions || []).map((permission) => `<span>${escapeHTML(labelize(permission))}</span>`).join("") || "<span>reportes</span>"}</div></td>
         <td>
           <select class="table-select write-action" onchange="updateAuthUserStatus('${item.id}', this.value)" ${item.id === user.id ? "disabled" : ""}>
             <option value="activo" ${(item.status || "activo") === "activo" ? "selected" : ""}>Activo</option>
@@ -627,7 +634,7 @@ function renderSettings() {
         </td>
         <td><button class="danger-button compact delete-action" type="button" onclick="deleteAuthUser('${item.id}')" ${item.id === user.id ? "disabled" : ""}>Eliminar</button></td>
       </tr>
-    `).join("") : tableEmpty(4, "No hay usuarios creados.");
+    `).join("") : tableEmpty(6, "No hay usuarios creados.");
   }
   const diagnostics = dataIntegrityIssues();
   dom.settingsData.innerHTML = `

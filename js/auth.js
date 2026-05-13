@@ -20,21 +20,28 @@ export function isAuthenticated() {
 
 export function canWrite() {
   const user = currentUser();
-  return user?.role === "admin" || user?.role === "finanzas";
+  return user?.role === "admin" || user?.role === "finanzas" || user?.permissions?.includes("write");
 }
 
 export function canDelete() {
-  return currentUser()?.role === "admin";
+  const user = currentUser();
+  return user?.role === "admin" || user?.permissions?.includes("delete");
 }
 
-export function registerInitialUser({ name, email, password }) {
+export function registerInitialUser({ name, email, password, username = "admin" }) {
   if (hasUsers()) throw new Error("El registro inicial ya fue creado.");
   const user = createRecord({
     name,
+    username,
     email: email.toLowerCase(),
     passwordHashMock: mockHash(password),
     role: "admin",
-    status: "activo"
+    status: "activo",
+    permissions: ["clients", "finance", "projects", "reports", "settings", "write", "delete"],
+    avatar: "",
+    phone: "",
+    area: "Administracion",
+    notes: ""
   });
 
   state.users.push(user);
@@ -54,7 +61,8 @@ export function registerInitialUser({ name, email, password }) {
 }
 
 export function login({ email, password }) {
-  const user = state.users.find((item) => item.email === email.toLowerCase());
+  const credential = email.toLowerCase();
+  const user = state.users.find((item) => item.email === credential || String(item.username || "").toLowerCase() === credential);
   if (!user || user.passwordHashMock !== mockHash(password) || user.status === "inactivo") {
     throw new Error("Email o contrasena incorrectos.");
   }

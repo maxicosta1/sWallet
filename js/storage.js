@@ -101,7 +101,7 @@ export function migrateSnapshot(snapshot) {
   migrated.payments = migrated.payments.map(migratePayment);
   migrated.tasks = migrated.tasks.map(migrateTask);
   migrated.goals = migrated.goals.map(migrateGoal);
-  migrated.users = migrated.users.map((user) => ({ status: "active", ...user }));
+  migrated.users = migrated.users.map(migrateUser);
 
   return migrated;
 }
@@ -194,4 +194,26 @@ function migrateGoal(goal) {
     priority: "media",
     ...goal
   };
+}
+
+function migrateUser(user) {
+  const username = user.username || String(user.email || user.name || "usuario").split("@")[0].toLowerCase().replace(/[^a-z0-9._-]/g, ".");
+  const status = user.status === "active" ? "activo" : user.status;
+  return {
+    username,
+    status: "activo",
+    permissions: defaultPermissionsForRole(user.role),
+    avatar: "",
+    phone: "",
+    area: "",
+    notes: "",
+    ...user,
+    status: status || "activo"
+  };
+}
+
+function defaultPermissionsForRole(role) {
+  if (role === "admin") return ["clients", "finance", "projects", "reports", "settings", "write", "delete"];
+  if (role === "finanzas") return ["clients", "finance", "reports", "write"];
+  return ["reports"];
 }

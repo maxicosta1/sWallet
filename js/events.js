@@ -820,17 +820,23 @@ function handleAuthUserSubmit(event) {
   event.preventDefault();
   if (!assertDelete() || !validateForm(dom.authUserForm)) return;
   if (!isValidEmail(dom.authUserEmail.value)) return fieldError(dom.authUserEmail, "Email invalido", "Ingresa un email valido.");
+  if (dom.authUserAvatar.value && !isValidUrl(dom.authUserAvatar.value)) return fieldError(dom.authUserAvatar, "Foto invalida", "Usa una URL valida con http:// o https://.");
   const email = dom.authUserEmail.value.trim().toLowerCase();
-  if (state.users.some((user) => user.email === email)) {
-    notify("Usuario duplicado", "Ya existe un usuario con ese email.");
-    return;
-  }
+  const username = dom.authUserUsername.value.trim().toLowerCase();
+  if (state.users.some((user) => user.email === email)) return notify("Usuario duplicado", "Ya existe un usuario con ese email.");
+  if (state.users.some((user) => String(user.username || "").toLowerCase() === username)) return notify("Usuario duplicado", "Ya existe un usuario con ese nombre de usuario.");
   state.users.push(createRecord({
     name: dom.authUserName.value.trim(),
+    username,
     email,
     passwordHashMock: mockHash(dom.authUserPassword.value),
     role: dom.authUserRole.value,
-    status: dom.authUserStatus.value
+    status: dom.authUserStatus.value,
+    permissions: [...dom.authUserPermissions.selectedOptions].map((option) => option.value),
+    avatar: dom.authUserAvatar.value.trim(),
+    phone: dom.authUserPhone.value.trim(),
+    area: dom.authUserArea.value.trim(),
+    notes: dom.authUserNotes.value.trim()
   }));
   dom.authUserForm.reset();
   saveAndRender("Usuario creado", "El nuevo acceso quedo disponible.");

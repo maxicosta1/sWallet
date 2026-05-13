@@ -35,7 +35,7 @@
                 </div>
             </div>
             <form id="loginForm" class="data-form" novalidate>
-                <label>Email<input id="loginEmail" required type="email" placeholder="admin@scode.com"></label>
+                <label>Email o usuario<input id="loginEmail" required type="text" placeholder="admin@scode.com o admin"></label>
                 <label>Contrasena<input id="loginPassword" required type="password"></label>
                 <p class="form-error" id="loginError" hidden></p>
                 <button class="primary-button" type="submit">Ingresar</button>
@@ -1221,6 +1221,7 @@
                         <form id="authUserForm" class="data-form" novalidate>
                             <div class="form-row">
                                 <label>Nombre<input id="authUserName" required type="text"></label>
+                                <label>Usuario<input id="authUserUsername" required type="text" placeholder="agustin.scode"></label>
                                 <label>Email<input id="authUserEmail" required type="email"></label>
                             </div>
                             <div class="form-row">
@@ -1228,11 +1229,26 @@
                                 <label>Rol<select id="authUserRole" required><option value="admin">Admin</option><option value="finanzas">Finanzas</option><option value="solo_lectura">Solo lectura</option></select></label>
                                 <label>Estado<select id="authUserStatus" required><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label>
                             </div>
+                            <div class="form-row">
+                                <label>Foto de perfil URL<input id="authUserAvatar" type="url" placeholder="https://..."></label>
+                                <label>Telefono<input id="authUserPhone" type="text" placeholder="+54 9..."></label>
+                                <label>Area<input id="authUserArea" type="text" placeholder="Finanzas, Desarrollo, Comercial..."></label>
+                            </div>
+                            <label>Permisos
+                                <select id="authUserPermissions" multiple size="5">
+                                    <option value="clients">Clientes</option>
+                                    <option value="finance">Finanzas</option>
+                                    <option value="projects">Proyectos</option>
+                                    <option value="reports">Reportes</option>
+                                    <option value="settings">Configuracion</option>
+                                </select>
+                            </label>
+                            <label>Notas internas<textarea id="authUserNotes" rows="2" placeholder="Responsabilidades, alcance, observaciones..."></textarea></label>
                             <button class="primary-button write-action" type="submit">Crear usuario</button>
                         </form>
                         <div class="table-wrap settings-users-table">
                             <table>
-                                <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                <thead><tr><th>Usuario</th><th>Datos</th><th>Rol</th><th>Permisos</th><th>Estado</th><th>Acciones</th></tr></thead>
                                 <tbody id="authUsersTable"></tbody>
                             </table>
                         </div>
