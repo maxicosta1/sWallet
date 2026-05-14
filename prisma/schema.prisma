@@ -1,10 +1,9 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../backend/node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -174,7 +173,7 @@ model User {
   passwordHash       String?
   role               Role                @default(solo_lectura)
   status             UserStatus          @default(activo)
-  permissions        String[]            @default([])
+  permissions        Json?
   phone              String?
   area               String?
   notes              String?             @db.Text
@@ -542,7 +541,7 @@ model AdminTask {
   priority    Priority   @default(media)
   status      TaskStatus @default(pendiente)
   dueDate     DateTime?
-  checklist   String[]   @default([])
+  checklist   Json?
   comments    String?    @db.Text
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)

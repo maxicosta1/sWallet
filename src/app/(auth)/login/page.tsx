@@ -28,9 +28,6 @@ export default async function LoginPage() {
           </CardHeader>
           <CardContent>
             <LoginForm />
-            <p className="mt-5 rounded-2xl bg-white/[0.04] p-3 text-xs text-muted-foreground">
-              Demo: admin@scode.com / admin123456. Cambiar credenciales luego del primer deploy.
-            </p>
           </CardContent>
         </Card>
       </div>

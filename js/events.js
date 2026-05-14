@@ -1,4 +1,4 @@
-import { canDelete, canWrite, login, logout, registerInitialUser } from "./auth.js";
+import { canDelete, canWrite, login, logout } from "./auth.js";
 import { clientService } from "./api/clientService.js";
 import { projectService } from "./api/projectService.js";
 import { filteredInvoices, projectExists, clientExists } from "./finance.js";
@@ -33,7 +33,6 @@ import {
 } from "./render.js";
 
 export function bindEvents() {
-  dom.registerForm.addEventListener("submit", handleRegister);
   dom.loginForm.addEventListener("submit", handleLogin);
   dom.logoutButton.addEventListener("click", async () => {
     await logout();
@@ -271,31 +270,12 @@ function resetForModal(id) {
   resets[id]?.();
 }
 
-async function handleRegister(event) {
-  event.preventDefault();
-  try {
-    setFormBusy(dom.registerForm, true);
-    await registerInitialUser({
-      name: dom.registerName.value.trim(),
-      email: dom.registerEmail.value.trim(),
-      password: dom.registerPassword.value
-    });
-    notify("Usuario creado", "Sesion iniciada como admin.");
-    renderAll();
-  } catch (error) {
-    dom.registerError.textContent = error.message;
-    dom.registerError.hidden = false;
-  } finally {
-    setFormBusy(dom.registerForm, false);
-  }
-}
-
 async function handleLogin(event) {
   event.preventDefault();
   try {
     setFormBusy(dom.loginForm, true);
     await login({
-      email: dom.loginEmail.value.trim(),
+      credential: dom.loginEmail.value.trim(),
       password: dom.loginPassword.value
     });
     dom.loginError.hidden = true;

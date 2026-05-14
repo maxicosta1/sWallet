@@ -1,10 +1,10 @@
 import { PrismaClient, type Currency, type MovementType } from "@prisma/client";
-import { hash } from "bcryptjs";
-
 const prisma = new PrismaClient();
 
-const adminEmail = process.env.DEMO_ADMIN_EMAIL ?? "admin@scode.com";
-const adminPassword = process.env.DEMO_ADMIN_PASSWORD ?? "admin123456";
+const allowedUsers = (process.env.ALLOWED_LOGIN_USERS ?? "FranPernil,MaxiTaxi")
+  .split(",")
+  .map((user) => user.trim())
+  .filter(Boolean);
 
 function addDays(days: number) {
   const date = new Date();
@@ -31,20 +31,27 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      name: "sCode Admin",
-      email: adminEmail,
-      passwordHash: await hash(adminPassword, 12),
-      role: "admin"
+      name: allowedUsers[0] ?? "FranPernil",
+      username: allowedUsers[0] ?? "FranPernil",
+      email: `${(allowedUsers[0] ?? "FranPernil").toLowerCase()}@swallet.local`,
+      role: "admin",
+      status: "activo",
+      permissions: ["clients", "finance", "projects", "reports", "settings", "write", "delete"]
     }
   });
 
-  await prisma.user.createMany({
-    data: [
-      { name: "Finanzas sCode", email: "finanzas@scode.com", passwordHash: await hash("finanzas123", 12), role: "finanzas" },
-      { name: "Equipo Dev", email: "dev@scode.com", passwordHash: await hash("developer123", 12), role: "desarrollador" },
-      { name: "Lectura", email: "readonly@scode.com", passwordHash: await hash("readonly123", 12), role: "solo_lectura" }
-    ]
-  });
+  if (allowedUsers[1]) {
+    await prisma.user.create({
+      data: {
+        name: allowedUsers[1],
+        username: allowedUsers[1],
+        email: `${allowedUsers[1].toLowerCase()}@swallet.local`,
+        role: "admin",
+        status: "activo",
+        permissions: ["clients", "finance", "projects", "reports", "settings", "write", "delete"]
+      }
+    });
+  }
 
   const categoryData: Array<{ name: string; color: string; icon: string }> = [
     { name: "hosting", color: "#9f5cff", icon: "Server" },

@@ -1,11 +1,11 @@
 # sWallet Backend
 
-Backend Express inicial para migracion futura a PostgreSQL. En Fase 3 sigue aislado: no reemplaza `localStorage` ni conecta el frontend.
+Backend Express inicial para la base MySQL/MariaDB compartida. El frontend estatico consume estas rutas por API.
 
 ## Comandos
 
 ```bash
-cd backend
+cd backEnd
 npm install
 npm run prisma:validate
 npm run prisma:generate
@@ -29,9 +29,8 @@ src/
 ## Rutas
 
 - `GET /health`: estado del proceso.
-- `GET /health/db`: verifica conexion Prisma/PostgreSQL.
+- `GET /health/db`: verifica conexion Prisma/MySQL.
 - `GET /api/v1`: lista de modulos.
-- `POST /api/v1/auth/bootstrap`: crea primer admin solo si no existen usuarios.
 - `POST /api/v1/auth/login`: devuelve access token y refresh token.
 - `POST /api/v1/auth/refresh`: rota refresh token.
 - `POST /api/v1/auth/logout`: revoca refresh token.
@@ -67,8 +66,9 @@ src/
 
 ## Notas
 
-- Auth backend basica ya existe con JWT, refresh token persistido y bcrypt.
+- Auth backend basica ya existe con JWT y refresh token persistido.
+- El login publico no registra usuarios: solo acepta los usuarios configurados en `ALLOWED_LOGIN_USERS` con `ALLOWED_LOGIN_PASSWORD`.
 - Clientes y proyectos ya tienen CRUD real en backend.
 - Los demas endpoints de dominio siguen como placeholders.
 - Prisma usa `../prisma/schema.prisma` como schema compartido.
-- El frontend actual sigue usando `localStorage`.
+- El frontend estatico ya llama al backend para auth, clientes y proyectos.

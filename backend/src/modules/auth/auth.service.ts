@@ -1,59 +1,23 @@
 import { prisma } from "../../db/prisma.js";
-import { badRequest, conflict, forbidden, unauthorized } from "../../shared/errors.js";
+import { env } from "../../config/env.js";
+import { badRequest, conflict, unauthorized } from "../../shared/errors.js";
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from "../../shared/jwt.js";
-import { hashPassword, verifyPassword } from "../../shared/passwords.js";
 import { serializeUser } from "../../shared/users.js";
 
-type BootstrapInput = {
-  name: string;
-  username?: string;
-  email: string;
-  password: string;
-};
-
 type LoginInput = {
-  email: string;
+  credential: string;
   password: string;
   userAgent?: string;
   ipAddress?: string;
 };
 
-export async function bootstrapAdmin(input: BootstrapInput) {
-  const usersCount = await prisma.user.count();
-  if (usersCount > 0) throw forbidden("Bootstrap is only allowed before first user exists.");
-
-  const user = await prisma.user.create({
-    data: {
-      name: input.name,
-      username: input.username,
-      email: input.email,
-      passwordHash: await hashPassword(input.password),
-      role: "admin",
-      status: "activo",
-      permissions: ["clients", "finance", "projects", "reports", "settings", "write", "delete"]
-    }
-  });
-
-  await prisma.activityLog.create({
-    data: {
-      userId: user.id,
-      type: "creado",
-      title: "Admin bootstrap",
-      body: "Primer usuario administrador creado desde backend."
-    }
-  });
-
-  return serializeUser(user);
-}
-
 export async function login(input: LoginInput) {
-  const user = await prisma.user.findUnique({ where: { email: input.email } });
-  if (!user || user.deletedAt || user.status !== "activo" || !user.passwordHash) {
+  const allowedUsername = resolveAllowedUsername(input.credential, input.password);
+  if (!allowedUsername) {
     throw unauthorized("Invalid credentials.");
   }
 
-  const validPassword = await verifyPassword(input.password, user.passwordHash);
-  if (!validPassword) throw unauthorized("Invalid credentials.");
+  const user = await ensureAllowedUser(allowedUsername);
 
   const access = signAccessToken({ userId: user.id, role: user.role });
   const refresh = signRefreshToken({ userId: user.id, role: user.role });
@@ -152,4 +116,61 @@ export async function getCurrentUser(userId: string) {
 export async function assertEmailAvailable(email: string) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw conflict("Email already exists.");
+}
+
+function resolveAllowedUsername(credential: string, password: string) {
+  if (!env.allowedLogin.password || password !== env.allowedLogin.password) return null;
+
+  const normalizedCredential = normalizeCredential(credential);
+  return env.allowedLogin.users.find((user) => normalizeCredential(user) === normalizedCredential) ?? null;
+}
+
+async function ensureAllowedUser(username: string) {
+  const email = allowedUserEmail(username);
+  const existing = await prisma.user.findFirst({
+    where: {
+      OR: [{ username }, { email }]
+    }
+  });
+
+  if (existing) {
+    if (existing.deletedAt || existing.status !== "activo" || existing.role !== "admin") {
+      return prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          username,
+          email,
+          name: username,
+          role: "admin",
+          status: "activo",
+          deletedAt: null,
+          permissions: adminPermissions()
+        }
+      });
+    }
+    return existing;
+  }
+
+  return prisma.user.create({
+    data: {
+      username,
+      email,
+      name: username,
+      role: "admin",
+      status: "activo",
+      permissions: adminPermissions()
+    }
+  });
+}
+
+function normalizeCredential(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function allowedUserEmail(username: string) {
+  return `${normalizeCredential(username)}@swallet.local`;
+}
+
+function adminPermissions() {
+  return ["clients", "finance", "projects", "reports", "settings", "write", "delete"];
 }

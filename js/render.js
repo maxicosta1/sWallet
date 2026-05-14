@@ -1,4 +1,4 @@
-import { canDelete, canWrite, currentUser, hasUsers, isAuthenticated } from "./auth.js";
+import { canDelete, canWrite, currentUser, isAuthenticated } from "./auth.js";
 import {
   actions,
   billingSummaryByClient,
@@ -76,7 +76,6 @@ export function renderAuth() {
   dom.appShell.hidden = !authenticated;
 
   if (!authenticated) {
-    dom.registerPanel.hidden = hasUsers();
     dom.loginPanel.hidden = false;
     return;
   }

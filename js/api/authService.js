@@ -1,14 +1,6 @@
 import { apiRequest, clearSessionTokens, getRefreshToken, setSessionTokens } from "./http.js";
 
 export const authService = {
-  async bootstrap(input) {
-    const payload = await apiRequest("/auth/bootstrap", {
-      method: "POST",
-      body: input
-    });
-    return payload.user;
-  },
-
   async login(input) {
     const session = await apiRequest("/auth/login", {
       method: "POST",

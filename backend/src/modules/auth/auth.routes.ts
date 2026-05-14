@@ -2,8 +2,8 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { asyncHandler } from "../../shared/async-handler.js";
-import { bootstrapAdmin, getCurrentUser, login, logout, refreshSession } from "./auth.service.js";
-import { bootstrapSchema, loginSchema, logoutSchema, refreshSchema } from "./auth.schemas.js";
+import { getCurrentUser, login, logout, refreshSession } from "./auth.service.js";
+import { loginSchema, logoutSchema, refreshSchema } from "./auth.schemas.js";
 
 export const authRouter = Router();
 
@@ -13,12 +13,6 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
-
-authRouter.post("/bootstrap", authLimiter, asyncHandler(async (req, res) => {
-  const payload = bootstrapSchema.parse(req.body);
-  const user = await bootstrapAdmin(payload);
-  res.status(201).json({ user });
-}));
 
 authRouter.post("/login", authLimiter, asyncHandler(async (req, res) => {
   const payload = loginSchema.parse(req.body);
