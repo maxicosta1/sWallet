@@ -1,5 +1,7 @@
-const DEFAULT_API_BASE_URL = "http://localhost:4000/api/v1";
-const API_BASE_URL = window.sWalletApiBaseUrl || DEFAULT_API_BASE_URL;
+const LOCAL_API_BASE_URL = "http://localhost:4000/api/v1";
+const PRODUCTION_API_BASE_URL = "/api/v1";
+const DEFAULT_API_BASE_URL = isLocalHost() ? LOCAL_API_BASE_URL : PRODUCTION_API_BASE_URL;
+const API_BASE_URL = normalizeApiBaseUrl(window.sWalletApiBaseUrl || DEFAULT_API_BASE_URL);
 const ACCESS_TOKEN_KEY = "swalletAccessToken";
 const REFRESH_TOKEN_KEY = "swalletRefreshToken";
 
@@ -31,11 +33,19 @@ export function clearSessionTokens() {
 }
 
 export async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: buildHeaders(options.headers),
-    body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: buildHeaders(options.headers),
+      body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
+    });
+  } catch {
+    throw new ApiError(
+      "No se pudo conectar con el servidor. Verifica que el backend este publicado y que la URL de la API apunte a /api/v1.",
+      { status: 0 }
+    );
+  }
 
   if (response.status === 204) return null;
 
@@ -57,6 +67,15 @@ function buildHeaders(headers = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...headers
   };
+}
+
+function normalizeApiBaseUrl(value) {
+  const trimmed = String(value || "").trim().replace(/\/+$/, "");
+  return trimmed || DEFAULT_API_BASE_URL;
+}
+
+function isLocalHost() {
+  return ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
 }
 
 async function readJson(response) {
