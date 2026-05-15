@@ -81,6 +81,9 @@ export function renderAuth() {
   }
 
   const user = currentUser();
+  document.querySelectorAll("[data-user-brand]").forEach((item) => {
+    item.textContent = user?.username || user?.name || "sCode";
+  });
   dom.sessionUser.textContent = user.email;
   dom.sessionRole.textContent = user.role.replace("_", " ");
   document.body.classList.toggle("read-only", !canWrite());

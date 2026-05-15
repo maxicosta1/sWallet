@@ -1,10 +1,7 @@
-import { currentUser } from "./auth.js";
 import { parseDate, startOfDay, state, DAY_MS } from "./state.js";
 
 export function scoped(collection) {
-  const user = currentUser();
-  if (!user) return [];
-  return state[collection].filter((item) => !item.userId || item.userId === user.id);
+  return state[collection];
 }
 
 export function clients() {

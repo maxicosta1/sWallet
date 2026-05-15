@@ -9,6 +9,7 @@ const ACCESS_TTL_SECONDS = 15 * 60;
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60;
 const DEFAULT_USERS = ["FranPernil", "MaxiTaxi"];
 const DEFAULT_PASSWORD = "LiamVillero123";
+const SHARED_SNAPSHOT_USER_ID = "shared";
 
 type RouteContext = {
   params: Promise<{ path?: string[] }>;
@@ -217,7 +218,7 @@ function sanitizeSnapshot(snapshot: unknown) {
 }
 
 function userIdFor(username: string) {
-  return username.trim().toLowerCase();
+  return SHARED_SNAPSHOT_USER_ID;
 }
 
 let snapshotTableReady = false;
