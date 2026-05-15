@@ -35,6 +35,7 @@ export function loadState() {
     state.savedAt = parsed.savedAt || "";
     state.session = parsed.session || null;
     state.users = Array.isArray(parsed.users) ? parsed.users : [];
+    state.userProfiles = normalizeProfiles(parsed.userProfiles);
     persistedArrays.forEach((key) => {
       state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
     });
@@ -95,6 +96,7 @@ export function stateSnapshot() {
   }, {
     schemaVersion: SCHEMA_VERSION,
     savedAt: state.savedAt || new Date().toISOString(),
+    userProfiles: normalizeProfiles(state.userProfiles),
     companySettings: state.companySettings,
     exchangeRate: state.exchangeRate
   });
@@ -107,6 +109,8 @@ function applySnapshot(snapshot) {
   persistedArrays.forEach((key) => {
     state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
   });
+  state.userProfiles = normalizeProfiles(parsed.userProfiles);
+  applyCurrentUserProfile();
   state.companySettings = { ...state.companySettings, ...(parsed.companySettings || {}) };
   state.exchangeRate = Number(parsed.exchangeRate) || 1200;
 }
@@ -118,6 +122,7 @@ export function migrateSnapshot(snapshot) {
     schemaVersion: SCHEMA_VERSION,
     savedAt: snapshot.savedAt || new Date().toISOString(),
     session: snapshot.session || null,
+    userProfiles: normalizeProfiles(snapshot.userProfiles),
     companySettings: snapshot.companySettings || {},
     exchangeRate: Number(snapshot.exchangeRate) || 1200
   };
@@ -160,6 +165,22 @@ function normalizeRecord(record) {
     updatedAt: record.updatedAt || record.createdAt || now,
     ...record
   };
+}
+
+function normalizeProfiles(profiles) {
+  if (!profiles || typeof profiles !== "object" || Array.isArray(profiles)) return {};
+  return Object.entries(profiles).reduce((acc, [key, value]) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) acc[key] = { ...value };
+    return acc;
+  }, {});
+}
+
+function applyCurrentUserProfile() {
+  const current = state.users.find((user) => user.id === state.session?.userId);
+  if (!current) return;
+  const username = String(current.username || "").toLowerCase();
+  const profile = state.userProfiles?.[current.username] || state.userProfiles?.[username] || state.userProfiles?.[current.id];
+  if (profile?.avatar !== undefined) current.avatar = profile.avatar;
 }
 
 function migrateClient(client) {

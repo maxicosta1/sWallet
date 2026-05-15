@@ -86,6 +86,9 @@ export function renderAuth() {
   });
   dom.sessionUser.textContent = user.email;
   dom.sessionRole.textContent = user.role.replace("_", " ");
+  document.querySelectorAll("[data-session-avatar]").forEach((item) => {
+    item.innerHTML = avatarMarkup(user);
+  });
   document.body.classList.toggle("read-only", !canWrite());
 }
 
@@ -620,15 +623,16 @@ function renderSettings() {
   const user = currentUser();
   syncCompanySettingsForm();
   dom.settingsSession.innerHTML = `
-    <article class="list-item"><div><strong>${escapeHTML(user.name)}</strong><span>@${escapeHTML(user.username || "usuario")} - ${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
+    <article class="list-item account-profile-item"><div class="user-avatar large" data-session-avatar>${avatarMarkup(user)}</div><div><strong>${escapeHTML(user.name)}</strong><span>@${escapeHTML(user.username || "usuario")} - ${escapeHTML(user.email)}</span></div><span class="badge ${user.role}">${labelize(user.role)}</span></article>
     <article class="list-item"><div><strong>Permisos</strong><span>${canWrite() ? "Puede crear y editar" : "Solo visualizacion"}</span></div><span class="badge ${canDelete() ? "admin" : "neutral"}">${canDelete() ? "admin" : "limitado"}</span></article>
   `;
+  if (dom.profilePhotoUrl) dom.profilePhotoUrl.value = user.avatar || "";
   if (dom.authUsersTable) {
     dom.authUsersTable.innerHTML = state.users.length ? state.users.map((item) => `
       <tr>
         <td>
           <div class="user-cell">
-            <div class="user-avatar">${item.avatar ? `<img src="${escapeAttribute(item.avatar)}" alt="">` : escapeHTML((item.name || "U").slice(0, 1).toUpperCase())}</div>
+            <div class="user-avatar">${avatarMarkup(item)}</div>
             <div class="entity-title"><strong>${escapeHTML(item.name)}</strong><span>@${escapeHTML(item.username || "-")}${item.id === user.id ? " - sesion actual" : ""}</span></div>
           </div>
         </td>
@@ -676,6 +680,12 @@ function renderSettings() {
       </article>
     `).join("") : emptyState("Todavia no hay actividad registrada.");
   }
+}
+
+function avatarMarkup(user) {
+  return user?.avatar
+    ? `<img src="${escapeAttribute(user.avatar)}" alt="">`
+    : escapeHTML((user?.name || user?.username || "U").slice(0, 1).toUpperCase());
 }
 
 function dataIntegrityIssues() {

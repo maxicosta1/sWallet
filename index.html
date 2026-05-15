@@ -1195,6 +1195,14 @@
                     <section class="panel">
                         <div class="panel-header"><div><p class="eyebrow">Cuenta</p><h2>Sesion actual</h2></div></div>
                         <div class="stack-list" id="settingsSession"></div>
+                        <form id="profilePhotoForm" class="data-form profile-photo-form" novalidate>
+                            <label>Foto de perfil URL<input id="profilePhotoUrl" type="url" placeholder="https://..."></label>
+                            <label>Subir foto<input id="profilePhotoFile" type="file" accept="image/*"></label>
+                            <div class="form-actions">
+                                <button class="ghost-button" id="clearProfilePhoto" type="button">Quitar foto</button>
+                                <button class="primary-button" type="submit">Guardar foto</button>
+                            </div>
+                        </form>
                     </section>
 
                     <section class="panel">

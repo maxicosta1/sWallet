@@ -6,6 +6,7 @@ export const state = {
   schemaVersion: SCHEMA_VERSION,
   savedAt: "",
   users: [],
+  userProfiles: {},
   session: null,
   clients: [],
   projects: [],

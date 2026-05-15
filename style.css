@@ -1173,10 +1173,25 @@ tr:last-child td {
     background: linear-gradient(135deg, var(--primary), #ff7a8a);
 }
 
+.user-avatar.large {
+    width: 58px;
+    height: 58px;
+    font-size: 1.2rem;
+    box-shadow: 0 14px 28px rgba(33, 21, 54, 0.14);
+}
+
 .user-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.account-profile-item {
+    align-items: center;
+}
+
+.profile-photo-form {
+    margin-top: 16px;
 }
 
 .permission-tags {
@@ -2621,14 +2636,103 @@ table {
 }
 
 @media (max-width: 640px) {
+    body {
+        background:
+            radial-gradient(circle at 80% -10%, rgba(159, 92, 255, 0.22), transparent 18rem),
+            linear-gradient(180deg, #fbf9ff 0%, #f4efff 42%, #ffffff 100%);
+    }
+
+    .main-content {
+        padding: 14px 12px 22px;
+    }
+
+    .topbar {
+        margin-bottom: 14px;
+    }
+
+    .topbar h1 {
+        max-width: 58vw;
+        font-size: clamp(2.05rem, 14vw, 3.6rem);
+        line-height: 0.98;
+    }
+
+    .menu-toggle {
+        box-shadow: 0 14px 30px rgba(33, 21, 54, 0.16);
+    }
+
+    #dashboardView {
+        display: grid;
+        gap: 14px;
+    }
+
     .dashboard-board,
     .panel,
     .portal-preview {
         padding: 14px;
     }
 
+    .dashboard-board {
+        padding: 14px;
+        border: 0;
+        border-radius: 28px;
+        background:
+            linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(246, 240, 255, 0.92));
+        box-shadow:
+            0 24px 55px rgba(61, 42, 97, 0.16),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
     .dashboard-balance-card {
         max-width: none;
+        min-height: 250px;
+        padding: 20px;
+        border-radius: 30px;
+        box-shadow:
+            0 24px 55px rgba(48, 35, 86, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .dashboard-balance-card #heroBalance {
+        font-size: clamp(2.1rem, 12vw, 3.4rem);
+        letter-spacing: 0;
+    }
+
+    .dashboard-balance-card .bank-card-bottom {
+        gap: 10px;
+    }
+
+    .dashboard-balance-card .bank-card-bottom div {
+        min-height: 72px;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.13);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #dashboardView .stat-card {
+        min-height: 112px;
+        padding: 14px;
+        border-radius: 22px;
+        box-shadow: 0 16px 34px rgba(61, 42, 97, 0.12);
+    }
+
+    #dashboardView .stat-card strong {
+        font-size: clamp(1.1rem, 6vw, 1.55rem);
+    }
+
+    #dashboardView .panel {
+        border-radius: 24px;
+        box-shadow: 0 16px 34px rgba(61, 42, 97, 0.11);
+    }
+
+    .dashboard-main-grid,
+    .dashboard-secondary-grid {
+        gap: 14px;
     }
 
     .date-range-pill,

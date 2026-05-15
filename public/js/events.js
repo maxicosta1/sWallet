@@ -87,6 +87,8 @@ export function bindEvents() {
   dom.supportForm.addEventListener("submit", handleSupportSubmit);
   dom.teamForm.addEventListener("submit", handleTeamSubmit);
   dom.marketingForm.addEventListener("submit", handleMarketingSubmit);
+  if (dom.profilePhotoForm) dom.profilePhotoForm.addEventListener("submit", handleProfilePhotoSubmit);
+  if (dom.clearProfilePhoto) dom.clearProfilePhoto.addEventListener("click", clearProfilePhoto);
 
   dom.cancelClientEdit.addEventListener("click", () => { resetClientForm(); closeModal(); });
   dom.cancelPaymentEdit.addEventListener("click", () => { resetPaymentForm(); closeModal(); });
@@ -732,6 +734,59 @@ function handleMarketingSubmit(event) {
   else state.marketingCampaigns.push(createRecord(payload));
   resetMarketingForm();
   saveAndRender("Campana guardada", "Marketing actualizado.");
+}
+
+async function handleProfilePhotoSubmit(event) {
+  event.preventDefault();
+  if (!assertWritable()) return;
+  try {
+    setFormBusy(dom.profilePhotoForm, true);
+    const avatar = dom.profilePhotoFile?.files?.[0]
+      ? await readProfilePhoto(dom.profilePhotoFile.files[0])
+      : dom.profilePhotoUrl.value.trim();
+    updateCurrentUserProfile({ avatar });
+    saveAndRender("Foto actualizada", "Tu perfil fue actualizado.");
+  } catch (error) {
+    notify("No se pudo guardar la foto", error.message);
+  } finally {
+    setFormBusy(dom.profilePhotoForm, false);
+  }
+}
+
+function clearProfilePhoto() {
+  if (!assertWritable()) return;
+  dom.profilePhotoUrl.value = "";
+  if (dom.profilePhotoFile) dom.profilePhotoFile.value = "";
+  updateCurrentUserProfile({ avatar: "" });
+  saveAndRender("Foto eliminada", "Tu perfil vuelve a usar iniciales.");
+}
+
+function readProfilePhoto(file) {
+  const maxSize = 900 * 1024;
+  if (!file.type.startsWith("image/")) throw new Error("Selecciona una imagen valida.");
+  if (file.size > maxSize) throw new Error("La imagen debe pesar menos de 900 KB.");
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", () => reject(new Error("No se pudo leer la imagen.")));
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateCurrentUserProfile(payload) {
+  if (!state.session?.userId) return;
+  const user = state.users.find((item) => item.id === state.session.userId);
+  if (!user) return;
+  const username = String(user.username || "").toLowerCase();
+  state.userProfiles = state.userProfiles || {};
+  if (user.username) {
+    state.userProfiles[user.username] = { ...(state.userProfiles[user.username] || {}), ...payload };
+  }
+  if (username) {
+    state.userProfiles[username] = { ...(state.userProfiles[username] || {}), ...payload };
+  }
+  state.userProfiles[user.id] = { ...(state.userProfiles[user.id] || {}), ...payload };
+  updateRecord(state.users, state.session.userId, payload);
 }
 
 function saveExchangeRate() {

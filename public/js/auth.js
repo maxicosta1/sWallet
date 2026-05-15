@@ -81,6 +81,8 @@ function clearAuthState() {
 }
 
 function normalizeUser(user) {
+  const username = user.username || String(user.email || "").split("@")[0];
+  const profile = state.userProfiles?.[username] || state.userProfiles?.[String(username).toLowerCase()] || state.userProfiles?.[user.id] || {};
   return {
     permissions: [],
     avatar: "",
@@ -88,8 +90,9 @@ function normalizeUser(user) {
     area: "",
     notes: "",
     ...user,
+    ...profile,
     name: user.name || user.email,
-    username: user.username || String(user.email || "").split("@")[0],
+    username,
     status: user.status || "activo"
   };
 }
