@@ -4,6 +4,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "8mb"
     }
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/app",
+        destination: "/index.html"
+      }
+    ];
   }
 };
 
