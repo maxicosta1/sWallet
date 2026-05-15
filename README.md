@@ -1,12 +1,47 @@
 # sWallet
 
-Sistema interno estatico para administrar sCode Digital Solutions desde Live Server.
+Sistema interno para administrar sCode Digital Solutions con frontend estatico y API de Vercel.
 
-> Fase 3 backend: el frontend actual sigue funcionando igual. La carpeta `backend/` ya tiene auth real y CRUD de clientes/proyectos en Express + PostgreSQL, pero todavia no reemplaza `localStorage`.
+> Persistencia actual: todos los datos del dashboard se sincronizan contra Supabase Postgres mediante `/api/v1/state`. `localStorage` queda solo como cache local y backup de recuperacion.
 
 ## Ejecutar
 
-Abrir `index.html` con Live Server. La primera vez muestra registro de admin; luego se accede con el usuario creado. Los datos se guardan en `localStorage` bajo `scodeFinanceApp`.
+En local se puede abrir `index.html` con Live Server para revisar UI. Para probar login y sincronizacion remota, correr el proyecto Next/Vercel con variables de Supabase configuradas.
+
+Credenciales autorizadas por defecto:
+
+- Usuarios: `FranPernil`, `MaxiTaxi`
+- Password: configurar `ALLOWED_LOGIN_PASSWORD` en Vercel
+
+## Vercel + Supabase
+
+Variables requeridas:
+
+```env
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+AUTH_SECRET="clave-larga-privada"
+ALLOWED_LOGIN_USERS="FranPernil,MaxiTaxi"
+ALLOWED_LOGIN_PASSWORD="clave-privada"
+```
+
+Usar en `DATABASE_URL` la URL con pooler y `?pgbouncer=true`. Usar en `DIRECT_URL` la URL para migraciones que muestra Supabase.
+
+Crear las tablas en Supabase con Prisma:
+
+```bash
+npm install
+npm run db:generate
+npx prisma db push
+```
+
+La API de Vercel queda expuesta en `/api/v1`:
+
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- `POST /api/v1/auth/refresh`
+- `GET /api/v1/state`
+- `PUT /api/v1/state`
 
 ## Estructura
 
@@ -14,8 +49,8 @@ Abrir `index.html` con Live Server. La primera vez muestra registro de admin; lu
 - `style.css`: tema claro sCode, componentes, responsive y modales.
 - `app.js`: inicializador.
 - `js/state.js`: estado, modelos locales y datos demo.
-- `js/storage.js`: persistencia local.
-- `js/auth.js`: auth mock, sesion y roles.
+- `js/storage.js`: cache local y sincronizacion con Supabase.
+- `js/auth.js`: sesion, roles y carga remota.
 - `js/finance.js`: calculos, filtros, busqueda y alertas.
 - `js/render.js`: render de vistas, tablas, cards, graficos y resets.
 - `js/events.js`: eventos, validaciones, CRUD y exportacion CSV.
@@ -41,11 +76,11 @@ CRM, Presupuestos, Documentos, Soporte y Marketing tienen filtros propios por cl
 
 ## Configuracion Y Backup
 
-En `Configuracion` se editan los datos de empresa, color principal, monedas, servicios, categorias financieras y dias de recordatorio. Tambien se puede exportar un backup JSON completo e importar uno anterior para restaurar `localStorage`.
+En `Configuracion` se editan los datos de empresa, color principal, monedas, servicios, categorias financieras y dias de recordatorio. Tambien se puede exportar un backup JSON completo e importar uno anterior.
 
 ## Usuarios Y Roles
 
-El admin puede crear usuarios mock con roles `admin`, `finanzas` y `solo_lectura`, cambiar rol/estado y eliminar accesos. Los usuarios inactivos no pueden iniciar sesion.
+El acceso esta restringido por la API a los usuarios permitidos en `ALLOWED_LOGIN_USERS`.
 
 ## Auditoria
 
@@ -63,11 +98,9 @@ Los formularios validan campos obligatorios, emails, URLs, montos minimos/maximo
 4. Organizar trabajo en `Tareas`, `Administracion`, `Calendario` y `CRM`.
 5. Revisar estado general en `Dashboard` y `Reportes`.
 
-## Futuro Backend
+## Persistencia
 
-Las colecciones ya estan separadas por dominio y guardan `userId`. Para migrar a backend, reemplazar `js/storage.js` por servicios HTTP/API manteniendo la misma forma de datos.
-
-La base local usa `schemaVersion` y migraciones automaticas en `js/storage.js`, asi que los backups viejos se normalizan al cargar/importar.
+La base usa Prisma sobre Supabase Postgres. La tabla `AppSnapshot` guarda el estado completo del dashboard por usuario, conservando `schemaVersion` y las migraciones automaticas de `js/storage.js`.
 
 Documentacion tecnica nueva:
 

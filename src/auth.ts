@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { Role } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -53,7 +54,7 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
-        session.user.role = token.role;
+        session.user.role = resolveRole(token.role);
       }
       return session;
     }
@@ -115,4 +116,10 @@ async function ensureAllowedUser(username: string) {
 
 function normalizeCredential(value: string) {
   return value.trim().toLowerCase();
+}
+
+function resolveRole(role: unknown): Role {
+  return role === "admin" || role === "finanzas" || role === "desarrollador" || role === "solo_lectura"
+    ? role
+    : "solo_lectura";
 }

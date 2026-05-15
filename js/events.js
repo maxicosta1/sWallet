@@ -1,6 +1,4 @@
 import { canDelete, canWrite, login, logout } from "./auth.js";
-import { clientService } from "./api/clientService.js";
-import { projectService } from "./api/projectService.js";
 import { filteredInvoices, projectExists, clientExists } from "./finance.js";
 import { createRecord, state } from "./state.js";
 import { saveState, resetStorage } from "./storage.js";
@@ -330,10 +328,10 @@ async function handleClientSubmit(event) {
   try {
     setFormBusy(dom.clientForm, true);
     const client = dom.clientId.value
-      ? await clientService.update(dom.clientId.value, payload)
-      : await clientService.create(payload);
+      ? { ...state.clients.find((item) => item.id === dom.clientId.value), ...payload, updatedAt: new Date().toISOString() }
+      : createRecord(payload);
     upsertRecord(state.clients, client);
-    saveAndRender("Cliente guardado", "Persistido en PostgreSQL.");
+    saveAndRender("Cliente guardado", "Sincronizado con Supabase.");
     resetClientForm();
   } catch (error) {
     notify("No se pudo guardar cliente", error.message);
@@ -371,11 +369,11 @@ async function handleProjectSubmit(event) {
   try {
     setFormBusy(dom.projectForm, true);
     const project = dom.projectId.value
-      ? await projectService.update(dom.projectId.value, payload)
-      : await projectService.create(payload);
+      ? { ...state.projects.find((item) => item.id === dom.projectId.value), ...payload, updatedAt: new Date().toISOString() }
+      : createRecord(payload);
     upsertRecord(state.projects, project);
     resetProjectForm();
-    saveAndRender("Proyecto guardado", "Persistido en PostgreSQL.");
+    saveAndRender("Proyecto guardado", "Sincronizado con Supabase.");
   } catch (error) {
     notify("No se pudo guardar proyecto", error.message);
   } finally {
@@ -881,25 +879,15 @@ function deleteGeneric(key, id, message) {
 async function deleteClient(id) {
   if (!assertDelete()) return;
   if (!confirm("Confirmas eliminar este registro?")) return;
-  try {
-    await clientService.remove(id);
-    state.clients = state.clients.filter((record) => record.id !== id);
-    saveAndRender("Cliente eliminado", "PostgreSQL fue actualizado.");
-  } catch (error) {
-    notify("No se pudo eliminar cliente", error.message);
-  }
+  state.clients = state.clients.filter((record) => record.id !== id);
+  saveAndRender("Cliente eliminado", "Supabase fue actualizado.");
 }
 
 async function deleteProject(id) {
   if (!assertDelete()) return;
   if (!confirm("Confirmas eliminar este registro?")) return;
-  try {
-    await projectService.remove(id);
-    state.projects = state.projects.filter((record) => record.id !== id);
-    saveAndRender("Proyecto eliminado", "PostgreSQL fue actualizado.");
-  } catch (error) {
-    notify("No se pudo eliminar proyecto", error.message);
-  }
+  state.projects = state.projects.filter((record) => record.id !== id);
+  saveAndRender("Proyecto eliminado", "Supabase fue actualizado.");
 }
 
 function setFormBusy(form, busy) {

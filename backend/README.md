@@ -1,6 +1,6 @@
 # sWallet Backend
 
-Backend Express inicial para la base MySQL/MariaDB compartida. El frontend estatico consume estas rutas por API.
+Backend Express legacy. La ruta recomendada para produccion ahora es Vercel + Supabase mediante `src/app/api/v1/[...path]/route.ts`.
 
 ## Comandos
 
@@ -29,7 +29,7 @@ src/
 ## Rutas
 
 - `GET /health`: estado del proceso.
-- `GET /health/db`: verifica conexion Prisma/MySQL.
+- `GET /health/db`: verifica conexion Prisma/Postgres.
 - `GET /api/v1`: lista de modulos.
 - `POST /api/v1/auth/login`: devuelve access token y refresh token.
 - `POST /api/v1/auth/refresh`: rota refresh token.
@@ -71,4 +71,4 @@ src/
 - Clientes y proyectos ya tienen CRUD real en backend.
 - Los demas endpoints de dominio siguen como placeholders.
 - Prisma usa `../prisma/schema.prisma` como schema compartido.
-- El frontend estatico ya llama al backend para auth, clientes y proyectos.
+- El frontend estatico de produccion llama a la API de Vercel para auth y snapshot completo de datos en Supabase.

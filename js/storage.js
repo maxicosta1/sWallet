@@ -1,6 +1,10 @@
 import { SCHEMA_VERSION, state, STORAGE_KEY } from "./state.js";
+import { getAccessToken } from "./api/http.js";
+import { snapshotService } from "./api/snapshotService.js";
 
 const persistedArrays = [
+  "clients",
+  "projects",
   "invoices",
   "payments",
   "movements",
@@ -31,8 +35,6 @@ export function loadState() {
     state.savedAt = parsed.savedAt || "";
     state.session = parsed.session || null;
     state.users = Array.isArray(parsed.users) ? parsed.users : [];
-    state.clients = Array.isArray(parsed.clients) ? parsed.clients : [];
-    state.projects = Array.isArray(parsed.projects) ? parsed.projects : [];
     persistedArrays.forEach((key) => {
       state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
     });
@@ -46,16 +48,9 @@ export function loadState() {
 
 export function saveState() {
   state.savedAt = new Date().toISOString();
-  const payload = persistedArrays.reduce((acc, key) => {
-    acc[key] = normalizeCollection(state[key]);
-    return acc;
-  }, {
-    schemaVersion: SCHEMA_VERSION,
-    savedAt: state.savedAt,
-    companySettings: state.companySettings,
-    exchangeRate: state.exchangeRate
-  });
+  const payload = stateSnapshot();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  queueRemoteSave(payload);
 }
 
 export function exportSnapshot() {
@@ -76,6 +71,40 @@ export function importSnapshot(json) {
 export function resetStorage() {
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
+}
+
+export async function loadRemoteState() {
+  const payload = await snapshotService.load();
+  if (!payload?.snapshot) {
+    saveState();
+    return;
+  }
+
+  applySnapshot(payload.snapshot);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stateSnapshot()));
+}
+
+export function stateSnapshot() {
+  return persistedArrays.reduce((acc, key) => {
+    acc[key] = normalizeCollection(state[key]);
+    return acc;
+  }, {
+    schemaVersion: SCHEMA_VERSION,
+    savedAt: state.savedAt || new Date().toISOString(),
+    companySettings: state.companySettings,
+    exchangeRate: state.exchangeRate
+  });
+}
+
+function applySnapshot(snapshot) {
+  const parsed = migrateSnapshot(snapshot);
+  state.schemaVersion = parsed.schemaVersion;
+  state.savedAt = parsed.savedAt || "";
+  persistedArrays.forEach((key) => {
+    state[key] = Array.isArray(parsed[key]) ? parsed[key] : [];
+  });
+  state.companySettings = { ...state.companySettings, ...(parsed.companySettings || {}) };
+  state.exchangeRate = Number(parsed.exchangeRate) || 1200;
 }
 
 export function migrateSnapshot(snapshot) {
@@ -102,6 +131,16 @@ export function migrateSnapshot(snapshot) {
   migrated.users = migrated.users.map(migrateUser);
 
   return migrated;
+}
+
+let pendingSave = Promise.resolve();
+
+function queueRemoteSave(payload) {
+  if (!getAccessToken()) return;
+  pendingSave = pendingSave
+    .catch(() => null)
+    .then(() => snapshotService.save(payload))
+    .catch((error) => console.error("No se pudo sincronizar con Supabase", error));
 }
 
 function normalizeCollection(collection) {

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -202,6 +203,7 @@ model User {
   activities         ActivityLog[]
   notesAuthored      ClientNote[]
   dashboardWidgets   DashboardWidget[]
+  appSnapshot        AppSnapshot?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   deletedAt          DateTime?
@@ -960,4 +962,15 @@ model DashboardWidget {
 
   @@index([userId])
   @@unique([userId, key])
+}
+
+model AppSnapshot {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  data      Json
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
 }

@@ -1,5 +1,5 @@
-const LOCAL_API_BASE_URL = "http://localhost:4000/api/v1";
-const PRODUCTION_API_BASE_URL = "/api/v1/index.php";
+const LOCAL_API_BASE_URL = "http://localhost:3000/api/v1";
+const PRODUCTION_API_BASE_URL = "/api/v1";
 const DEFAULT_API_BASE_URL = isLocalHost() ? LOCAL_API_BASE_URL : PRODUCTION_API_BASE_URL;
 const API_BASE_URL = normalizeApiBaseUrl(window.sWalletApiBaseUrl || DEFAULT_API_BASE_URL);
 const ACCESS_TOKEN_KEY = "swalletAccessToken";

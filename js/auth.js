@@ -1,8 +1,6 @@
 import { authService } from "./api/authService.js";
-import { clientService } from "./api/clientService.js";
-import { projectService } from "./api/projectService.js";
 import { state } from "./state.js";
-import { saveState } from "./storage.js";
+import { loadRemoteState, saveState } from "./storage.js";
 
 export function mockHash(value) {
   return btoa(unescape(encodeURIComponent(String(value))));
@@ -66,12 +64,7 @@ export async function restoreSession() {
 }
 
 export async function loadApiCollections() {
-  const [clients, projects] = await Promise.all([
-    clientService.list(),
-    projectService.list()
-  ]);
-  state.clients = clients;
-  state.projects = projects;
+  await loadRemoteState();
 }
 
 function setAuthenticatedUser(user) {
