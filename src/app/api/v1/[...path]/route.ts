@@ -11,7 +11,7 @@ const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60;
 const DEFAULT_USERS = ["FranPernil", "MaxiTaxi"];
 
 type RouteContext = {
-  params: Promise<{ path?: string[] }> | { path?: string[] };
+  params: Promise<{ path?: string[] }>;
 };
 
 type TokenPayload = {
