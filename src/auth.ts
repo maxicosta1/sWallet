@@ -10,6 +10,8 @@ const credentialsSchema = z.object({
   password: z.string().min(8)
 });
 
+const DEFAULT_LOGIN_PASSWORD = "LiamVillero123";
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -64,8 +66,8 @@ export const authConfig = {
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
 
 function resolveAllowedUsername(credential: string, password: string) {
-  const allowedPassword = process.env.ALLOWED_LOGIN_PASSWORD?.trim();
-  if (!allowedPassword || password !== allowedPassword) return null;
+  const allowedPassword = process.env.ALLOWED_LOGIN_PASSWORD?.trim() || DEFAULT_LOGIN_PASSWORD;
+  if (password.trim() !== allowedPassword) return null;
 
   const normalizedCredential = normalizeCredential(credential);
   const allowedUsers = (process.env.ALLOWED_LOGIN_USERS ?? "")

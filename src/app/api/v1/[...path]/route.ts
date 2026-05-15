@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const ACCESS_TTL_SECONDS = 15 * 60;
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60;
 const DEFAULT_USERS = ["FranPernil", "MaxiTaxi"];
+const DEFAULT_PASSWORD = "LiamVillero123";
 
 type RouteContext = {
   params: Promise<{ path?: string[] }>;
@@ -110,7 +111,7 @@ async function handleRequest(request: NextRequest, context: RouteContext) {
 async function login(request: NextRequest) {
   const body = await readJson(request);
   const credential = String(body.credential || body.email || body.username || "").trim();
-  const password = String(body.password || "");
+  const password = String(body.password || "").trim();
   const username = allowedUsername(credential);
 
   if (!username || password !== allowedPassword()) {
@@ -220,7 +221,7 @@ function allowedUsers() {
 }
 
 function allowedPassword() {
-  return process.env.ALLOWED_LOGIN_PASSWORD?.trim() || "";
+  return process.env.ALLOWED_LOGIN_PASSWORD?.trim() || DEFAULT_PASSWORD;
 }
 
 function allowedUsername(credential: string) {
