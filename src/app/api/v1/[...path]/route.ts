@@ -220,7 +220,7 @@ function allowedUsers() {
 }
 
 function allowedPassword() {
-  return process.env.ALLOWED_LOGIN_PASSWORD || "";
+  return process.env.ALLOWED_LOGIN_PASSWORD?.trim() || "";
 }
 
 function allowedUsername(credential: string) {

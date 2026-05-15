@@ -64,7 +64,7 @@ export const authConfig = {
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
 
 function resolveAllowedUsername(credential: string, password: string) {
-  const allowedPassword = process.env.ALLOWED_LOGIN_PASSWORD;
+  const allowedPassword = process.env.ALLOWED_LOGIN_PASSWORD?.trim();
   if (!allowedPassword || password !== allowedPassword) return null;
 
   const normalizedCredential = normalizeCredential(credential);
