@@ -125,6 +125,7 @@ export function migrateSnapshot(snapshot) {
   persistedArrays.forEach((key) => {
     migrated[key] = normalizeCollection(snapshot[key]);
   });
+  migrated.users = normalizeCollection(snapshot.users);
 
   migrated.clients = migrated.clients.map(migrateClient);
   migrated.projects = migrated.projects.map(migrateProject);
