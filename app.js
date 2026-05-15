@@ -6,21 +6,27 @@ import { bindEvents } from "./js/events.js";
 document.addEventListener("DOMContentLoaded", async () => {
   bindDom();
   loadState();
-  await restoreSession();
-  bindEvents();
   renderAll();
-  if (!document.getElementById("appShell").hidden) {
-    resetPaymentForm();
-    resetClientForm();
-    resetProjectForm();
-    resetInvoiceForm();
-    resetMovementForm();
-    resetSubscriptionForm();
-    resetTaskForm();
-    resetGoalForm();
-    resetRequestForm();
-    resetNoteForm();
-    resetActionForm();
+  bindEvents();
+  restoreSession().then(() => {
     renderAll();
-  }
+    if (!document.getElementById("appShell").hidden) {
+      resetForms();
+    }
+  });
 });
+
+function resetForms() {
+  resetPaymentForm();
+  resetClientForm();
+  resetProjectForm();
+  resetInvoiceForm();
+  resetMovementForm();
+  resetSubscriptionForm();
+  resetTaskForm();
+  resetGoalForm();
+  resetRequestForm();
+  resetNoteForm();
+  resetActionForm();
+  renderAll();
+}
