@@ -2,6 +2,7 @@ const LOCAL_API_BASE_URL = "http://localhost:3000/api/v1";
 const PRODUCTION_API_BASE_URL = "/api/v1";
 const DEFAULT_API_BASE_URL = isLocalHost() ? LOCAL_API_BASE_URL : PRODUCTION_API_BASE_URL;
 const API_BASE_URL = normalizeApiBaseUrl(window.sWalletApiBaseUrl || DEFAULT_API_BASE_URL);
+const REQUEST_TIMEOUT_MS = 12000;
 const ACCESS_TOKEN_KEY = "swalletAccessToken";
 const REFRESH_TOKEN_KEY = "swalletRefreshToken";
 
@@ -34,9 +35,12 @@ export function clearSessionTokens() {
 
 export async function apiRequest(path, options = {}) {
   let response;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
+      signal: controller.signal,
       headers: buildHeaders(options.headers),
       body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
     });
@@ -45,6 +49,8 @@ export async function apiRequest(path, options = {}) {
       "No se pudo conectar con el servidor. Verifica que el backend este publicado y que la URL de la API apunte a /api/v1.",
       { status: 0 }
     );
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
   if (response.status === 204) return null;

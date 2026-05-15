@@ -203,7 +203,6 @@ model User {
   activities         ActivityLog[]
   notesAuthored      ClientNote[]
   dashboardWidgets   DashboardWidget[]
-  appSnapshot        AppSnapshot?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   deletedAt          DateTime?
@@ -968,7 +967,6 @@ model AppSnapshot {
   id        String   @id @default(cuid())
   userId    String   @unique
   data      Json
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -118,30 +117,7 @@ async function login(request: NextRequest) {
     return unauthorized("Usuario o contrasena incorrectos.");
   }
 
-  const user = await ensureUser(username);
-  return json(sessionPayload({ userId: user.id, username }));
-}
-
-async function ensureUser(username: string) {
-  const email = `${username.toLowerCase()}@swallet.local`;
-  return prisma.user.upsert({
-    where: { email },
-    create: {
-      username,
-      email,
-      name: username,
-      role: "admin",
-      status: "activo",
-      permissions: ["read", "write", "delete", "admin"]
-    },
-    update: {
-      username,
-      name: username,
-      role: "admin",
-      status: "activo",
-      permissions: ["read", "write", "delete", "admin"]
-    }
-  });
+  return json(sessionPayload({ userId: userIdFor(username), username }));
 }
 
 function sessionPayload(session: { userId: string; username: string }) {
@@ -228,14 +204,18 @@ function allowedUsername(credential: string) {
   return allowedUsers().find((username) => username.toLowerCase() === credential.toLowerCase()) || null;
 }
 
-function sanitizeSnapshot(snapshot: unknown): Prisma.InputJsonObject {
+function sanitizeSnapshot(snapshot: unknown) {
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
     return {};
   }
   return {
     ...(snapshot as Record<string, unknown>),
     savedAt: new Date().toISOString()
-  } as Prisma.InputJsonObject;
+  };
+}
+
+function userIdFor(username: string) {
+  return username.trim().toLowerCase();
 }
 
 async function routePath(context: RouteContext) {

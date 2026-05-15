@@ -74,11 +74,15 @@ export function resetStorage() {
 }
 
 export async function loadRemoteState() {
-  const payload = await snapshotService.load();
-  if (!payload?.snapshot) {
-    saveState();
+  let payload;
+  try {
+    payload = await snapshotService.load();
+  } catch (error) {
+    console.error("No se pudo cargar Supabase, usando cache local", error);
     return;
   }
+
+  if (!payload?.snapshot) return;
 
   applySnapshot(payload.snapshot);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stateSnapshot()));
