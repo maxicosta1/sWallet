@@ -16,21 +16,21 @@ export class ApiError extends Error {
 }
 
 export function getAccessToken() {
-  return sessionStorage.getItem(ACCESS_TOKEN_KEY) || "";
+  return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
 }
 
 export function getRefreshToken() {
-  return sessionStorage.getItem(REFRESH_TOKEN_KEY) || "";
+  return localStorage.getItem(REFRESH_TOKEN_KEY) || "";
 }
 
 export function setSessionTokens({ accessToken, refreshToken }) {
-  if (accessToken) sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  if (refreshToken) sessionStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 }
 
 export function clearSessionTokens() {
-  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 export async function apiRequest(path, options = {}) {

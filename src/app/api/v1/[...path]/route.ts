@@ -79,6 +79,7 @@ async function handleRequest(request: NextRequest, context: RouteContext) {
 
     if (method === "GET" && path === "state") {
       const session = await requireSession(request, "access");
+      await ensureSnapshotTable();
       const snapshot = await prisma.appSnapshot.findUnique({
         where: { userId: session.userId }
       });
@@ -89,6 +90,7 @@ async function handleRequest(request: NextRequest, context: RouteContext) {
       const session = await requireSession(request, "access");
       const body = await readJson(request);
       const snapshot = sanitizeSnapshot(body.snapshot ?? body);
+      await ensureSnapshotTable();
       const saved = await prisma.appSnapshot.upsert({
         where: { userId: session.userId },
         create: { userId: session.userId, data: snapshot },
@@ -216,6 +218,26 @@ function sanitizeSnapshot(snapshot: unknown) {
 
 function userIdFor(username: string) {
   return username.trim().toLowerCase();
+}
+
+let snapshotTableReady = false;
+
+async function ensureSnapshotTable() {
+  if (snapshotTableReady) return;
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "AppSnapshot" (
+      "id" TEXT PRIMARY KEY,
+      "userId" TEXT NOT NULL UNIQUE,
+      "data" JSONB NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await prisma.$executeRawUnsafe(`
+    CREATE INDEX IF NOT EXISTS "AppSnapshot_updatedAt_idx"
+    ON "AppSnapshot" ("updatedAt")
+  `);
+  snapshotTableReady = true;
 }
 
 async function routePath(context: RouteContext) {
