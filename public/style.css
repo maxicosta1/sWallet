@@ -603,6 +603,10 @@ button {
     text-decoration: none;
 }
 
+#dashboardDateRange {
+    display: none;
+}
+
 .period-tabs button.active,
 .google-calendar-button {
     color: #fff;
