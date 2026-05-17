@@ -718,6 +718,7 @@ model Opportunity {
   id          String            @id @default(cuid())
   userId      String?
   clientId    String?
+  campaignId  String?
   responsibleTeamMemberId String?
   legacyId    String?           @unique
   title       String
@@ -731,12 +732,14 @@ model Opportunity {
   notes       String?           @db.Text
   user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  campaign    MarketingCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   responsibleTeamMember TeamMember? @relation("OpportunityResponsible", fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   deletedAt   DateTime?
 
   @@index([clientId])
+  @@index([campaignId])
   @@index([responsibleTeamMemberId])
   @@index([status])
 }
@@ -933,6 +936,7 @@ model MarketingCampaign {
   status    String
   date      DateTime
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  opportunities Opportunity[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?

@@ -12,7 +12,7 @@ const roleRank: Record<string, number> = {
 };
 
 const moduleAccessByRole: Record<string, ModuleAccess[]> = {
-  admin: ["dashboard", "sales", "projects", "finance", "operations", "reports", "settings", "client_portal"],
+  admin: ["dashboard", "sales", "projects", "finance", "operations", "reports", "settings", "admin", "client_portal"],
   finanzas: ["dashboard", "sales", "finance", "reports", "settings"],
   project_manager: ["dashboard", "sales", "projects", "operations", "reports", "client_portal"],
   desarrollador: ["dashboard", "projects", "operations", "reports", "client_portal"],
@@ -34,6 +34,16 @@ export function canWriteFinance(role?: string | null) {
 export function canWriteProjects(role?: string | null) {
   if (!role) return false;
   return role === "admin" || role === "desarrollador" || role === "project_manager";
+}
+
+export function canWriteSales(role?: string | null) {
+  if (!role) return false;
+  return role === "admin" || role === "finanzas" || role === "project_manager" || role === "marketing";
+}
+
+export function canWriteOperations(role?: string | null) {
+  if (!role) return false;
+  return role === "admin" || role === "project_manager" || role === "marketing";
 }
 
 export function canAdmin(role?: string | null) {

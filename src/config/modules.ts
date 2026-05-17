@@ -8,6 +8,7 @@ export type ModuleAccess =
   | "operations"
   | "reports"
   | "settings"
+  | "admin"
   | "client_portal";
 
 export type ModuleStatus = "active" | "foundation" | "planned";
@@ -50,7 +51,7 @@ export const appModules: AppModule[] = [
     shortLabel: "AG",
     group: "home",
     access: "operations",
-    status: "planned",
+    status: "active",
     description: "Calendario operativo con vencimientos, entregas, reuniones y proximas acciones.",
     legacySection: "Calendario"
   },
@@ -61,7 +62,7 @@ export const appModules: AppModule[] = [
     shortLabel: "AL",
     group: "home",
     access: "operations",
-    status: "planned",
+    status: "active",
     description: "Senales inteligentes para facturas vencidas, clientes sin contacto y proyectos en riesgo."
   },
   {
@@ -81,7 +82,7 @@ export const appModules: AppModule[] = [
     shortLabel: "CRM",
     group: "sales",
     access: "sales",
-    status: "planned",
+    status: "active",
     description: "Pipeline comercial desde lead hasta venta cerrada.",
     legacySection: "CRM / Ventas"
   },
@@ -92,7 +93,7 @@ export const appModules: AppModule[] = [
     shortLabel: "PR",
     group: "sales",
     access: "sales",
-    status: "planned",
+    status: "active",
     description: "Propuestas comerciales con items, condiciones y conversion a proyecto o factura.",
     legacySection: "Presupuestos"
   },
@@ -103,7 +104,7 @@ export const appModules: AppModule[] = [
     shortLabel: "PC",
     group: "sales",
     access: "client_portal",
-    status: "planned",
+    status: "active",
     description: "Vista limitada y segura para compartir avance, documentos, facturas y aprobaciones.",
     legacySection: "Portal Cliente"
   },
@@ -124,7 +125,7 @@ export const appModules: AppModule[] = [
     shortLabel: "TA",
     group: "projects",
     access: "projects",
-    status: "planned",
+    status: "active",
     description: "Kanban de trabajo con responsables del equipo, fechas, subtareas y horas.",
     legacySection: "Tareas"
   },
@@ -135,7 +136,7 @@ export const appModules: AppModule[] = [
     shortLabel: "DO",
     group: "projects",
     access: "projects",
-    status: "planned",
+    status: "active",
     description: "Biblioteca y plantillas imprimibles asociadas a clientes y proyectos.",
     legacySection: "Documentos"
   },
@@ -146,7 +147,7 @@ export const appModules: AppModule[] = [
     shortLabel: "SO",
     group: "projects",
     access: "projects",
-    status: "planned",
+    status: "active",
     description: "Mantenimiento post-entrega, dominios, hosting, SSL y renovaciones.",
     legacySection: "Soporte"
   },
@@ -167,7 +168,7 @@ export const appModules: AppModule[] = [
     shortLabel: "FA",
     group: "finance",
     access: "finance",
-    status: "planned",
+    status: "active",
     description: "Facturas reales con items, vencimientos, saldo pendiente y PDF imprimible.",
     legacySection: "Facturacion"
   },
@@ -218,7 +219,7 @@ export const appModules: AppModule[] = [
     shortLabel: "EQ",
     group: "operations",
     access: "operations",
-    status: "planned",
+    status: "active",
     description: "Personas, responsabilidades, asignaciones, horas y rendimiento.",
     legacySection: "Equipo"
   },
@@ -240,7 +241,7 @@ export const appModules: AppModule[] = [
     shortLabel: "MK",
     group: "operations",
     access: "operations",
-    status: "planned",
+    status: "active",
     description: "Campanas conectadas con oportunidades, reuniones, presupuestos y ventas.",
     legacySection: "Marketing"
   },
@@ -250,9 +251,9 @@ export const appModules: AppModule[] = [
     label: "Administracion",
     shortLabel: "AD",
     group: "operations",
-    access: "operations",
-    status: "planned",
-    description: "Pedidos, notas internas, proximas acciones y control administrativo.",
+    access: "admin",
+    status: "active",
+    description: "Onboarding interno, permisos, papelera, seguridad y QA operativo.",
     legacySection: "Administracion"
   },
   {

@@ -134,7 +134,7 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
         </div>
       </aside>
 
-      {sidebarOpen ? <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={closeSidebar} aria-label="Cerrar menú" /> : null}
+      {sidebarOpen ? <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={closeSidebar} aria-label="Cerrar menu" /> : null}
 
       <main className="min-w-0 px-4 py-4 md:px-7 md:py-5 lg:px-8">
         <header className="mb-6 hidden items-center justify-between gap-4 md:flex">
@@ -148,12 +148,18 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             </div>
           </div>
           <div className="hidden items-center gap-2 md:flex">
-            <div className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 text-sm text-muted-foreground">
+            <form action="/reports" className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 text-sm text-muted-foreground">
               <Search className="h-4 w-4" />
-              Buscar cliente, proyecto, factura o pago
-            </div>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
+              <input
+                name="q"
+                className="w-72 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-muted-foreground"
+                placeholder="Buscar cliente, proyecto, factura o pago"
+              />
+            </form>
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/alerts" aria-label="Alertas">
+                <Bell className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
         </header>
@@ -170,12 +176,15 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             </Button>
             <div className="flex items-center gap-3">
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="h-12 w-16 rounded-full border-white/10 bg-[#15151c] shadow-glass"
                 aria-label="Buscar"
               >
-                <Search className="h-5 w-5" />
+                <Link href="/reports">
+                  <Search className="h-5 w-5" />
+                </Link>
               </Button>
               <div className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-sm font-black text-white shadow-glass">
                 {session.user.image ? (
