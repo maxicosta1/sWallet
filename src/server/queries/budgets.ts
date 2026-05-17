@@ -4,6 +4,47 @@ import { decimalToNumber } from "@/lib/format";
 export type BudgetsData = Awaited<ReturnType<typeof getBudgetsData>>;
 export type BudgetDetail = NonNullable<Awaited<ReturnType<typeof getBudgetDetail>>>;
 
+type BudgetSummaryInput = {
+  id: string;
+  number: string | null;
+  projectName: string;
+  currency: "ARS" | "USD";
+  subtotal: unknown;
+  discount: unknown;
+  taxes: unknown;
+  total: unknown;
+  validUntil: Date | null;
+  status: string;
+  client: { company: string; name: string } | null;
+  project: { name: string } | null;
+  items: Array<{ amount: unknown; total: unknown }>;
+  invoices: Array<{ id: string; number: string }>;
+  approvedProject: { id: string; name: string } | null;
+};
+
+type BudgetDetailInput = Omit<BudgetSummaryInput, "client" | "project" | "items"> & {
+  services: string | null;
+  issueDate: Date;
+  notes: string | null;
+  client: {
+    id: string;
+    company: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+  project: { id: string; name: string } | null;
+  items: Array<{
+    id: string;
+    description: string;
+    amount: unknown;
+    quantity: unknown;
+    unitPrice: unknown;
+    total: unknown;
+    position: number;
+  }>;
+};
+
 export async function getBudgetsData() {
   const [clients, projects, budgets] = await Promise.all([
     prisma.client.findMany({
@@ -58,23 +99,7 @@ export async function getBudgetDetail(id: string) {
   return serializeBudgetDetail(budget);
 }
 
-function serializeBudgetSummary(budget: {
-  id: string;
-  number: string | null;
-  projectName: string;
-  currency: "ARS" | "USD";
-  subtotal: unknown;
-  discount: unknown;
-  taxes: unknown;
-  total: unknown;
-  validUntil: Date | null;
-  status: string;
-  client: { company: string; name: string } | null;
-  project: { name: string } | null;
-  items: Array<{ amount: unknown; total: unknown }>;
-  invoices: Array<{ id: string; number: string }>;
-  approvedProject: { id: string; name: string } | null;
-}) {
+function serializeBudgetSummary(budget: BudgetSummaryInput) {
   const subtotal = decimalToNumber(budget.subtotal) || budget.items.reduce((sum, item) => sum + (decimalToNumber(item.total) || decimalToNumber(item.amount)), 0);
   const total = decimalToNumber(budget.total) || Math.max(subtotal - decimalToNumber(budget.discount) + decimalToNumber(budget.taxes), 0);
 
@@ -97,28 +122,7 @@ function serializeBudgetSummary(budget: {
   };
 }
 
-function serializeBudgetDetail(budget: Parameters<typeof serializeBudgetSummary>[0] & {
-  services: string | null;
-  issueDate: Date;
-  notes: string | null;
-  client: {
-    id: string;
-    company: string;
-    name: string;
-    email: string;
-    phone: string;
-  } | null;
-  project: { id: string; name: string } | null;
-  items: Array<{
-    id: string;
-    description: string;
-    amount: unknown;
-    quantity: unknown;
-    unitPrice: unknown;
-    total: unknown;
-    position: number;
-  }>;
-}) {
+function serializeBudgetDetail(budget: BudgetDetailInput) {
   const summary = serializeBudgetSummary(budget);
 
   return {
