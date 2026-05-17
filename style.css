@@ -4297,4 +4297,12 @@ body:not(.print-mode) .modal-panel select option {
     body:not(.print-mode) .modal-panel .form-row {
         grid-template-columns: 1fr !important;
     }
+
+    body:not(.print-mode) .topbar h1 {
+        color: transparent !important;
+    }
+
+    body:not(.print-mode) .topbar h1::before {
+        color: #ffffff !important;
+    }
 }
