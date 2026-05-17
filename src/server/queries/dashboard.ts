@@ -20,7 +20,7 @@ export async function getDashboardData() {
     }),
     prisma.payment.findMany({
       where: { deletedAt: null },
-      include: { client: true },
+      include: { client: true, movement: true },
       orderBy: { dueDate: "asc" }
     }),
     prisma.movement.findMany({
@@ -40,7 +40,8 @@ export async function getDashboardData() {
   ]);
 
   const paidPayments = payments.filter((payment) => payment.status === "pagado");
-  const monthPaidPayments = paidPayments.filter((payment) => within(payment.date, start, end));
+  const paidPaymentsWithoutMovement = paidPayments.filter((payment) => !payment.movement);
+  const monthPaidPaymentsWithoutMovement = paidPaymentsWithoutMovement.filter((payment) => within(payment.date, start, end));
   const monthMovements = movements.filter((movement) => within(movement.date, start, end));
   const incomeMovements = movements.filter((movement) => movement.type === "ingreso");
   const expenseMovements = movements.filter((movement) => movement.type === "gasto" || movement.type === "inversion");
@@ -49,9 +50,9 @@ export async function getDashboardData() {
   const pendingPayments = payments.filter((payment) => payment.status === "pendiente" || payment.status === "vencido");
   const duePayments = payments.filter((payment) => payment.status === "vencido" || (payment.status === "pendiente" && payment.dueDate < new Date()));
 
-  const income = sumPaymentsARS(paidPayments, exchangeRate) + sumMovementsARS(incomeMovements, exchangeRate);
+  const income = sumPaymentsARS(paidPaymentsWithoutMovement, exchangeRate) + sumMovementsARS(incomeMovements, exchangeRate);
   const expenses = sumMovementsARS(expenseMovements, exchangeRate);
-  const monthIncome = sumPaymentsARS(monthPaidPayments, exchangeRate) + sumMovementsARS(monthIncomeMovements, exchangeRate);
+  const monthIncome = sumPaymentsARS(monthPaidPaymentsWithoutMovement, exchangeRate) + sumMovementsARS(monthIncomeMovements, exchangeRate);
   const monthExpenses = sumMovementsARS(monthExpenseMovements, exchangeRate);
   const pendingARS = sumPaymentsDebtARS(pendingPayments, exchangeRate);
   const netProfit = monthIncome - monthExpenses;
@@ -201,12 +202,12 @@ function sumMovementsARS(movements: Array<{ amount: unknown; currency: Currency 
 }
 
 function balanceByCurrency(
-  payments: Array<{ amount: unknown; currency: Currency; status: PaymentStatus }>,
+  payments: Array<{ amount: unknown; currency: Currency; status: PaymentStatus; movement?: unknown | null }>,
   movements: Array<{ amount: unknown; currency: Currency; type: MovementType }>,
   currency: Currency
 ) {
   const paid = payments
-    .filter((payment) => payment.status === "pagado" && payment.currency === currency)
+    .filter((payment) => payment.status === "pagado" && !payment.movement && payment.currency === currency)
     .reduce((total, payment) => total + decimalToNumber(payment.amount), 0);
   const income = movements
     .filter((movement) => movement.type === "ingreso" && movement.currency === currency)
@@ -223,7 +224,7 @@ function normalizePaymentStatus(status: PaymentStatus, dueDate: Date) {
 }
 
 function buildMonthlySeries(
-  payments: Array<{ amount: unknown; currency: Currency; status: PaymentStatus; date: Date }>,
+  payments: Array<{ amount: unknown; currency: Currency; status: PaymentStatus; date: Date; movement?: unknown | null }>,
   movements: Array<{ amount: unknown; currency: Currency; type: MovementType; date: Date }>,
   rate: number
 ) {
@@ -232,7 +233,7 @@ function buildMonthlySeries(
     const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
     const start = new Date(date.getFullYear(), date.getMonth(), 1);
     const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
-    const monthPayments = payments.filter((payment) => payment.status === "pagado" && within(payment.date, start, end));
+    const monthPayments = payments.filter((payment) => payment.status === "pagado" && !payment.movement && within(payment.date, start, end));
     const monthMovements = movements.filter((movement) => within(movement.date, start, end));
     const income = sumPaymentsARS(monthPayments, rate) + sumMovementsARS(monthMovements.filter((movement) => movement.type === "ingreso"), rate);
     const expenses = sumMovementsARS(monthMovements.filter((movement) => movement.type !== "ingreso"), rate);
@@ -256,11 +257,11 @@ function buildServiceSeries(clients: Array<{ service: string }>) {
 }
 
 function buildRecentActivity(
-  payments: Array<{ id: string; amount: unknown; currency: Currency; date: Date; dueDate: Date; status: PaymentStatus; client: { company: string } }>,
+  payments: Array<{ id: string; amount: unknown; currency: Currency; date: Date; dueDate: Date; status: PaymentStatus; client: { company: string }; movement?: unknown | null }>,
   movements: Array<{ id: string; amount: unknown; currency: Currency; date: Date; type: MovementType; description: string }>
 ) {
   return [
-    ...payments.map((payment) => ({
+    ...payments.filter((payment) => !payment.movement).map((payment) => ({
       id: payment.id,
       title: payment.client.company,
       description: `Pago ${normalizePaymentStatus(payment.status, payment.dueDate)}`,

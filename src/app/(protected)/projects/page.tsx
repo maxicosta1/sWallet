@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDashboardData } from "@/server/queries/dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectForm } from "@/components/forms/entity-forms";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const data = await getDashboardData();
-  const clients = data.clients.map((client) => ({ id: client.id, label: `${client.company} · ${client.name}` }));
+  const clients = data.clients.map((client) => ({ id: client.id, label: `${client.company} - ${client.name}` }));
 
   return (
     <div className="grid gap-5 xl:grid-cols-[.78fr_1.22fr]">
@@ -38,10 +39,15 @@ export default async function ProjectsPage() {
           <DataTable
             headers={["Proyecto", "Cliente", "Presupuesto", "Progreso", "Entrega", "Estado"]}
             rows={data.projects.map((project) => [
-              project.name,
+              <Link key="project" href={`/projects/${project.id}`} className="font-bold transition hover:text-primary">
+                {project.name}
+              </Link>,
               project.clientName,
               <CurrencyAmount key="budget" value={project.budget} currency={project.currency} />,
-              <div key="progress" className="min-w-32"><Progress value={project.progress} /><span className="mt-1 block text-xs text-muted-foreground">{project.progress}%</span></div>,
+              <div key="progress" className="min-w-32">
+                <Progress value={project.progress} />
+                <span className="mt-1 block text-xs text-muted-foreground">{project.progress}%</span>
+              </div>,
               project.dueAt ? formatDate(project.dueAt) : "Sin fecha",
               <StatusBadge key="status" status={project.status} />
             ])}

@@ -1,4 +1,5 @@
 import { getDashboardData } from "@/server/queries/dashboard";
+import { getBillingData } from "@/server/queries/billing";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaymentForm } from "@/components/forms/entity-forms";
 import { DataTable } from "@/components/dashboard/data-table";
@@ -9,8 +10,11 @@ import { formatDate } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function PaymentsPage() {
-  const data = await getDashboardData();
-  const clients = data.clients.map((client) => ({ id: client.id, label: `${client.company} · ${client.name}` }));
+  const [data, billing] = await Promise.all([getDashboardData(), getBillingData()]);
+  const clients = data.clients.map((client) => ({ id: client.id, label: `${client.company} - ${client.name}` }));
+  const invoices = billing.invoices
+    .filter((invoice) => invoice.balanceDue > 0)
+    .map((invoice) => ({ id: invoice.id, label: `${invoice.number} - ${invoice.clientName}` }));
 
   return (
     <div className="grid gap-5 xl:grid-cols-[.78fr_1.22fr]">
@@ -21,8 +25,11 @@ export default async function PaymentsPage() {
             <CardTitle>Registrar pago</CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
-          <PaymentForm clients={clients} />
+        <CardContent className="grid gap-3">
+          <PaymentForm clients={clients} projects={billing.projects} invoices={invoices} categories={billing.categories} />
+          <p className="text-xs leading-5 text-muted-foreground">
+            Cuando el estado es pagado, sWallet crea un movimiento de ingreso y actualiza el saldo de la factura asociada.
+          </p>
         </CardContent>
       </Card>
 

@@ -15,7 +15,7 @@ export const domainModules = [
 
 export type DomainModule = (typeof domainModules)[number];
 
-export const roles = ["admin", "finanzas", "desarrollador", "solo_lectura"] as const;
+export const roles = ["admin", "finanzas", "project_manager", "desarrollador", "marketing", "solo_lectura", "cliente"] as const;
 export type Role = (typeof roles)[number];
 
 export const currencies = ["ARS", "USD"] as const;

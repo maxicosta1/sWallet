@@ -7,14 +7,25 @@ import {
   BarChart3,
   Bell,
   BriefcaseBusiness,
+  CalendarDays,
   CircleUserRound,
+  ClipboardList,
   CreditCard,
+  FileStack,
+  FileText,
   FolderKanban,
+  Handshake,
   LayoutDashboard,
+  ListTodo,
+  Megaphone,
   Menu,
+  Monitor,
   ReceiptText,
+  Repeat,
   Search,
   Settings,
+  Target,
+  UserRoundCog,
   Users
 } from "lucide-react";
 import type { Session } from "next-auth";
@@ -22,23 +33,40 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui-store";
 import { LogoutButton } from "@/components/layout/logout-button";
+import { appModules, moduleGroups, modulesByGroup } from "@/config/modules";
+import { canAccessModule } from "@/lib/permissions";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clients", label: "Clientes", icon: Users },
-  { href: "/payments", label: "Pagos", icon: CreditCard },
-  { href: "/movements", label: "Movimientos", icon: ReceiptText },
-  { href: "/reports", label: "Reportes", icon: BarChart3 },
-  { href: "/projects", label: "Proyectos", icon: FolderKanban },
-  { href: "/subscriptions", label: "Suscripciones", icon: BriefcaseBusiness },
-  { href: "/settings", label: "Settings", icon: Settings }
-];
+const moduleIcons = {
+  dashboard: LayoutDashboard,
+  agenda: CalendarDays,
+  alerts: Bell,
+  clients: Users,
+  crm: Handshake,
+  budgets: FileText,
+  "client-portal": Monitor,
+  projects: FolderKanban,
+  tasks: ListTodo,
+  documents: FileStack,
+  support: BriefcaseBusiness,
+  finance: WalletIcon,
+  billing: ReceiptText,
+  payments: CreditCard,
+  movements: ReceiptText,
+  subscriptions: Repeat,
+  reports: BarChart3,
+  team: UserRoundCog,
+  goals: Target,
+  marketing: Megaphone,
+  admin: ClipboardList,
+  settings: Settings
+};
 
 export function AppShell({ children, session }: { children: React.ReactNode; session: Session }) {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, closeSidebar } = useUiStore();
   const displayName = session.user.name?.split(" ")[0] ?? session.user.email?.split("@")[0] ?? "equipo";
   const initials = displayName.slice(0, 2).toUpperCase();
+  const allowedModules = appModules.filter((module) => canAccessModule(session.user.role, module.access));
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -48,35 +76,52 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="mb-7 flex items-center gap-3">
+        <div className="mb-5 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-coral text-xl font-black text-white shadow-glow">
             s
           </div>
           <div>
-            <strong className="block text-white">sCode</strong>
-            <span className="text-xs font-semibold text-muted-foreground">Finance OS</span>
+            <strong className="block text-white">sWallet</strong>
+            <span className="text-xs font-semibold text-muted-foreground">sCode Ops</span>
           </div>
         </div>
 
-        <nav className="grid gap-2">
-          {navItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            const Icon = item.icon;
+        <nav className="scrollbar-thin -mx-1 grid flex-1 content-start gap-5 overflow-y-auto pr-1">
+          {moduleGroups.map((group) => {
+            const items = modulesByGroup(group.key).filter((module) => allowedModules.some((allowed) => allowed.key === module.key));
+            if (!items.length) return null;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeSidebar}
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-muted-foreground transition hover:bg-primary/10 hover:text-white",
-                  active && "bg-primary/15 text-white ring-1 ring-primary/30"
-                )}
-              >
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06]">
-                  <Icon className="h-4 w-4" />
-                </span>
-                {item.label}
-              </Link>
+              <section key={group.key} className="grid gap-2">
+                <p className="px-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                  {group.label}
+                </p>
+                {items.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const Icon = moduleIcons[item.key as keyof typeof moduleIcons] ?? LayoutDashboard;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeSidebar}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-bold text-muted-foreground transition hover:bg-primary/10 hover:text-white",
+                        active && "bg-primary/15 text-white ring-1 ring-primary/30"
+                      )}
+                    >
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.06]">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {item.status !== "active" ? (
+                        <span className="rounded-full bg-white/[0.06] px-2 py-1 text-[0.62rem] font-black uppercase text-muted-foreground">
+                          {item.status === "foundation" ? "base" : "plan"}
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </section>
             );
           })}
         </nav>
@@ -99,13 +144,13 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             </Button>
             <div>
               <p className="text-xs font-black uppercase text-primary">sCode Digital Solutions</p>
-              <h1 className="text-2xl font-black tracking-tight text-white md:text-4xl">Finance SaaS</h1>
+              <h1 className="text-2xl font-black tracking-tight text-white md:text-4xl">sWallet interno</h1>
             </div>
           </div>
           <div className="hidden items-center gap-2 md:flex">
             <div className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 text-sm text-muted-foreground">
               <Search className="h-4 w-4" />
-              Buscar cliente, pago o proyecto
+              Buscar cliente, proyecto, factura o pago
             </div>
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
@@ -158,4 +203,8 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
       </main>
     </div>
   );
+}
+
+function WalletIcon(props: React.ComponentProps<typeof ReceiptText>) {
+  return <ReceiptText {...props} />;
 }

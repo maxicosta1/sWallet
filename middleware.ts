@@ -1,17 +1,12 @@
 import { auth } from "@/auth";
+import { protectedPaths } from "@/config/modules";
 
 export default auth((request) => {
   const isLoggedIn = Boolean(request.auth);
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
-  const isProtectedRoute =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/clients") ||
-    request.nextUrl.pathname.startsWith("/payments") ||
-    request.nextUrl.pathname.startsWith("/movements") ||
-    request.nextUrl.pathname.startsWith("/reports") ||
-    request.nextUrl.pathname.startsWith("/projects") ||
-    request.nextUrl.pathname.startsWith("/subscriptions") ||
-    request.nextUrl.pathname.startsWith("/settings");
+  const isProtectedRoute = protectedPaths.some((path) => (
+    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`)
+  ));
 
   if (isProtectedRoute && !isLoggedIn) {
     return Response.redirect(new URL("/login", request.nextUrl));

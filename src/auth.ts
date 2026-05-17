@@ -79,7 +79,6 @@ function normalizeCredential(value: string) {
 }
 
 function resolveRole(role: unknown): Role {
-  return role === "admin" || role === "finanzas" || role === "desarrollador" || role === "solo_lectura"
-    ? role
-    : "solo_lectura";
+  const allowedRoles = ["admin", "finanzas", "project_manager", "desarrollador", "marketing", "solo_lectura", "cliente"];
+  return allowedRoles.includes(String(role)) ? (role as Role) : "solo_lectura";
 }

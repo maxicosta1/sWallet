@@ -13,14 +13,17 @@ export default async function SettingsPage() {
         <CardHeader>
           <div>
             <CardDescription>Multimoneda</CardDescription>
-            <CardTitle>Cotización USD/ARS</CardTitle>
+            <CardTitle>Cotizacion USD/ARS</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <ExchangeRateForm rate={data.exchangeRate} />
-          <p className="mt-3 text-sm text-muted-foreground">Cada actualización crea un registro histórico para reportes y auditoría.</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Cada actualizacion crea un registro historico para reportes y auditoria.
+          </p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <div>
@@ -31,8 +34,11 @@ export default async function SettingsPage() {
         <CardContent className="grid gap-3 text-sm text-muted-foreground">
           <p><strong className="text-white">admin:</strong> acceso total.</p>
           <p><strong className="text-white">finanzas:</strong> clientes, pagos, movimientos y reportes.</p>
+          <p><strong className="text-white">project_manager:</strong> proyectos, tareas, equipo operativo y portal cliente.</p>
           <p><strong className="text-white">desarrollador:</strong> proyectos y lectura operativa.</p>
-          <p><strong className="text-white">solo lectura:</strong> navegación y reportes sin escritura.</p>
+          <p><strong className="text-white">marketing:</strong> CRM, campanas, clientes y reportes comerciales.</p>
+          <p><strong className="text-white">solo lectura:</strong> navegacion y reportes sin escritura.</p>
+          <p><strong className="text-white">cliente:</strong> acceso limitado al portal cliente.</p>
         </CardContent>
       </Card>
     </div>

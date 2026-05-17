@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDashboardData } from "@/server/queries/dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClientForm } from "@/components/forms/entity-forms";
@@ -33,9 +34,12 @@ export default async function ClientsPage() {
         </CardHeader>
         <CardContent>
           <DataTable
-            headers={["Cliente", "Servicio", "Generó", "Debe", "Proyectos", "Estado"]}
+            headers={["Cliente", "Servicio", "Genero", "Debe", "Proyectos", "Estado"]}
             rows={data.clients.map((client) => [
-              <div key="client"><strong className="block">{client.company}</strong><span className="text-xs text-muted-foreground">{client.name} · {client.email}</span></div>,
+              <Link key="client" href={`/clients/${client.id}`} className="block transition hover:text-primary">
+                <strong className="block">{client.company}</strong>
+                <span className="text-xs text-muted-foreground">{client.name} - {client.email}</span>
+              </Link>,
               client.service,
               <CurrencyAmount key="generated" value={client.generated} currency="ARS" />,
               <CurrencyAmount key="debt" value={client.debt} currency="ARS" />,

@@ -11,8 +11,11 @@ datasource db {
 enum Role {
   admin
   finanzas
+  project_manager
   desarrollador
+  marketing
   solo_lectura
+  cliente
 }
 
 enum UserStatus {
@@ -90,6 +93,25 @@ enum ProjectStatus {
   finalizado
 }
 
+enum ProjectStage {
+  relevamiento
+  diseno
+  desarrollo
+  revision_interna
+  revision_cliente
+  correcciones
+  entrega
+  mantenimiento
+}
+
+enum ProjectRisk {
+  normal
+  en_riesgo
+  atrasado
+  bloqueado_cliente
+  bloqueado_interno
+}
+
 enum SubscriptionStatus {
   activa
   por_vencer
@@ -101,6 +123,7 @@ enum TaskStatus {
   pendiente
   en_proceso
   en_revision
+  bloqueada
   completada
   cancelada
 }
@@ -317,10 +340,14 @@ model Project {
   id             String             @id @default(cuid())
   userId         String?
   clientId       String
+  approvedBudgetId String?          @unique
+  responsibleTeamMemberId String?
   legacyId       String?            @unique
   name           String
   description    String?            @db.Text
   status         ProjectStatus      @default(pendiente)
+  stage          ProjectStage       @default(relevamiento)
+  risk           ProjectRisk        @default(normal)
   progress       Int                @default(0)
   budget         Decimal            @db.Decimal(14, 2)
   paid           Decimal            @default(0) @db.Decimal(14, 2)
@@ -330,11 +357,14 @@ model Project {
   technologies   String?
   links          String?            @db.Text
   notes          String?            @db.Text
+  scope          Json?
   startsAt       DateTime?
   dueAt          DateTime?
   deliveredAt    DateTime?
   user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   client         Client             @relation(fields: [clientId], references: [id])
+  approvedBudget Budget?            @relation("ApprovedBudget", fields: [approvedBudgetId], references: [id], onDelete: SetNull)
+  responsibleTeamMember TeamMember? @relation("ProjectResponsible", fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
   invoices       Invoice[]
   payments       Payment[]
   movements      Movement[]
@@ -349,13 +379,18 @@ model Project {
   documents      Document[]
   supportPlans   SupportPlan[]
   attachments    Attachment[]
+  timeEntries     TimeEntry[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   deletedAt      DateTime?
 
   @@index([userId])
   @@index([clientId])
+  @@index([approvedBudgetId])
+  @@index([responsibleTeamMemberId])
   @@index([status])
+  @@index([stage])
+  @@index([risk])
   @@index([dueAt])
 }
 
@@ -379,9 +414,15 @@ model Invoice {
   userId      String?
   clientId    String
   projectId   String?
+  budgetId    String?
   legacyId    String?       @unique
   number      String
   amount      Decimal       @db.Decimal(14, 2)
+  subtotal    Decimal       @default(0) @db.Decimal(14, 2)
+  discount    Decimal       @default(0) @db.Decimal(14, 2)
+  taxes       Decimal       @default(0) @db.Decimal(14, 2)
+  total       Decimal       @default(0) @db.Decimal(14, 2)
+  balanceDue  Decimal       @default(0) @db.Decimal(14, 2)
   currency    Currency      @default(ARS)
   issueDate   DateTime
   dueDate     DateTime
@@ -390,8 +431,10 @@ model Invoice {
   user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client        @relation(fields: [clientId], references: [id])
   project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  budget      Budget?       @relation(fields: [budgetId], references: [id], onDelete: SetNull)
   items       InvoiceItem[]
   payments    Payment[]
+  movements   Movement[]
   attachments Attachment[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -401,6 +444,7 @@ model Invoice {
   @@index([userId])
   @@index([clientId])
   @@index([projectId])
+  @@index([budgetId])
   @@index([status])
   @@index([dueDate])
 }
@@ -424,6 +468,7 @@ model Payment {
   clientId      String
   projectId     String?
   invoiceId     String?
+  budgetId      String?
   legacyId      String?              @unique
   amount        Decimal              @db.Decimal(14, 2)
   paidAmount    Decimal              @default(0) @db.Decimal(14, 2)
@@ -439,6 +484,8 @@ model Payment {
   client        Client               @relation(fields: [clientId], references: [id])
   project       Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
   invoice       Invoice?             @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  budget        Budget?              @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  movement      Movement?            @relation("PaymentMovement")
   installments  PaymentInstallment[]
   attachments   Attachment[]
   createdAt     DateTime             @default(now())
@@ -449,6 +496,7 @@ model Payment {
   @@index([clientId])
   @@index([projectId])
   @@index([invoiceId])
+  @@index([budgetId])
   @@index([status])
   @@index([dueDate])
 }
@@ -472,6 +520,8 @@ model Movement {
   userId      String?
   clientId    String?
   projectId   String?
+  paymentId   String?      @unique
+  invoiceId   String?
   legacyId    String?      @unique
   type        MovementType
   categoryId  String
@@ -482,6 +532,8 @@ model Movement {
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
   project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  payment     Payment?     @relation("PaymentMovement", fields: [paymentId], references: [id], onDelete: SetNull)
+  invoice     Invoice?     @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
   category    Category     @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
   createdAt   DateTime     @default(now())
@@ -491,6 +543,7 @@ model Movement {
   @@index([userId])
   @@index([clientId])
   @@index([projectId])
+  @@index([invoiceId])
   @@index([categoryId])
   @@index([type])
   @@index([date])
@@ -535,6 +588,7 @@ model AdminTask {
   userId      String?
   clientId    String?
   projectId   String?
+  responsibleTeamMemberId String?
   legacyId    String?    @unique
   title       String
   description String?    @db.Text
@@ -547,6 +601,8 @@ model AdminTask {
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
   project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  responsibleTeamMember TeamMember? @relation("TaskResponsible", fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
+  timeEntries TimeEntry[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
@@ -554,6 +610,7 @@ model AdminTask {
   @@index([userId])
   @@index([clientId])
   @@index([projectId])
+  @@index([responsibleTeamMemberId])
   @@index([status])
   @@index([dueDate])
 }
@@ -589,6 +646,7 @@ model ServiceRequest {
   userId      String?
   clientId    String?
   projectId   String?
+  responsibleTeamMemberId String?
   legacyId    String?    @unique
   description String     @db.Text
   type        String
@@ -601,12 +659,14 @@ model ServiceRequest {
   user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
   project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  responsibleTeamMember TeamMember? @relation("ServiceRequestResponsible", fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
 
   @@index([clientId])
   @@index([projectId])
+  @@index([responsibleTeamMemberId])
   @@index([status])
 }
 
@@ -658,6 +718,7 @@ model Opportunity {
   id          String            @id @default(cuid())
   userId      String?
   clientId    String?
+  responsibleTeamMemberId String?
   legacyId    String?           @unique
   title       String
   service     String
@@ -670,11 +731,13 @@ model Opportunity {
   notes       String?           @db.Text
   user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  responsibleTeamMember TeamMember? @relation("OpportunityResponsible", fields: [responsibleTeamMemberId], references: [id], onDelete: SetNull)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   deletedAt   DateTime?
 
   @@index([clientId])
+  @@index([responsibleTeamMemberId])
   @@index([status])
 }
 
@@ -684,16 +747,24 @@ model Budget {
   clientId    String?
   projectId   String?
   legacyId    String?      @unique
+  number      String?      @unique
   projectName String
   services    String?      @db.Text
+  subtotal    Decimal      @default(0) @db.Decimal(14, 2)
   discount    Decimal      @default(0) @db.Decimal(14, 2)
+  taxes       Decimal      @default(0) @db.Decimal(14, 2)
+  total       Decimal      @default(0) @db.Decimal(14, 2)
   currency    Currency     @default(ARS)
+  issueDate   DateTime     @default(now())
   validUntil  DateTime?
   status      BudgetStatus @default(borrador)
   notes       String?      @db.Text
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   client      Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
   project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  approvedProject Project? @relation("ApprovedBudget")
+  invoices    Invoice[]
+  payments    Payment[]
   items       BudgetItem[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -701,6 +772,7 @@ model Budget {
 
   @@index([clientId])
   @@index([projectId])
+  @@index([number])
   @@index([status])
   @@index([validUntil])
 }
@@ -710,6 +782,9 @@ model BudgetItem {
   budgetId    String
   description String
   amount      Decimal  @db.Decimal(14, 2)
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @default(0) @db.Decimal(14, 2)
+  total       Decimal  @default(0) @db.Decimal(14, 2)
   position    Int      @default(0)
   budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
@@ -797,21 +872,51 @@ model SupportPlan {
 }
 
 model TeamMember {
-  id        String     @id @default(cuid())
-  userId    String?
-  legacyId  String?    @unique
-  name      String
-  email     String
-  role      String
-  status    UserStatus @default(activo)
-  focus     String?
-  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deletedAt DateTime?
+  id              String           @id @default(cuid())
+  userId          String?
+  legacyId        String?          @unique
+  name            String
+  lastName        String?
+  email           String
+  phone           String?
+  role            String
+  status          UserStatus       @default(activo)
+  focus           String?
+  responsibilities String?         @db.Text
+  notes           String?          @db.Text
+  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  responsibleProjects Project[]    @relation("ProjectResponsible")
+  assignedTasks   AdminTask[]      @relation("TaskResponsible")
+  serviceRequests ServiceRequest[] @relation("ServiceRequestResponsible")
+  opportunities   Opportunity[]    @relation("OpportunityResponsible")
+  timeEntries     TimeEntry[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
 
   @@index([email])
   @@index([status])
+}
+
+model TimeEntry {
+  id           String     @id @default(cuid())
+  teamMemberId String
+  projectId    String?
+  taskId       String?
+  date         DateTime
+  hours        Decimal    @db.Decimal(10, 2)
+  comment      String?    @db.Text
+  teamMember   TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  project      Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task         AdminTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  @@index([teamMemberId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([date])
 }
 
 model MarketingCampaign {
