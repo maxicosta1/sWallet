@@ -3636,3 +3636,153 @@ td {
         border-radius: 22px;
     }
 }
+
+/* sWallet purple bank accent */
+:root {
+    --primary: #9f5cff;
+    --primary-dark: #6f39c6;
+    --line-strong: rgba(159, 92, 255, 0.46);
+}
+
+body {
+    background:
+        radial-gradient(circle at 15% -18%, rgba(159, 92, 255, 0.28), transparent 30rem),
+        radial-gradient(circle at 88% 4%, rgba(112, 72, 255, 0.28), transparent 32rem),
+        radial-gradient(circle at 64% 82%, rgba(255, 90, 31, 0.12), transparent 30rem),
+        linear-gradient(145deg, #030405 0%, #0b0d12 46%, #050608 100%);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(159, 92, 255, 0.95), rgba(112, 72, 255, 0.78));
+}
+
+.brand-mark,
+.topbar::after {
+    color: #ffffff;
+    background: linear-gradient(135deg, #9f5cff 0%, #7048ff 52%, #d95cff 100%);
+    box-shadow: 0 18px 46px rgba(159, 92, 255, 0.26);
+}
+
+.nav-link.active,
+.period-tabs button.active,
+.primary-button,
+.google-calendar-button,
+.mobile-bank-nav button.active span {
+    color: #ffffff;
+    background: linear-gradient(135deg, #9f5cff 0%, #7c3df2 58%, #d95cff 100%);
+    box-shadow: 0 18px 42px rgba(159, 92, 255, 0.26);
+}
+
+.nav-link.active {
+    border-color: rgba(159, 92, 255, 0.62);
+}
+
+.nav-link.active .nav-icon {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.primary-button:hover,
+.google-calendar-button:hover {
+    box-shadow: 0 22px 52px rgba(159, 92, 255, 0.34);
+}
+
+.ghost-button:hover {
+    border-color: rgba(159, 92, 255, 0.42);
+    background: rgba(159, 92, 255, 0.13);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: rgba(159, 92, 255, 0.68);
+    box-shadow:
+        0 0 0 4px rgba(159, 92, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.rate-card,
+.session-card {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(159, 92, 255, 0.16), transparent 12rem),
+        rgba(255, 255, 255, 0.045);
+}
+
+.dashboard-board {
+    background:
+        radial-gradient(circle at 13% 13%, rgba(159, 92, 255, 0.16), transparent 18rem),
+        radial-gradient(circle at 94% 10%, rgba(112, 72, 255, 0.18), transparent 20rem),
+        linear-gradient(135deg, rgba(15, 17, 22, 0.88), rgba(8, 9, 12, 0.9));
+}
+
+.bank-card,
+.dashboard-balance-card {
+    background:
+        radial-gradient(circle at 84% 22%, rgba(159, 92, 255, 0.28), transparent 11rem),
+        radial-gradient(circle at 8% 6%, rgba(255, 255, 255, 0.13), transparent 13rem),
+        linear-gradient(145deg, #22252a 0%, #101216 42%, #050608 100%);
+}
+
+.bank-card::before {
+    background: linear-gradient(90deg, transparent, rgba(159, 92, 255, 0.3), transparent);
+}
+
+.bank-card::after {
+    background:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1), transparent 1.3rem),
+        linear-gradient(135deg, rgba(112, 72, 255, 0.92), rgba(217, 92, 255, 0.62));
+}
+
+.account-pill,
+.badge {
+    color: #ffffff;
+    border-color: rgba(159, 92, 255, 0.35);
+    background: rgba(159, 92, 255, 0.92);
+}
+
+#dashboardView .stat-card:first-child {
+    background:
+        radial-gradient(circle at 96% 8%, rgba(159, 92, 255, 0.3), transparent 9rem),
+        linear-gradient(145deg, rgba(38, 41, 47, 0.96), rgba(14, 16, 20, 0.96));
+}
+
+.stat-card::after {
+    background: linear-gradient(180deg, rgba(159, 92, 255, 0.95), rgba(217, 92, 255, 0.24));
+}
+
+.badge.pagada,
+.badge.completada,
+.amount-positive {
+    color: #c7a7ff;
+}
+
+.mobile-bank-nav button.active {
+    background: rgba(159, 92, 255, 0.12);
+}
+
+.mobile-bank-nav button.active span {
+    box-shadow: 0 10px 24px rgba(159, 92, 255, 0.3);
+}
+
+@media (max-width: 860px) {
+    body {
+        background:
+            radial-gradient(circle at 80% -8%, rgba(112, 72, 255, 0.35), transparent 18rem),
+            radial-gradient(circle at 0% 18%, rgba(159, 92, 255, 0.24), transparent 16rem),
+            linear-gradient(180deg, #030405 0%, #090a0e 52%, #040506 100%);
+    }
+
+    .sidebar {
+        background:
+            radial-gradient(circle at 100% 0%, rgba(159, 92, 255, 0.16), transparent 14rem),
+            rgba(5, 6, 8, 0.98);
+    }
+}
+
+@media (max-width: 640px) {
+    .topbar::after {
+        color: #ffffff;
+        background: linear-gradient(135deg, #9f5cff, #d95cff);
+        box-shadow: 0 18px 42px rgba(159, 92, 255, 0.28);
+    }
+}

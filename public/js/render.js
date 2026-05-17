@@ -156,9 +156,10 @@ function syncActiveNavigation(view) {
 
 function updatePageTitle(view) {
   const title = titles[view] || "Dashboard financiero";
-  const firstName = currentUser()?.name?.split(" ")[0] || "equipo";
-  dom.pageTitle.textContent = title;
-  dom.pageTitle.dataset.mobileTitle = view === "dashboard" ? `Bienvenido ${firstName}!` : title;
+  const firstName = displayBrandName(currentUser()) || "usuario";
+  const dashboardTitle = `Bienvenido: ${firstName}`;
+  dom.pageTitle.textContent = view === "dashboard" ? dashboardTitle : title;
+  dom.pageTitle.dataset.mobileTitle = view === "dashboard" ? dashboardTitle : title;
 }
 
 export function syncControls() {
