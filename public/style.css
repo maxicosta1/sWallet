@@ -4115,3 +4115,186 @@ td .entity-title span,
         rgba(12, 11, 18, 0.76);
     backdrop-filter: blur(26px) saturate(145%);
 }
+
+/* Final dark safety pass: remove legacy white panels and fix modal scrolling */
+body:not(.print-mode) .panel,
+body:not(.print-mode) #dashboardView .panel,
+body:not(.print-mode) .dashboard-board,
+body:not(.print-mode) .stat-card,
+body:not(.print-mode) .resource-card,
+body:not(.print-mode) .portal-preview,
+body:not(.print-mode) .portal-section,
+body:not(.print-mode) .portal-project-card,
+body:not(.print-mode) .portal-account-card,
+body:not(.print-mode) .billing-card,
+body:not(.print-mode) .admin-card,
+body:not(.print-mode) .goal-card,
+body:not(.print-mode) .kanban-card,
+body:not(.print-mode) .kanban-column,
+body:not(.print-mode) .detail-panel,
+body:not(.print-mode) .filters-panel {
+    color: #f7f3ff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    background:
+        radial-gradient(circle at 94% 0%, rgba(159, 92, 255, 0.14), transparent 18rem),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.028)),
+        rgba(9, 8, 14, 0.86) !important;
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+    backdrop-filter: blur(22px) saturate(130%);
+}
+
+body:not(.print-mode) .progress-hero,
+body:not(.print-mode) .mini-ledger,
+body:not(.print-mode) .mini-ledger div,
+body:not(.print-mode) .list-item,
+body:not(.print-mode) .calendar-sync-item,
+body:not(.print-mode) .portal-mini-metrics,
+body:not(.print-mode) .billing-detail,
+body:not(.print-mode) .search-results,
+body:not(.print-mode) .activity-item {
+    color: #f7f3ff !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    background: rgba(10, 9, 15, 0.78) !important;
+}
+
+body:not(.print-mode) .panel h2,
+body:not(.print-mode) .panel h3,
+body:not(.print-mode) .panel strong,
+body:not(.print-mode) .stat-card strong,
+body:not(.print-mode) .resource-card strong,
+body:not(.print-mode) .list-item strong,
+body:not(.print-mode) .progress-hero strong,
+body:not(.print-mode) .calendar-sync-item strong,
+body:not(.print-mode) .portal-preview strong,
+body:not(.print-mode) .portal-section strong,
+body:not(.print-mode) td,
+body:not(.print-mode) label {
+    color: #ffffff !important;
+}
+
+body:not(.print-mode) .panel p,
+body:not(.print-mode) .panel span,
+body:not(.print-mode) .panel small,
+body:not(.print-mode) .stat-card span,
+body:not(.print-mode) .stat-card small,
+body:not(.print-mode) .resource-card p,
+body:not(.print-mode) .resource-card small,
+body:not(.print-mode) .progress-hero span,
+body:not(.print-mode) .list-item span,
+body:not(.print-mode) .calendar-sync-item span,
+body:not(.print-mode) .entity-title span {
+    color: #bdb6cf !important;
+}
+
+body:not(.print-mode) .progress-hero strong,
+body:not(.print-mode) .amount-positive {
+    color: #c7a7ff !important;
+}
+
+body:not(.print-mode) .progress-bar,
+body:not(.print-mode) .progress-fill {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body:not(.print-mode) .table-wrap,
+body:not(.print-mode) table {
+    color: #f7f3ff !important;
+    background: #09080f !important;
+}
+
+body:not(.print-mode) th {
+    color: #d9d2eb !important;
+    background: #17131f !important;
+}
+
+body:not(.print-mode) tbody tr {
+    background: #0e0c14 !important;
+}
+
+body:not(.print-mode) tbody tr:nth-child(even) {
+    background: #14111d !important;
+}
+
+body:not(.print-mode) .modal-active {
+    overflow: hidden !important;
+}
+
+body:not(.print-mode) .modal-backdrop.show {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+body:not(.print-mode) .modal-panel {
+    position: fixed !important;
+    inset: 18px auto auto 50% !important;
+    top: 18px !important;
+    left: 50% !important;
+    width: min(860px, calc(100vw - 28px)) !important;
+    max-width: calc(100vw - 28px) !important;
+    max-height: calc(100dvh - 36px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    transform: translateX(-50%) !important;
+    color: #f7f3ff !important;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(159, 92, 255, 0.18), transparent 17rem),
+        linear-gradient(145deg, rgba(29, 25, 39, 0.98), rgba(10, 9, 15, 0.99)) !important;
+    box-shadow: 0 34px 100px rgba(0, 0, 0, 0.68), 0 0 0 1px rgba(159, 92, 255, 0.22) !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+body:not(.print-mode) .modal-panel.modal-open {
+    display: block !important;
+    animation: none !important;
+}
+
+body:not(.print-mode) .modal-panel .panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: -18px -18px 16px;
+    padding: 18px 64px 16px 18px;
+    border-radius: 22px 22px 0 0;
+    background: rgba(12, 10, 18, 0.92);
+    backdrop-filter: blur(18px);
+}
+
+body:not(.print-mode) .modal-close {
+    position: sticky;
+    top: 14px;
+    float: right;
+    z-index: 8;
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.print-mode) .modal-panel input,
+body:not(.print-mode) .modal-panel select,
+body:not(.print-mode) .modal-panel textarea {
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.075) !important;
+}
+
+body:not(.print-mode) .modal-panel select option {
+    color: #16111f;
+    background: #ffffff;
+}
+
+@media (max-width: 640px) {
+    body:not(.print-mode) .modal-panel {
+        inset: 8px auto auto 50% !important;
+        top: 8px !important;
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        border-radius: 24px !important;
+    }
+
+    body:not(.print-mode) .modal-panel .form-row {
+        grid-template-columns: 1fr !important;
+    }
+}
