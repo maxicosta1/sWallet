@@ -2961,3 +2961,678 @@ table {
         color: transparent;
     }
 }
+
+/* sWallet virtual bank dark theme */
+:root {
+    --bg: #040506;
+    --bg-soft: #0a0b0d;
+    --panel: rgba(18, 20, 24, 0.78);
+    --panel-strong: rgba(24, 26, 31, 0.96);
+    --line: rgba(255, 255, 255, 0.09);
+    --line-strong: rgba(157, 255, 84, 0.42);
+    --text: #f7f8f2;
+    --muted: #a0a3ad;
+    --faint: #6f737e;
+    --primary: #9dff54;
+    --primary-dark: #67d928;
+    --coral: #ff5a1f;
+    --green: #30f2a0;
+    --yellow: #f2dc61;
+    --red: #ff5c7a;
+    --blue: #2aa8ff;
+    --radius: 22px;
+    --radius-sm: 14px;
+    --shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
+    --blur: blur(26px);
+    color-scheme: dark;
+}
+
+html,
+body {
+    background: #040506;
+}
+
+body {
+    color: var(--text);
+    background:
+        radial-gradient(circle at 15% -18%, rgba(157, 255, 84, 0.24), transparent 30rem),
+        radial-gradient(circle at 88% 4%, rgba(112, 72, 255, 0.28), transparent 32rem),
+        radial-gradient(circle at 64% 82%, rgba(255, 90, 31, 0.13), transparent 30rem),
+        linear-gradient(145deg, #030405 0%, #0b0d12 46%, #050608 100%);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 82%);
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #07080a;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 2px solid #07080a;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(157, 255, 84, 0.86), rgba(112, 72, 255, 0.78));
+}
+
+.app-shell {
+    background: transparent;
+}
+
+.sidebar {
+    width: 276px;
+    padding: 22px 18px;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        linear-gradient(180deg, rgba(15, 17, 21, 0.96), rgba(4, 5, 6, 0.96)),
+        #050608;
+    box-shadow: 18px 0 60px rgba(0, 0, 0, 0.28);
+}
+
+.brand {
+    padding: 8px 8px 14px;
+}
+
+.brand-mark {
+    border-radius: 17px;
+    color: #071008;
+    background: linear-gradient(135deg, #9dff54 0%, #30f2a0 48%, #7048ff 100%);
+    box-shadow: 0 18px 46px rgba(157, 255, 84, 0.22);
+}
+
+.brand strong,
+.topbar h1,
+.panel h2 {
+    color: #ffffff;
+}
+
+.brand span,
+.session-card small,
+.rate-card label {
+    color: var(--muted);
+}
+
+.nav-menu {
+    gap: 7px;
+}
+
+.nav-link {
+    min-height: 48px;
+    padding: 11px 12px;
+    border-radius: 16px;
+    color: #aaaeb8;
+    background: transparent;
+}
+
+.nav-link:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.055);
+}
+
+.nav-link.active {
+    color: #071008;
+    border-color: rgba(157, 255, 84, 0.58);
+    background: linear-gradient(135deg, #9dff54 0%, #78f85c 58%, #30f2a0 100%);
+    box-shadow: 0 16px 34px rgba(157, 255, 84, 0.18);
+}
+
+.nav-icon {
+    color: inherit;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.nav-link.active .nav-icon {
+    color: #071008;
+    background: rgba(5, 8, 6, 0.12);
+}
+
+.rate-card,
+.session-card {
+    border-color: rgba(255, 255, 255, 0.1);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(157, 255, 84, 0.14), transparent 12rem),
+        rgba(255, 255, 255, 0.045);
+    box-shadow: none;
+}
+
+.main-content {
+    margin-left: 276px;
+    max-width: calc(100vw - 276px);
+    padding: 34px 34px 46px;
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    margin: -18px -18px 22px;
+    padding: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 0 0 28px 28px;
+    background: rgba(4, 5, 6, 0.72);
+    backdrop-filter: blur(26px);
+}
+
+.topbar h1 {
+    max-width: 12ch;
+    font-size: clamp(2.15rem, 4.2vw, 4.2rem);
+    line-height: 0.96;
+}
+
+.eyebrow,
+.rate-card span {
+    color: var(--primary);
+}
+
+.global-search {
+    max-width: 440px;
+}
+
+input,
+select,
+textarea,
+.global-search input,
+.rate-input input {
+    color: #f7f8f2;
+    border-color: rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.075);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(247, 248, 242, 0.42);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: rgba(157, 255, 84, 0.62);
+    box-shadow:
+        0 0 0 4px rgba(157, 255, 84, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.primary-button,
+.google-calendar-button {
+    color: #061007;
+    border-color: transparent;
+    background: linear-gradient(135deg, #9dff54, #30f2a0);
+    box-shadow: 0 18px 42px rgba(157, 255, 84, 0.22);
+}
+
+.primary-button:hover,
+.google-calendar-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 22px 52px rgba(157, 255, 84, 0.28);
+}
+
+.ghost-button {
+    color: #f7f8f2;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.ghost-button:hover {
+    color: #ffffff;
+    border-color: rgba(157, 255, 84, 0.36);
+    background: rgba(157, 255, 84, 0.11);
+}
+
+.dashboard-board {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        radial-gradient(circle at 13% 13%, rgba(157, 255, 84, 0.13), transparent 18rem),
+        radial-gradient(circle at 94% 10%, rgba(112, 72, 255, 0.18), transparent 20rem),
+        linear-gradient(135deg, rgba(15, 17, 22, 0.88), rgba(8, 9, 12, 0.9));
+    box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.44),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-controls {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.period-tabs {
+    border-color: rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.period-tabs button,
+#dashboardDateRange {
+    color: #c6cad3;
+}
+
+.period-tabs button.active {
+    color: #071008;
+    background: linear-gradient(135deg, #9dff54, #30f2a0);
+}
+
+.bank-card,
+.dashboard-balance-card {
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    background:
+        radial-gradient(circle at 84% 22%, rgba(157, 255, 84, 0.22), transparent 11rem),
+        radial-gradient(circle at 8% 6%, rgba(255, 255, 255, 0.13), transparent 13rem),
+        linear-gradient(145deg, #22252a 0%, #101216 42%, #050608 100%);
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.58),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.bank-card::before {
+    opacity: 0.42;
+    background: linear-gradient(90deg, transparent, rgba(157, 255, 84, 0.24), transparent);
+}
+
+.bank-card::after {
+    background:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1), transparent 1.3rem),
+        linear-gradient(135deg, rgba(112, 72, 255, 0.82), rgba(157, 255, 84, 0.62));
+}
+
+.dashboard-balance-card #heroBalance {
+    color: #ffffff;
+    text-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+}
+
+.account-pill {
+    color: #071008;
+    background: rgba(157, 255, 84, 0.92);
+}
+
+.bank-card-bottom div {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+#dashboardView .stat-card,
+.stat-card,
+.panel,
+.resource-card,
+.billing-card,
+.admin-card,
+.goal-card,
+.kanban-column,
+.kanban-card,
+.detail-panel,
+.portal-section,
+.portal-preview,
+.portal-project-card,
+.portal-account-card,
+.insight-card {
+    color: #f7f8f2;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        linear-gradient(145deg, rgba(26, 28, 34, 0.92), rgba(12, 13, 16, 0.92));
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+#dashboardView .stat-card:first-child {
+    background:
+        radial-gradient(circle at 96% 8%, rgba(157, 255, 84, 0.28), transparent 9rem),
+        linear-gradient(145deg, rgba(38, 41, 47, 0.96), rgba(14, 16, 20, 0.96));
+}
+
+#dashboardView .stat-card span,
+#dashboardView .stat-card small,
+.stat-card span,
+.stat-card small,
+.panel .eyebrow,
+.list-item span,
+.calendar-sync-item span,
+.table-wrap th,
+.progress-hero span,
+.detail-panel p,
+.resource-card p,
+.resource-card small,
+.portal-project-card p,
+.portal-account-card span,
+.portal-account-card small,
+.card-meta {
+    color: #9da2ae;
+}
+
+#dashboardView .stat-card strong,
+.stat-card strong,
+.panel h2,
+.entity-title strong,
+.resource-card strong,
+.list-item strong,
+.calendar-sync-item strong,
+td,
+label {
+    color: #f7f8f2;
+}
+
+.stat-card::after {
+    background: linear-gradient(180deg, rgba(157, 255, 84, 0.95), rgba(48, 242, 160, 0.24));
+}
+
+.stat-card.coral::after {
+    background: linear-gradient(180deg, rgba(255, 90, 31, 0.95), rgba(255, 90, 31, 0.18));
+}
+
+.stat-card.blue::after {
+    background: linear-gradient(180deg, rgba(42, 168, 255, 0.95), rgba(42, 168, 255, 0.18));
+}
+
+.panel-header,
+.table-wrap,
+.billing-detail,
+.detail-panel,
+.stack-list,
+.mini-ledger,
+.calendar-sync-list,
+.search-results {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.list-item,
+.calendar-sync-item,
+.activity-item,
+.mini-ledger div,
+.portal-mini-metrics,
+.filters-panel,
+tbody tr {
+    border-color: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+tbody tr:hover,
+.list-item:hover,
+.kanban-card:hover {
+    background: rgba(157, 255, 84, 0.07);
+}
+
+table {
+    color: #f7f8f2;
+}
+
+th {
+    color: #aeb3bd;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+td {
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.badge {
+    color: #071008;
+    border-color: rgba(157, 255, 84, 0.28);
+    background: rgba(157, 255, 84, 0.86);
+}
+
+.badge.pendiente,
+.badge.en-progreso,
+.badge.en_revision {
+    color: #fff7e8;
+    background: rgba(255, 176, 64, 0.2);
+}
+
+.badge.vencida,
+.badge.atrasado,
+.badge.alta,
+.badge.urgente {
+    color: #ffe8ed;
+    background: rgba(255, 92, 122, 0.2);
+}
+
+.badge.pagada,
+.badge.completada,
+.amount-positive {
+    color: #9dff54;
+}
+
+.amount-negative {
+    color: #ff7a92;
+}
+
+.modal-backdrop {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(12px);
+}
+
+.modal-panel.modal-open {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(157, 255, 84, 0.12), transparent 15rem),
+        rgba(14, 16, 20, 0.98);
+}
+
+.modal-close {
+    color: #f7f8f2;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hamburger {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.075);
+}
+
+.hamburger span {
+    background: #ffffff;
+}
+
+.mobile-bank-nav {
+    display: none;
+}
+
+@media (min-width: 861px) {
+    .main-content {
+        width: calc(100vw - 276px);
+        max-width: calc(100vw - 276px);
+        margin-left: 276px;
+    }
+}
+
+@media (max-width: 860px) {
+    body {
+        background:
+            radial-gradient(circle at 80% -8%, rgba(112, 72, 255, 0.35), transparent 18rem),
+            radial-gradient(circle at 0% 18%, rgba(157, 255, 84, 0.22), transparent 16rem),
+            linear-gradient(180deg, #030405 0%, #090a0e 52%, #040506 100%);
+    }
+
+    .sidebar {
+        width: min(330px, 88vw);
+        background:
+            radial-gradient(circle at 100% 0%, rgba(157, 255, 84, 0.13), transparent 14rem),
+            rgba(5, 6, 8, 0.98);
+    }
+
+    .main-content {
+        max-width: 100vw;
+        margin-left: 0;
+        padding: 18px 14px 92px;
+    }
+
+    .topbar {
+        margin: 0 0 18px;
+        border-radius: 28px;
+        background: rgba(5, 6, 8, 0.58);
+    }
+
+    .dashboard-board {
+        border-radius: 32px;
+    }
+}
+
+@media (max-width: 640px) {
+    .main-content {
+        padding: 14px 12px 104px;
+    }
+
+    .topbar {
+        padding: 10px 0 2px;
+        border: 0;
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    .topbar::after {
+        color: #071008;
+        border-color: rgba(255, 255, 255, 0.13);
+        background: linear-gradient(135deg, #9dff54, #30f2a0);
+        box-shadow: 0 18px 42px rgba(157, 255, 84, 0.22);
+    }
+
+    .hamburger,
+    .global-search input {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.085);
+        box-shadow: none;
+    }
+
+    .global-search::before {
+        border-color: #ffffff;
+    }
+
+    .global-search::after {
+        background: #ffffff;
+    }
+
+    .topbar h1::before {
+        color: #ffffff;
+    }
+
+    .dashboard-controls {
+        display: none;
+    }
+
+    .dashboard-board {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .dashboard-kpis {
+        gap: 14px;
+    }
+
+    .dashboard-balance-card {
+        min-height: 258px;
+        padding: 22px;
+        border-radius: 34px;
+    }
+
+    .dashboard-balance-card #heroBalance {
+        font-size: clamp(2.35rem, 13vw, 3.65rem);
+    }
+
+    .dashboard-balance-card .bank-card-bottom div {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.075);
+    }
+
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #dashboardView .stat-card {
+        min-height: 122px;
+        padding: 16px;
+        border-radius: 24px;
+    }
+
+    #dashboardView .stat-card strong {
+        font-size: clamp(1.08rem, 6vw, 1.55rem);
+    }
+
+    #dashboardView .panel,
+    .panel,
+    .resource-card,
+    .billing-card,
+    .admin-card,
+    .goal-card {
+        border-radius: 26px;
+    }
+
+    .panel-header {
+        align-items: flex-start;
+    }
+
+    .panel-header .primary-button,
+    .panel-header .ghost-button {
+        width: auto;
+    }
+
+    .mobile-bank-nav {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 45;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 26px;
+        background: rgba(11, 12, 15, 0.88);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+        backdrop-filter: blur(22px);
+    }
+
+    .mobile-bank-nav button {
+        display: grid;
+        place-items: center;
+        gap: 4px;
+        min-width: 0;
+        padding: 7px 4px 6px;
+        border: 0;
+        border-radius: 18px;
+        color: #8f949e;
+        background: transparent;
+        font-size: 0.68rem;
+        font-weight: 800;
+    }
+
+    .mobile-bank-nav span {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: #f7f8f2;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 0.72rem;
+    }
+
+    .mobile-bank-nav button.active {
+        color: #ffffff;
+        background: rgba(157, 255, 84, 0.09);
+    }
+
+    .mobile-bank-nav button.active span {
+        color: #071008;
+        background: linear-gradient(135deg, #9dff54, #30f2a0);
+        box-shadow: 0 10px 24px rgba(157, 255, 84, 0.24);
+    }
+
+    .table-wrap {
+        border-radius: 22px;
+    }
+}

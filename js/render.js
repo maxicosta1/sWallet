@@ -103,6 +103,7 @@ export function renderAll() {
   renderAuth();
   if (!isAuthenticated()) return;
   updatePageTitle(state.activeView);
+  syncActiveNavigation(state.activeView);
   syncControls();
   renderBankingHero();
   renderStats();
@@ -142,10 +143,15 @@ export function renderView(view) {
   }
   state.activeView = view;
   document.querySelectorAll(".view").forEach((panel) => panel.classList.toggle("active", panel.dataset.viewPanel === view));
-  document.querySelectorAll(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.view === view));
+  syncActiveNavigation(view);
   updatePageTitle(view);
   closeMobileMenu();
   drawAllCharts();
+}
+
+function syncActiveNavigation(view) {
+  document.querySelectorAll(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.view === view));
+  document.querySelectorAll(".mobile-bank-nav [data-view]").forEach((link) => link.classList.toggle("active", link.dataset.view === view));
 }
 
 function updatePageTitle(view) {
