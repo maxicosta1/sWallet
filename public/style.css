@@ -3922,3 +3922,196 @@ textarea:focus {
         border-radius: 26px;
     }
 }
+
+/* Dashboard cleanup, readable tables and liquid glass polish */
+@media (min-width: 1200px) {
+    #dashboardView .dashboard-stats {
+        grid-template-columns: repeat(3, minmax(170px, 1fr));
+    }
+
+    #dashboardView .stat-card {
+        min-height: 138px;
+    }
+}
+
+@media (min-width: 1500px) {
+    .dashboard-kpis {
+        grid-template-columns: minmax(360px, 0.78fr) minmax(0, 1.22fr);
+    }
+}
+
+.dashboard-board,
+.panel,
+.stat-card,
+.resource-card,
+.billing-card,
+.kanban-card,
+.kanban-column,
+.detail-panel,
+.portal-section,
+.portal-preview,
+.admin-card,
+.goal-card,
+.modal-panel {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035)),
+        rgba(12, 11, 18, 0.68);
+    border-color: rgba(255, 255, 255, 0.11);
+    box-shadow:
+        0 26px 80px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    backdrop-filter: blur(24px) saturate(135%);
+}
+
+.panel::before,
+.stat-card::before,
+.resource-card::before,
+.billing-card::before,
+.kanban-card::before,
+.portal-section::before,
+.modal-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.12), transparent 12rem),
+        linear-gradient(115deg, transparent 0 42%, rgba(255, 255, 255, 0.045) 50%, transparent 58%);
+    opacity: 0.72;
+}
+
+.panel > *,
+.stat-card > *,
+.resource-card > *,
+.billing-card > *,
+.kanban-card > *,
+.portal-section > *,
+.modal-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-controls {
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+        rgba(11, 10, 16, 0.68);
+    backdrop-filter: blur(22px) saturate(130%);
+}
+
+.table-wrap {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(6, 6, 10, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+table {
+    background: #09090f;
+}
+
+thead,
+th {
+    color: #d9d4e8;
+    background: #16141d;
+}
+
+th {
+    border-bottom: 1px solid rgba(159, 92, 255, 0.26);
+}
+
+tbody tr,
+.settings-users-table tbody tr,
+.dashboard-ledger tbody tr {
+    background: #0f0e15;
+}
+
+tbody tr:nth-child(even) {
+    background: #14121c;
+}
+
+tbody tr:hover {
+    background: rgba(159, 92, 255, 0.16);
+}
+
+td {
+    color: #f4efff;
+    border-bottom-color: rgba(255, 255, 255, 0.075);
+}
+
+td .entity-title strong,
+.entity-title strong,
+.table-wrap strong {
+    color: #ffffff;
+}
+
+td .entity-title span,
+.entity-title span,
+.table-wrap small {
+    color: #b9b2c9;
+}
+
+.calendar-card,
+#calendarioView .panel {
+    background:
+        radial-gradient(circle at 90% 8%, rgba(159, 92, 255, 0.18), transparent 16rem),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+        rgba(8, 8, 13, 0.76);
+}
+
+.mini-calendar,
+#fullCalendarGrid {
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    background: rgba(5, 5, 9, 0.52);
+}
+
+.calendar-weekdays span {
+    color: #bcb5cc;
+}
+
+.calendar-day {
+    color: #f8f4ff;
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+        rgba(17, 15, 25, 0.78);
+}
+
+.calendar-day.muted {
+    border-color: transparent;
+    background: transparent;
+}
+
+.calendar-day.today {
+    color: #ffffff;
+    border-color: rgba(159, 92, 255, 0.6);
+    background: linear-gradient(135deg, #9f5cff, #7c3df2 58%, #d95cff);
+}
+
+.calendar-day.has-event:not(.today) {
+    color: #ffffff;
+    border-color: rgba(159, 92, 255, 0.34);
+    background: rgba(159, 92, 255, 0.18);
+}
+
+.actions-cell {
+    flex-wrap: wrap;
+}
+
+.actions-cell .ghost-button,
+.actions-cell .primary-button,
+.actions-cell .danger-button {
+    min-height: 34px;
+}
+
+.bank-card,
+.dashboard-balance-card {
+    background:
+        radial-gradient(circle at 86% 22%, rgba(159, 92, 255, 0.32), transparent 13rem),
+        radial-gradient(circle at 12% 7%, rgba(255, 255, 255, 0.16), transparent 14rem),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.03)),
+        rgba(12, 11, 18, 0.76);
+    backdrop-filter: blur(26px) saturate(145%);
+}

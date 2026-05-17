@@ -5,7 +5,14 @@ import { saveState, resetStorage } from "./storage.js";
 import {
   closeMobileMenu,
   dom,
+  escapeHTML,
+  formatARS,
+  formatDate,
+  formatMoney,
+  getClient,
   getInvoice,
+  getProject,
+  labelize,
   notify,
   renderAll,
   renderView,
@@ -144,7 +151,7 @@ export function bindEvents() {
   });
 
   dom.exportCsv.addEventListener("click", exportCsv);
-  dom.printReport.addEventListener("click", () => window.print());
+  dom.printReport.addEventListener("click", printFinancialReport);
 
   [dom.filterFrom, dom.filterTo, dom.filterClient, dom.filterCurrency, dom.filterStatus].forEach((control) => {
     control.addEventListener("input", () => {
@@ -878,8 +885,10 @@ function exposeInlineActions() {
   window.editProject = (id) => editGeneric("projects", id, fillProjectForm);
   window.deleteProject = deleteProject;
   window.editInvoice = (id) => editGeneric("invoices", id, fillInvoiceForm);
+  window.printInvoice = printInvoice;
   window.deleteInvoice = (id) => deleteGeneric("invoices", id, "Factura eliminada");
   window.editPayment = (id) => editGeneric("payments", id, fillPaymentForm);
+  window.printPayment = printPayment;
   window.deletePayment = (id) => deleteGeneric("payments", id, "Pago eliminado");
   window.editMovement = (id) => editGeneric("movements", id, fillMovementForm);
   window.deleteMovement = (id) => deleteGeneric("movements", id, "Movimiento eliminado");
@@ -898,12 +907,14 @@ function exposeInlineActions() {
   window.editOpportunity = (id) => editGeneric("opportunities", id, fillOpportunityForm);
   window.deleteOpportunity = (id) => deleteGeneric("opportunities", id, "Oportunidad eliminada");
   window.editBudget = (id) => editGeneric("budgets", id, fillBudgetForm);
+  window.printBudget = printBudget;
   window.deleteBudget = (id) => deleteGeneric("budgets", id, "Presupuesto eliminado");
   window.duplicateBudget = duplicateBudget;
   window.convertBudgetToProject = convertBudgetToProject;
   window.editCalendarEvent = (id) => editGeneric("calendarEvents", id, fillCalendarEventForm);
   window.deleteCalendarEvent = (id) => deleteGeneric("calendarEvents", id, "Evento eliminado");
   window.editDocument = (id) => editGeneric("documents", id, fillDocumentForm);
+  window.printDocument = printDocument;
   window.deleteDocument = (id) => deleteGeneric("documents", id, "Documento eliminado");
   window.editSupportPlan = (id) => editGeneric("supportPlans", id, fillSupportForm);
   window.deleteSupportPlan = (id) => deleteGeneric("supportPlans", id, "Mantenimiento eliminado");
@@ -911,12 +922,233 @@ function exposeInlineActions() {
   window.deleteTeamMember = (id) => deleteGeneric("teamMembers", id, "Miembro eliminado");
   window.editMarketingCampaign = (id) => editGeneric("marketingCampaigns", id, fillMarketingForm);
   window.deleteMarketingCampaign = (id) => deleteGeneric("marketingCampaigns", id, "Campana eliminada");
+  window.printFinancialReport = printFinancialReport;
   window.goSearchResult = (view) => {
     state.globalSearch = "";
     renderView(view);
     renderAll();
   };
 };
+
+function printInvoice(id) {
+  const invoice = state.invoices.find((item) => item.id === id);
+  if (!invoice) return notify("No se encontro la factura", "El registro ya no esta disponible.");
+  const client = getClient(invoice.clientId);
+  const project = getProject(invoice.projectId);
+  const paid = state.payments
+    .filter((payment) => payment.invoiceId === invoice.id && payment.status === "pagado")
+    .reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const pending = Math.max(Number(invoice.amount || 0) - paid, 0);
+
+  openPrintSheet({
+    type: "FACTURA",
+    number: invoice.number,
+    title: project?.name || client?.service || "Servicios sCode",
+    client,
+    meta: [
+      ["Fecha de emision", formatDate(invoice.issueDate)],
+      ["Fecha de vencimiento", formatDate(invoice.dueDate)],
+      ["Estado", labelize(invoice.status)],
+      ["Moneda", invoice.currency]
+    ],
+    rows: [[project?.name || client?.service || "Servicio profesional", invoice.notes || "Servicio facturado", "1", formatMoney(invoice.amount, invoice.currency), formatMoney(invoice.amount, invoice.currency)]],
+    totals: [
+      ["Subtotal", formatMoney(invoice.amount, invoice.currency)],
+      ["Pagado", formatMoney(paid, invoice.currency)],
+      ["Saldo pendiente", formatMoney(pending, invoice.currency)]
+    ],
+    notes: invoice.notes || "Comprobante generado desde sWallet."
+  });
+}
+
+function printPayment(id) {
+  const payment = state.payments.find((item) => item.id === id);
+  if (!payment) return notify("No se encontro el pago", "El registro ya no esta disponible.");
+  const client = getClient(payment.clientId);
+  const project = getProject(payment.projectId);
+  const invoice = getInvoice(payment.invoiceId);
+
+  openPrintSheet({
+    type: "COMPROBANTE DE PAGO",
+    number: payment.id.slice(0, 8).toUpperCase(),
+    title: payment.method || "Pago registrado",
+    client,
+    meta: [
+      ["Fecha", formatDate(payment.date)],
+      ["Factura asociada", invoice?.number || "Sin factura"],
+      ["Proyecto", project?.name || "General"],
+      ["Estado", labelize(payment.status)]
+    ],
+    rows: [["Pago recibido", payment.notes || payment.method || "Pago", "1", formatMoney(payment.amount, payment.currency), formatMoney(payment.amount, payment.currency)]],
+    totals: [["Total pagado", formatMoney(payment.amount, payment.currency)]],
+    notes: payment.notes || "Comprobante interno de pago registrado en sWallet."
+  });
+}
+
+function printBudget(id) {
+  const budget = state.budgets.find((item) => item.id === id);
+  if (!budget) return notify("No se encontro el presupuesto", "El registro ya no esta disponible.");
+  const client = getClient(budget.clientId);
+  const items = budgetItems(budget);
+  const subtotal = items.reduce((total, item) => total + item.amount, 0);
+  const total = budgetTotal(budget);
+
+  openPrintSheet({
+    type: "PRESUPUESTO",
+    number: budget.id.slice(0, 8).toUpperCase(),
+    title: budget.projectName,
+    client,
+    meta: [
+      ["Valido hasta", formatDate(budget.validUntil)],
+      ["Estado", labelize(budget.status)],
+      ["Moneda", budget.currency],
+      ["Servicios", `${items.length} items`]
+    ],
+    rows: items.map((item, index) => [String(index + 1), item.name, "1", formatMoney(item.amount, budget.currency), formatMoney(item.amount, budget.currency)]),
+    totals: [
+      ["Subtotal", formatMoney(subtotal, budget.currency)],
+      ["Descuento", formatMoney(Number(budget.discount || 0), budget.currency)],
+      ["Total", formatMoney(total, budget.currency)]
+    ],
+    notes: budget.notes || "Presupuesto valido hasta la fecha indicada. Los cambios fuera de alcance se presupuestan aparte."
+  });
+}
+
+function printDocument(id) {
+  const documentItem = state.documents.find((item) => item.id === id);
+  if (!documentItem) return notify("No se encontro el documento", "El registro ya no esta disponible.");
+  const client = getClient(documentItem.clientId);
+  const project = getProject(documentItem.projectId);
+
+  openPrintSheet({
+    type: labelize(documentItem.type || "DOCUMENTO").toUpperCase(),
+    number: documentItem.id.slice(0, 8).toUpperCase(),
+    title: documentItem.name,
+    client,
+    meta: [
+      ["Proyecto", project?.name || "General"],
+      ["Tipo", labelize(documentItem.type || "documento")],
+      ["Etiquetas", documentItem.tags || "Sin etiquetas"],
+      ["Fecha", formatDate(documentItem.createdAt)]
+    ],
+    rows: [["Documento", documentItem.description || "Documento interno", "1", "-", "-"]],
+    totals: [],
+    notes: documentItem.link ? `Link asociado: ${documentItem.link}` : "Documento generado desde sWallet."
+  });
+}
+
+function printFinancialReport() {
+  const income = state.payments.filter((payment) => payment.status === "pagado").reduce((total, payment) => total + Number(payment.amount || 0), 0);
+  const expenses = state.movements.filter((item) => item.type === "salida").reduce((total, item) => total + Number(item.amount || 0), 0);
+  const pending = filteredInvoices({}).reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+
+  openPrintSheet({
+    type: "REPORTE",
+    number: new Date().toISOString().slice(0, 10),
+    title: "Resumen financiero sWallet",
+    client: null,
+    meta: [
+      ["Clientes", String(state.clients.length)],
+      ["Proyectos", String(state.projects.length)],
+      ["Facturas", String(state.invoices.length)],
+      ["Pagos", String(state.payments.length)]
+    ],
+    rows: [
+      ["Ingresos cobrados", "Pagos marcados como pagados", "1", formatARS(income), formatARS(income)],
+      ["Egresos", "Movimientos de salida", "1", formatARS(expenses), formatARS(expenses)],
+      ["Facturado", "Facturas registradas", "1", formatARS(pending), formatARS(pending)]
+    ],
+    totals: [["Resultado estimado", formatARS(income - expenses)]],
+    notes: "Reporte operativo generado desde sWallet."
+  });
+}
+
+function budgetItems(budget) {
+  const rows = String(budget.services || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(":");
+      const amount = Number(parts.pop());
+      return {
+        name: parts.join(":").trim() || line,
+        amount: Number.isFinite(amount) ? amount : 0
+      };
+    })
+    .filter((item) => item.name || item.amount);
+  return rows.length ? rows : [{ name: budget.projectName || "Servicio sCode", amount: budgetTotal(budget) }];
+}
+
+function openPrintSheet({ type, number, title, client, meta, rows, totals, notes }) {
+  const company = state.companySettings || {};
+  const win = window.open("", "_blank", "width=900,height=1100");
+  if (!win) return notify("No se pudo abrir la hoja", "Habilita ventanas emergentes para imprimir.");
+  const rowsHtml = rows.map((row) => `
+    <tr>${row.map((cell) => `<td>${escapeHTML(cell)}</td>`).join("")}</tr>
+  `).join("");
+  const totalsHtml = totals.map(([label, value]) => `
+    <div><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>
+  `).join("");
+  const metaHtml = meta.map(([label, value]) => `
+    <div><span>${escapeHTML(label)}</span><strong>${escapeHTML(value || "-")}</strong></div>
+  `).join("");
+  const clientHtml = client ? `
+    <section class="sheet-client">
+      <div><span>Cliente</span><strong>${escapeHTML(client.company || client.name)}</strong></div>
+      <div><span>Contacto</span><strong>${escapeHTML(client.name || "-")}</strong></div>
+      <div><span>Email</span><strong>${escapeHTML(client.email || "-")}</strong></div>
+      <div><span>Telefono</span><strong>${escapeHTML(client.phone || "-")}</strong></div>
+    </section>
+  ` : "";
+
+  win.document.write(`<!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>${escapeHTML(type)} ${escapeHTML(number || "")}</title>
+        <style>${printSheetStyles()}</style>
+      </head>
+      <body>
+        <main class="sheet">
+          <header class="sheet-header">
+            <section>
+              <div class="brand-lockup"><span>s</span><div><strong>${escapeHTML(company.name || "sCode")}</strong><small>${escapeHTML(company.legalName || "Digital Solutions")}</small></div></div>
+              <p>${escapeHTML(company.email || "admin@scode.com")}<br>${escapeHTML(company.website || "scode.com")}</p>
+            </section>
+            <section class="sheet-title">
+              <b>${escapeHTML(type)}</b>
+              <strong>${escapeHTML(number || "-")}</strong>
+              <span>Emitido ${escapeHTML(formatDate(new Date()))}</span>
+            </section>
+          </header>
+          <h1>${escapeHTML(title)}</h1>
+          ${clientHtml}
+          <section class="sheet-meta">${metaHtml}</section>
+          <table>
+            <thead><tr><th>Codigo</th><th>Descripcion</th><th>Cant.</th><th>Unitario</th><th>Importe</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <section class="sheet-bottom">
+            <p>${escapeHTML(notes || "")}</p>
+            <div class="sheet-totals">${totalsHtml}</div>
+          </section>
+          <footer>
+            <span>Documento generado con sWallet</span>
+            <strong>${escapeHTML(company.name || "sCode Digital Solutions")}</strong>
+          </footer>
+        </main>
+        <script>window.addEventListener("load", () => setTimeout(() => window.print(), 250));</script>
+      </body>
+    </html>`);
+  win.document.close();
+}
+
+function printSheetStyles() {
+  return `
+    *{box-sizing:border-box} body{margin:0;background:#1b1b22;color:#111;font-family:Arial,Helvetica,sans-serif} .sheet{width:210mm;min-height:297mm;margin:0 auto;padding:14mm;background:#fff} .sheet-header{display:grid;grid-template-columns:1fr 1fr;border:2px solid #111} .sheet-header>section{min-height:42mm;padding:8mm}.sheet-header>section+section{border-left:2px solid #111}.brand-lockup{display:flex;gap:12px;align-items:center}.brand-lockup span{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#9f5cff;color:#fff;font-size:28px;font-weight:900}.brand-lockup strong{display:block;font-size:20px}.brand-lockup small,.sheet-header p,.sheet-title span{color:#444}.sheet-title b{display:block;font-size:30px;letter-spacing:.03em}.sheet-title strong{display:block;margin-top:8px;font-size:18px}h1{font-size:22px;margin:8mm 0 5mm}.sheet-client,.sheet-meta{display:grid;grid-template-columns:repeat(2,1fr);border:2px solid #111;border-top:0}.sheet-client div,.sheet-meta div{padding:7px 9px;border-top:1px solid #bbb}.sheet-client div:nth-child(odd),.sheet-meta div:nth-child(odd){border-right:1px solid #bbb}span{font-size:11px;text-transform:uppercase;color:#555;font-weight:700}strong{font-size:13px}table{width:100%;margin-top:5mm;border-collapse:collapse;border:2px solid #111}th{background:#eee;border-bottom:2px solid #111;font-size:12px;text-align:left;padding:7px}td{font-size:12px;padding:7px;border-bottom:1px solid #ddd}td:nth-child(1),td:nth-child(3),td:nth-child(4),td:nth-child(5){text-align:right}.sheet-bottom{display:grid;grid-template-columns:1fr 70mm;gap:10mm;margin-top:70mm;border:2px solid #111;padding:8mm}.sheet-bottom p{margin:0;font-size:12px;line-height:1.5}.sheet-totals{display:grid;gap:8px}.sheet-totals div{display:flex;justify-content:space-between;gap:16px}.sheet-totals div:last-child{padding-top:8px;border-top:2px solid #111}.sheet-totals div:last-child strong{font-size:18px}footer{display:flex;justify-content:space-between;margin-top:8mm;padding-top:5mm;border-top:1px solid #111;font-size:11px;color:#555}@media print{body{background:#fff}.sheet{margin:0;box-shadow:none}@page{size:A4;margin:0}}`;
+}
 
 function editGeneric(key, id, fill) {
   if (!assertWritable()) return;

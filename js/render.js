@@ -204,26 +204,15 @@ function renderStats() {
   const month = totalsForMonth();
   const totals = globalTotals();
   const billing = billingTotals();
-  const pendingTasks = tasks().filter((task) => !["completada", "cancelada"].includes(task.status)).length;
   const activeProjects = projects().filter((project) => !["finalizado", "entregado", "cancelado"].includes(project.status)).length;
-  const pendingBudgets = budgets().filter((budget) => ["borrador", "enviado"].includes(budget.status)).length;
-  const meetings = calendarEvents().filter((event) => event.type === "reunion" && event.status !== "completado").length;
   const overdue = filteredInvoices({ clientId: "", projectId: "", status: "vencida", currency: "", from: "", to: "", quick: "" }).length;
-  const progress = companyProgress();
   const cards = [
-    ["Saldo total", formatARS(totals.balanceARS), "Consolidado con cotizacion actual", "green"],
+    ["Saldo total", formatARS(totals.balanceARS), "Caja operativa consolidada", "green"],
     ["Ingresos del mes", formatARS(month.income), "Cobros + ingresos", "blue"],
     ["Gastos del mes", formatARS(month.expenses), "Salidas registradas", "coral"],
-    ["Estimado del mes", formatARS(month.estimated), "Ingresos + pendientes - gastos", ""],
-    ["Facturado", formatARS(billing.facturado), "Facturacion global filtrable", "blue"],
+    ["Ganancia neta", formatARS(month.profit), "Resultado del mes", month.profit >= 0 ? "green" : "coral"],
     ["Pendiente", formatARS(billing.pendiente), "Por cobrar", "coral"],
-    ["Proyectos activos", activeProjects.toString(), "Delivery en curso", "green"],
-    ["Tareas pendientes", pendingTasks.toString(), "Trabajo interno abierto", ""],
-    ["Presupuestos", pendingBudgets.toString(), "Propuestas pendientes", "blue"],
-    ["Reuniones", meetings.toString(), "Agenda abierta", ""],
-    ["Pagos vencidos", overdue.toString(), "Requieren seguimiento", "coral"],
-    ["Metas", `${progress}%`, "Progreso general sCode", "blue"],
-    ["Clientes", clients().length.toString(), "Cartera visible", ""]
+    ["Proyectos activos", activeProjects.toString(), `${overdue} pagos vencidos`, "blue"]
   ];
 
   dom.statsGrid.innerHTML = cards.map(([label, value, hint, tone]) => `
@@ -815,6 +804,7 @@ function renderInvoices() {
       <td>
         <div class="actions-cell">
           <button class="ghost-button compact write-action" type="button" onclick="editInvoice('${invoice.id}')">Editar</button>
+          <button class="ghost-button compact" type="button" onclick="printInvoice('${invoice.id}')">Imprimir</button>
           <button class="danger-button compact delete-action" type="button" onclick="deleteInvoice('${invoice.id}')">Eliminar</button>
         </div>
       </td>
@@ -834,6 +824,7 @@ function renderPayments() {
       <td>
         <div class="actions-cell">
           <button class="ghost-button compact write-action" type="button" onclick="editPayment('${payment.id}')">Editar</button>
+          <button class="ghost-button compact" type="button" onclick="printPayment('${payment.id}')">Comprobante</button>
           <button class="danger-button compact delete-action" type="button" onclick="deletePayment('${payment.id}')">Eliminar</button>
         </div>
       </td>
@@ -963,6 +954,7 @@ function renderDocuments() {
       <small>${escapeHTML(item.tags || "Sin etiquetas")}</small>
       <div class="actions-cell">
         ${item.link ? `<a class="ghost-button compact" href="${escapeAttribute(item.link)}" target="_blank" rel="noreferrer">Abrir</a>` : ""}
+        <button class="ghost-button compact" type="button" onclick="printDocument('${item.id}')">Imprimir</button>
         <button class="ghost-button compact write-action" type="button" onclick="editDocument('${item.id}')">Editar</button>
         <button class="danger-button compact delete-action" type="button" onclick="deleteDocument('${item.id}')">Eliminar</button>
       </div>
