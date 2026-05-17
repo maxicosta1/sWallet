@@ -2,11 +2,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const toneClass = {
-  green: "bg-emerald-400/15 text-emerald-100",
+  green: "bg-primary/15 text-primary",
   yellow: "bg-yellow-400/15 text-yellow-100",
   red: "bg-red-400/15 text-red-100",
   blue: "bg-sky-400/15 text-sky-100",
-  purple: "bg-primary/15 text-purple-100",
+  purple: "bg-violet-400/15 text-violet-100",
   coral: "bg-coral/15 text-orange-100",
   muted: "bg-white/[0.06] text-muted-foreground"
 };
@@ -18,7 +18,7 @@ export function Badge({
 }: React.HTMLAttributes<HTMLSpanElement> & { tone?: keyof typeof toneClass }) {
   return (
     <span
-      className={cn("inline-flex min-h-7 items-center rounded-full px-3 text-xs font-bold capitalize", toneClass[tone], className)}
+      className={cn("inline-flex min-h-7 items-center rounded-full border border-white/5 px-3 text-xs font-black capitalize", toneClass[tone], className)}
       {...props}
     />
   );

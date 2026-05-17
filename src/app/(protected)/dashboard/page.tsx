@@ -26,7 +26,7 @@ export default async function DashboardPage() {
         <Card className="min-h-[330px]">
           <CardHeader>
             <div>
-              <CardDescription>Quick insights</CardDescription>
+              <CardDescription>Cuenta central</CardDescription>
               <CardTitle>Resumen operativo</CardTitle>
             </div>
           </CardHeader>
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         <MetricCard label="Caja USD" value={formatCurrency(data.metrics.balanceUSD, "USD")} hint="Balance separado" icon={DollarSign} tone="blue" />
         <MetricCard label="Saldo total" value={formatCurrency(data.metrics.totalBalanceARS, "ARS")} hint="Consolidado" icon={Wallet} tone="purple" />
         <MetricCard label="Caja ARS" value={formatCurrency(data.metrics.balanceARS, "ARS")} hint="Balance local" icon={Banknote} tone="green" />
-        <MetricCard label="Pagos próximos" value={String(data.alerts.upcomingPayments.length)} hint="Próximos 10 días" icon={AlertTriangle} tone="coral" />
+        <MetricCard label="Pagos proximos" value={String(data.alerts.upcomingPayments.length)} hint="Proximos 10 dias" icon={AlertTriangle} tone="coral" />
         <MetricCard label="Suscripciones" value={String(data.subscriptions.length)} hint="Servicios activos" icon={CreditCard} tone="blue" />
       </section>
 
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <div>
               <CardDescription>Alertas</CardDescription>
-              <CardTitle>Pagos próximos</CardTitle>
+              <CardTitle>Pagos proximos</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
 
 function Insight({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-4">
+    <div className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
       <span className="text-xs font-black uppercase text-muted-foreground">{label}</span>
       <strong className="mt-2 block break-words text-xl font-black text-white">{value}</strong>
     </div>

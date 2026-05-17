@@ -11,10 +11,10 @@ export function DataTable({
   empty?: string;
 }) {
   return (
-    <div className="scrollbar-thin overflow-x-auto rounded-3xl border border-white/10">
+    <div className="scrollbar-thin overflow-x-auto rounded-[1.25rem] border border-white/10 bg-black/15">
       <table className="w-full min-w-[760px] border-collapse">
         <thead>
-          <tr>
+          <tr className="bg-white/[0.035]">
             {headers.map((header) => (
               <th key={header} className="border-b border-white/10 px-4 py-3 text-left text-xs font-black uppercase text-muted-foreground">
                 {header}
@@ -25,9 +25,9 @@ export function DataTable({
         <tbody>
           {rows.length ? (
             rows.map((row, index) => (
-              <tr key={index} className={cn("transition hover:bg-white/[0.035]", index !== rows.length - 1 && "border-b border-white/10")}>
+              <tr key={index} className={cn("transition hover:bg-primary/[0.045]", index !== rows.length - 1 && "border-b border-white/10")}>
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="px-4 py-4 text-sm text-white/88">
+                  <td key={cellIndex} className="px-4 py-4 text-sm font-medium text-white/88">
                     {cell}
                   </td>
                 ))}

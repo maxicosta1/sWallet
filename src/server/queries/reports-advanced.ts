@@ -19,7 +19,6 @@ export async function getAdvancedReportsData(query = "") {
     tasks,
     documents,
     teamMembers,
-    timeEntries,
     opportunities,
     campaigns
   ] = await Promise.all([
@@ -78,11 +77,6 @@ export async function getAdvancedReportsData(query = "") {
         timeEntries: { where: { deletedAt: null } }
       },
       orderBy: [{ name: "asc" }]
-    }),
-    prisma.timeEntry.findMany({
-      where: { deletedAt: null },
-      include: { teamMember: true, project: { include: { client: true } }, task: true },
-      orderBy: [{ date: "desc" }]
     }),
     prisma.opportunity.findMany({
       where: { deletedAt: null },

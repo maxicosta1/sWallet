@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --background: 248 45% 4%;
-  --foreground: 258 100% 98%;
-  --card: 247 28% 10%;
-  --card-foreground: 258 100% 98%;
-  --muted: 247 18% 15%;
-  --muted-foreground: 252 14% 68%;
-  --border: 255 22% 18%;
-  --input: 255 22% 18%;
-  --ring: 262 100% 68%;
-  --destructive: 348 100% 68%;
+  --background: 160 16% 3%;
+  --foreground: 150 22% 96%;
+  --card: 150 10% 8%;
+  --card-foreground: 150 22% 96%;
+  --muted: 150 9% 13%;
+  --muted-foreground: 150 6% 66%;
+  --border: 150 9% 18%;
+  --input: 150 9% 18%;
+  --ring: 144 100% 60%;
+  --destructive: 4 100% 66%;
   --destructive-foreground: 0 0% 100%;
 }
 
@@ -21,36 +21,77 @@
 }
 
 html {
-  background: #06070d;
+  background: #050706;
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
   color: hsl(var(--foreground));
   background:
-    radial-gradient(circle at 42% -12%, rgba(166, 128, 255, 0.36), transparent 34rem),
-    radial-gradient(circle at 90% 8%, rgba(159, 92, 255, 0.2), transparent 30rem),
-    radial-gradient(circle at 12% 80%, rgba(255, 122, 89, 0.1), transparent 26rem),
-    linear-gradient(160deg, #06070d 0%, #101024 48%, #07070d 100%);
+    linear-gradient(115deg, rgba(59, 255, 151, 0.12), transparent 28%),
+    linear-gradient(245deg, rgba(0, 136, 255, 0.13), transparent 30%),
+    linear-gradient(180deg, #070908 0%, #0c1010 42%, #040504 100%);
+  overflow-x: hidden;
+}
+
+body::before {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 70%);
 }
 
 ::selection {
-  background: rgba(159, 92, 255, 0.42);
+  background: rgba(65, 255, 148, 0.34);
 }
 
 .glass-panel {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(221, 255, 235, 0.09);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(14, 16, 28, 0.72);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(14, 17, 16, 0.82);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(24px);
 }
 
 .bank-card-surface {
   background:
-    linear-gradient(180deg, rgba(190, 214, 255, 0.34) 0%, rgba(159, 92, 255, 0.34) 28%, rgba(14, 10, 36, 0.96) 78%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02));
+    linear-gradient(120deg, rgba(180, 255, 214, 0.24), rgba(64, 255, 143, 0.2) 38%, rgba(8, 12, 10, 0.98) 74%),
+    linear-gradient(22deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02));
+}
+
+.virtual-card-surface {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(222, 255, 235, 0.12);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(34, 255, 132, 0.92), rgba(33, 167, 255, 0.66) 46%, rgba(22, 24, 26, 0.92) 88%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(65, 255, 148, 0.08);
+}
+
+.virtual-card-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(110deg, transparent 0 34%, rgba(255, 255, 255, 0.18) 44%, transparent 55%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 22px);
+  opacity: 0.42;
+}
+
+.app-frame {
+  border: 1px solid rgba(210, 255, 230, 0.11);
+  background: rgba(5, 7, 6, 0.72);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(24px);
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -60,5 +101,13 @@ body {
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(159, 92, 255, 0.32);
+  background: rgba(65, 255, 148, 0.32);
+}
+
+@media (max-width: 767px) {
+  body {
+    background:
+      linear-gradient(135deg, rgba(91, 255, 171, 0.14), transparent 42%),
+      linear-gradient(180deg, #050706 0%, #090d10 100%);
+  }
 }

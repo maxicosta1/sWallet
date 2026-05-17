@@ -18,12 +18,12 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#9f5cff",
-          foreground: "#ffffff"
+          DEFAULT: "#42ff91",
+          foreground: "#051008"
         },
         coral: {
-          DEFAULT: "#ff7a59",
-          foreground: "#140b08"
+          DEFAULT: "#ff5a2f",
+          foreground: "#160804"
         },
         card: {
           DEFAULT: "hsl(var(--card))",
@@ -44,8 +44,8 @@ const config: Config = {
         "3xl": "1.75rem"
       },
       boxShadow: {
-        glow: "0 0 60px rgba(159, 92, 255, 0.28)",
-        glass: "0 24px 80px rgba(0, 0, 0, 0.38)"
+        glow: "0 0 54px rgba(66, 255, 145, 0.28)",
+        glass: "0 24px 80px rgba(0, 0, 0, 0.48)"
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]

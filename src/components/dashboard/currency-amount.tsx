@@ -11,5 +11,5 @@ export function CurrencyAmount({
   currency: Currency | "ARS" | "USD";
   className?: string;
 }) {
-  return <span className={cn("tabular-nums", className)}>{formatCurrency(value, currency)}</span>;
+  return <span className={cn("font-black tabular-nums tracking-normal", className)}>{formatCurrency(value, currency)}</span>;
 }

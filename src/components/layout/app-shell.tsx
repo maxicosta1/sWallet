@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/ui-store";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { appModules, moduleGroups, modulesByGroup } from "@/config/modules";
+import type { AppModule } from "@/config/modules";
 import { canAccessModule } from "@/lib/permissions";
 
 const moduleIcons = {
@@ -67,22 +68,33 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
   const displayName = session.user.name?.split(" ")[0] ?? session.user.email?.split("@")[0] ?? "equipo";
   const initials = displayName.slice(0, 2).toUpperCase();
   const allowedModules = appModules.filter((module) => canAccessModule(session.user.role, module.access));
+  const mobileModules = ["dashboard", "clients", "projects", "reports", "alerts"]
+    .map((key) => allowedModules.find((module) => module.key === key))
+    .filter((module): module is AppModule => Boolean(module));
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="min-h-screen lg:grid lg:grid-cols-[292px_minmax(0,1fr)]">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[300px] flex-col border-r border-white/10 bg-[#080913]/90 p-5 backdrop-blur-2xl transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-[292px] flex-col border-r border-white/10 bg-[#050706]/92 p-4 backdrop-blur-2xl transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="mb-5 flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-coral text-xl font-black text-white shadow-glow">
+        <div className="app-frame mb-4 flex items-center gap-3 rounded-[1.35rem] p-3">
+          <div className="grid h-12 w-12 place-items-center rounded-[1.1rem] bg-primary text-xl font-black text-primary-foreground shadow-glow">
             s
           </div>
           <div>
             <strong className="block text-white">sWallet</strong>
-            <span className="text-xs font-semibold text-muted-foreground">sCode Ops</span>
+            <span className="text-xs font-bold text-muted-foreground">Virtual Bank OS</span>
+          </div>
+        </div>
+
+        <div className="virtual-card-surface mb-4 rounded-[1.35rem] p-4">
+          <div className="relative z-10">
+            <p className="text-xs font-black uppercase text-black/60">Cuenta operativa</p>
+            <strong className="mt-5 block text-2xl font-black text-black">sCode Wallet</strong>
+            <p className="mt-2 text-xs font-bold text-black/65">**** **** 5087</p>
           </div>
         </div>
 
@@ -105,11 +117,11 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
                       href={item.href}
                       onClick={closeSidebar}
                       className={cn(
-                        "group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-bold text-muted-foreground transition hover:bg-primary/10 hover:text-white",
-                        active && "bg-primary/15 text-white ring-1 ring-primary/30"
+                        "group flex items-center gap-3 rounded-[1.1rem] px-3 py-2.5 text-sm font-black text-muted-foreground transition hover:bg-white/[0.06] hover:text-white",
+                        active && "bg-primary text-primary-foreground shadow-glow"
                       )}
                     >
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.06]">
+                      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[0.06]", active && "bg-black/12")}>
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -126,8 +138,8 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
           })}
         </nav>
 
-        <div className="mt-auto rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-          <p className="text-xs font-black uppercase text-primary">Sesión</p>
+        <div className="app-frame mt-auto rounded-[1.35rem] p-4">
+          <p className="text-xs font-black uppercase text-primary">Sesion</p>
           <p className="mt-2 truncate text-sm font-bold text-white">{session.user.email}</p>
           <p className="mb-3 mt-1 text-xs capitalize text-muted-foreground">{session.user.role.replaceAll("_", " ")}</p>
           <LogoutButton />
@@ -136,7 +148,7 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
 
       {sidebarOpen ? <button className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={closeSidebar} aria-label="Cerrar menu" /> : null}
 
-      <main className="min-w-0 px-4 py-4 md:px-7 md:py-5 lg:px-8">
+      <main className="min-w-0 px-4 pb-28 pt-4 md:px-7 md:py-5 lg:px-8">
         <header className="mb-6 hidden items-center justify-between gap-4 md:flex">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleSidebar}>
@@ -144,11 +156,11 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             </Button>
             <div>
               <p className="text-xs font-black uppercase text-primary">sCode Digital Solutions</p>
-              <h1 className="text-2xl font-black tracking-tight text-white md:text-4xl">sWallet interno</h1>
+              <h1 className="text-2xl font-black tracking-normal text-white md:text-4xl">sWallet banking</h1>
             </div>
           </div>
           <div className="hidden items-center gap-2 md:flex">
-            <form action="/reports" className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 text-sm text-muted-foreground">
+            <form action="/reports" className="app-frame flex h-12 items-center gap-2 rounded-2xl px-4 text-sm text-muted-foreground">
               <Search className="h-4 w-4" />
               <input
                 name="q"
@@ -168,7 +180,7 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
             <Button
               variant="ghost"
               size="icon"
-              className="h-12 w-16 rounded-full border-white/10 bg-[#15151c] shadow-glass"
+              className="h-12 w-16 rounded-full border-white/10 bg-black/40 shadow-glass"
               onClick={toggleSidebar}
               aria-label="Abrir menu"
             >
@@ -179,14 +191,14 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
                 asChild
                 variant="ghost"
                 size="icon"
-                className="h-12 w-16 rounded-full border-white/10 bg-[#15151c] shadow-glass"
+                className="h-12 w-16 rounded-full border-white/10 bg-black/40 shadow-glass"
                 aria-label="Buscar"
               >
                 <Link href="/reports">
                   <Search className="h-5 w-5" />
                 </Link>
               </Button>
-              <div className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/[0.08] text-sm font-black text-white shadow-glass">
+              <div className="grid h-12 w-12 place-items-center rounded-full border border-primary/25 bg-primary text-sm font-black text-primary-foreground shadow-glow">
                 {session.user.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={session.user.image} alt="" className="h-full w-full rounded-full object-cover" />
@@ -200,9 +212,9 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
           </div>
           <div className="mt-7">
             <p className="text-xs font-black uppercase text-primary">sCode Digital Solutions</p>
-            <h1 className="mt-2 text-[clamp(2.4rem,13vw,3.6rem)] font-light leading-[0.92] tracking-normal text-white">
-              Bienvenido
-              <span className="block font-black">{displayName}!</span>
+            <h1 className="mt-2 text-[clamp(2.35rem,12vw,3.45rem)] font-black leading-[0.92] tracking-normal text-white">
+              Hola,
+              <span className="block text-primary">{displayName}</span>
             </h1>
           </div>
         </header>
@@ -210,6 +222,26 @@ export function AppShell({ children, session }: { children: React.ReactNode; ses
           {children}
         </motion.div>
       </main>
+      <nav className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 gap-1 rounded-[1.5rem] border border-white/10 bg-black/78 p-2 shadow-glass backdrop-blur-2xl md:hidden">
+        {mobileModules.map((item) => {
+          if (!item) return null;
+          const Icon = moduleIcons[item.key as keyof typeof moduleIcons] ?? LayoutDashboard;
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "grid min-h-14 place-items-center gap-1 rounded-[1.1rem] px-2 py-2 text-[0.65rem] font-black text-muted-foreground",
+                active && "bg-primary text-primary-foreground"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="max-w-full truncate">{item.shortLabel}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
