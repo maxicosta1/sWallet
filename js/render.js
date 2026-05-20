@@ -888,13 +888,13 @@ function renderBudgets() {
   const rows = budgets()
     .filter((item) => !filters.clientId || item.clientId === filters.clientId)
     .filter((item) => !filters.status || item.status === filters.status)
-    .filter((item) => matchesTerm([item.projectName, item.services, item.notes], filters.term))
+    .filter((item) => matchesTerm([item.number, item.projectName, item.services, item.notes], filters.term))
     .sort((a, b) => parseDate(b.createdAt) - parseDate(a.createdAt));
   dom.budgetsTable.innerHTML = rows.length ? rows.map((item) => {
     const total = budgetTotal(item);
     return `
       <tr>
-        <td><div class="entity-title"><strong>${escapeHTML(item.projectName)}</strong><span>${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</span></div></td>
+        <td><div class="entity-title"><strong>${escapeHTML(item.projectName)}</strong><span>${escapeHTML(item.number || "Sin numero")} - ${escapeHTML(getClient(item.clientId)?.company || "Sin cliente")}</span></div></td>
         <td>${formatMoney(total, item.currency)}</td>
         <td>${item.discount ? formatMoney(item.discount, item.currency) : "-"}</td>
         <td>${formatDate(item.validUntil)}</td>
@@ -1396,8 +1396,12 @@ export function resetBudgetForm() {
   dom.budgetForm?.reset();
   if (!dom.budgetForm) return;
   dom.budgetId.value = "";
+  dom.budgetNumber.value = "";
   dom.budgetCurrency.value = "ARS";
+  dom.budgetIssueDate.value = toInputDate(new Date());
   dom.budgetValidUntil.value = toInputDate(new Date(Date.now() + 10 * DAY_MS));
+  dom.budgetDiscount.value = 0;
+  dom.budgetTaxes.value = 0;
   dom.budgetStatus.value = "borrador";
   dom.budgetFormTitle.textContent = "Nuevo presupuesto";
 }
@@ -1598,12 +1602,31 @@ function googleCalendarUrl(event) {
 }
 
 function budgetTotal(budget) {
-  const subtotal = String(budget.services || "")
+  const subtotal = budgetItems(budget).reduce((total, item) => total + item.amount, 0);
+  return Math.max(subtotal - Number(budget.discount || 0) + Number(budget.taxes || 0), 0);
+}
+
+function budgetItems(budget) {
+  return String(budget.services || "")
     .split("\n")
-    .map((line) => Number(line.split(":").pop()))
-    .filter((value) => Number.isFinite(value))
-    .reduce((total, value) => total + value, 0);
-  return Math.max(subtotal - Number(budget.discount || 0), 0);
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(":");
+      const unitPrice = Number(parts.pop());
+      const maybeQuantity = Number(parts[parts.length - 1]);
+      const hasQuantity = parts.length > 1 && Number.isFinite(maybeQuantity);
+      const quantity = hasQuantity ? maybeQuantity : 1;
+      if (hasQuantity) parts.pop();
+      const amount = quantity * unitPrice;
+      return {
+        name: parts.join(":").trim() || line,
+        quantity,
+        unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
+        amount: Number.isFinite(amount) ? amount : 0
+      };
+    })
+    .filter((item) => item.name || item.amount);
 }
 
 function conversionRate(part, total) {

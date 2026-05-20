@@ -1000,13 +1000,21 @@
                         <div class="panel-header"><div><p class="eyebrow">Presupuestos</p><h2 id="budgetFormTitle">Nuevo presupuesto</h2></div></div>
                         <form id="budgetForm" class="data-form" novalidate>
                             <input type="hidden" id="budgetId">
-                            <label>Cliente<select id="budgetClient" required></select></label>
+                            <div class="form-row">
+                                <label>Cliente<select id="budgetClient" required></select></label>
+                                <label>Numero<input id="budgetNumber" type="text" placeholder="Auto al guardar"></label>
+                            </div>
                             <label>Proyecto potencial<input id="budgetProjectName" required type="text"></label>
-                            <label>Servicios y precios<textarea id="budgetServices" required rows="5" placeholder="Landing premium:450000&#10;SEO tecnico:120000"></textarea></label>
+                            <div class="form-row">
+                                <label>Emision<input id="budgetIssueDate" required type="date"></label>
+                                <label>Valido hasta<input id="budgetValidUntil" required type="date"></label>
+                            </div>
+                            <label>Items del presupuesto<textarea id="budgetServices" required rows="6" placeholder="Diseno UI:1:180000&#10;Desarrollo web:1:420000&#10;Soporte mensual:3:60000"></textarea></label>
+                            <p class="form-hint">Formato por linea: concepto:cantidad:precio unitario. Tambien acepta concepto:importe para presupuestos rapidos.</p>
                             <div class="form-row">
                                 <label>Descuento<input id="budgetDiscount" min="0" step="0.01" type="number"></label>
+                                <label>Impuestos<input id="budgetTaxes" min="0" step="0.01" type="number"></label>
                                 <label>Moneda<select id="budgetCurrency" required><option value="ARS">ARS</option><option value="USD">USD</option></select></label>
-                                <label>Valido hasta<input id="budgetValidUntil" required type="date"></label>
                             </div>
                             <label>Estado<select id="budgetStatus" required><option value="borrador">Borrador</option><option value="enviado">Enviado</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="vencido">Vencido</option></select></label>
                             <label>Notas<textarea id="budgetNotes" rows="2"></textarea></label>

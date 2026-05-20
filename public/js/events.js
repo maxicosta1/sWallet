@@ -1,6 +1,6 @@
 import { canDelete, canWrite, login, logout } from "./auth.js";
 import { filteredInvoices, projectExists, clientExists } from "./finance.js";
-import { createRecord, state } from "./state.js";
+import { createRecord, parseDate, state, toInputDate } from "./state.js";
 import { saveState, resetStorage } from "./storage.js";
 import {
   closeMobileMenu,
@@ -621,10 +621,13 @@ function handleBudgetSubmit(event) {
   const payload = {
     userId: state.session.userId,
     clientId: dom.budgetClient.value,
+    number: dom.budgetNumber.value.trim() || nextLocalBudgetNumber(),
     projectName: dom.budgetProjectName.value.trim(),
     services: dom.budgetServices.value.trim(),
     discount: Number(dom.budgetDiscount.value || 0),
+    taxes: Number(dom.budgetTaxes.value || 0),
     currency: dom.budgetCurrency.value,
+    issueDate: dom.budgetIssueDate.value,
     validUntil: dom.budgetValidUntil.value,
     status: dom.budgetStatus.value,
     notes: dom.budgetNotes.value.trim()
@@ -995,19 +998,21 @@ function printBudget(id) {
 
   openPrintSheet({
     type: "PRESUPUESTO",
-    number: budget.id.slice(0, 8).toUpperCase(),
+    number: budget.number || budget.id.slice(0, 8).toUpperCase(),
     title: budget.projectName,
     client,
     meta: [
+      ["Emision", formatDate(budget.issueDate || budget.createdAt)],
       ["Valido hasta", formatDate(budget.validUntil)],
       ["Estado", labelize(budget.status)],
       ["Moneda", budget.currency],
       ["Servicios", `${items.length} items`]
     ],
-    rows: items.map((item, index) => [String(index + 1), item.name, "1", formatMoney(item.amount, budget.currency), formatMoney(item.amount, budget.currency)]),
+    rows: items.map((item, index) => [String(index + 1), item.name, String(item.quantity), formatMoney(item.unitPrice, budget.currency), formatMoney(item.amount, budget.currency)]),
     totals: [
       ["Subtotal", formatMoney(subtotal, budget.currency)],
       ["Descuento", formatMoney(Number(budget.discount || 0), budget.currency)],
+      ["Impuestos", formatMoney(Number(budget.taxes || 0), budget.currency)],
       ["Total", formatMoney(total, budget.currency)]
     ],
     notes: budget.notes || "Presupuesto valido hasta la fecha indicada. Los cambios fuera de alcance se presupuestan aparte."
@@ -1070,14 +1075,21 @@ function budgetItems(budget) {
     .filter(Boolean)
     .map((line) => {
       const parts = line.split(":");
-      const amount = Number(parts.pop());
+      const unitPrice = Number(parts.pop());
+      const maybeQuantity = Number(parts[parts.length - 1]);
+      const hasQuantity = parts.length > 1 && Number.isFinite(maybeQuantity);
+      const quantity = hasQuantity ? maybeQuantity : 1;
+      if (hasQuantity) parts.pop();
+      const amount = quantity * unitPrice;
       return {
         name: parts.join(":").trim() || line,
+        quantity,
+        unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
         amount: Number.isFinite(amount) ? amount : 0
       };
     })
     .filter((item) => item.name || item.amount);
-  return rows.length ? rows : [{ name: budget.projectName || "Servicio sCode", amount: budgetTotal(budget) }];
+  return rows.length ? rows : [{ name: budget.projectName || "Servicio sCode", quantity: 1, unitPrice: 0, amount: 0 }];
 }
 
 function openPrintSheet({ type, number, title, client, meta, rows, totals, notes }) {
@@ -1190,6 +1202,7 @@ function duplicateBudget(id) {
   const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...copy } = budget;
   state.budgets.push(createRecord({
     ...copy,
+    number: nextLocalBudgetNumber(),
     projectName: `${budget.projectName} copia`,
     status: "borrador"
   }));
@@ -1224,12 +1237,16 @@ function convertBudgetToProject(id) {
 }
 
 function budgetTotal(budget) {
-  const subtotal = String(budget.services || "")
-    .split("\n")
-    .map((line) => Number(line.split(":").pop()))
+  const subtotal = budgetItems(budget).reduce((total, item) => total + item.amount, 0);
+  return Math.max(subtotal - Number(budget.discount || 0) + Number(budget.taxes || 0), 0);
+}
+
+function nextLocalBudgetNumber() {
+  const next = state.budgets
+    .map((budget) => Number(String(budget.number || "").replace("PRE-", "")))
     .filter((value) => Number.isFinite(value))
-    .reduce((total, value) => total + value, 0);
-  return Math.max(subtotal - Number(budget.discount || 0), 0);
+    .reduce((max, value) => Math.max(max, value), 0) + 1;
+  return `PRE-${String(next).padStart(6, "0")}`;
 }
 
 function fillClientForm(client) {
@@ -1435,10 +1452,13 @@ function fillOpportunityForm(item) {
 function fillBudgetForm(item) {
   dom.budgetId.value = item.id;
   dom.budgetClient.value = item.clientId;
+  dom.budgetNumber.value = item.number || "";
   dom.budgetProjectName.value = item.projectName;
   dom.budgetServices.value = item.services || "";
   dom.budgetDiscount.value = item.discount || 0;
+  dom.budgetTaxes.value = item.taxes || 0;
   dom.budgetCurrency.value = item.currency || "ARS";
+  dom.budgetIssueDate.value = item.issueDate || toInputDate(parseDate(item.createdAt));
   dom.budgetValidUntil.value = item.validUntil || "";
   dom.budgetStatus.value = item.status || "borrador";
   dom.budgetNotes.value = item.notes || "";
