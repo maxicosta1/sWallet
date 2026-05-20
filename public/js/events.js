@@ -617,17 +617,18 @@ function handleOpportunitySubmit(event) {
 function handleBudgetSubmit(event) {
   event.preventDefault();
   if (!assertWritable() || !validateForm(dom.budgetForm)) return;
-  if (!clientExists(dom.budgetClient.value)) return notify("Cliente obligatorio", "El presupuesto debe estar asociado a un cliente.");
+  if (dom.budgetClient.value && !clientExists(dom.budgetClient.value)) return notify("Cliente invalido", "Selecciona un cliente existente o deja el presupuesto sin asociar.");
+  const issueDate = dom.budgetIssueDate?.value || toInputDate(new Date());
   const payload = {
     userId: state.session.userId,
     clientId: dom.budgetClient.value,
-    number: dom.budgetNumber.value.trim() || nextLocalBudgetNumber(),
+    number: dom.budgetNumber?.value.trim() || nextLocalBudgetNumber(),
     projectName: dom.budgetProjectName.value.trim(),
     services: dom.budgetServices.value.trim(),
     discount: Number(dom.budgetDiscount.value || 0),
-    taxes: Number(dom.budgetTaxes.value || 0),
+    taxes: Number(dom.budgetTaxes?.value || 0),
     currency: dom.budgetCurrency.value,
-    issueDate: dom.budgetIssueDate.value,
+    issueDate,
     validUntil: dom.budgetValidUntil.value,
     status: dom.budgetStatus.value,
     notes: dom.budgetNotes.value.trim()
@@ -1452,13 +1453,13 @@ function fillOpportunityForm(item) {
 function fillBudgetForm(item) {
   dom.budgetId.value = item.id;
   dom.budgetClient.value = item.clientId;
-  dom.budgetNumber.value = item.number || "";
+  if (dom.budgetNumber) dom.budgetNumber.value = item.number || "";
   dom.budgetProjectName.value = item.projectName;
   dom.budgetServices.value = item.services || "";
   dom.budgetDiscount.value = item.discount || 0;
-  dom.budgetTaxes.value = item.taxes || 0;
+  if (dom.budgetTaxes) dom.budgetTaxes.value = item.taxes || 0;
   dom.budgetCurrency.value = item.currency || "ARS";
-  dom.budgetIssueDate.value = item.issueDate || toInputDate(parseDate(item.createdAt));
+  if (dom.budgetIssueDate) dom.budgetIssueDate.value = item.issueDate || toInputDate(parseDate(item.createdAt));
   dom.budgetValidUntil.value = item.validUntil || "";
   dom.budgetStatus.value = item.status || "borrador";
   dom.budgetNotes.value = item.notes || "";

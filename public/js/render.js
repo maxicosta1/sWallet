@@ -1238,6 +1238,12 @@ function populateClientSelects() {
     if ([...dom[id].options].some((option) => option.value === value)) dom[id].value = value;
   });
 
+  if (dom.budgetClient) {
+    const value = dom.budgetClient.value;
+    dom.budgetClient.innerHTML = [`<option value="">Sin asociar</option>`].concat(clients().map((client) => `<option value="${client.id}">${escapeHTML(client.company)} - ${escapeHTML(client.name)}</option>`)).join("");
+    if ([...dom.budgetClient.options].some((option) => option.value === value)) dom.budgetClient.value = value;
+  }
+
   if (dom.billingFilterClient) dom.billingFilterClient.value = state.billingFilters.clientId;
   if (dom.projectFilterClient) dom.projectFilterClient.value = state.projectFilterClientId;
   if (dom.adminClientFilter) dom.adminClientFilter.value = state.adminFilterClientId;
@@ -1396,12 +1402,12 @@ export function resetBudgetForm() {
   dom.budgetForm?.reset();
   if (!dom.budgetForm) return;
   dom.budgetId.value = "";
-  dom.budgetNumber.value = "";
+  if (dom.budgetNumber) dom.budgetNumber.value = "";
   dom.budgetCurrency.value = "ARS";
-  dom.budgetIssueDate.value = toInputDate(new Date());
+  if (dom.budgetIssueDate) dom.budgetIssueDate.value = toInputDate(new Date());
   dom.budgetValidUntil.value = toInputDate(new Date(Date.now() + 10 * DAY_MS));
   dom.budgetDiscount.value = 0;
-  dom.budgetTaxes.value = 0;
+  if (dom.budgetTaxes) dom.budgetTaxes.value = 0;
   dom.budgetStatus.value = "borrador";
   dom.budgetFormTitle.textContent = "Nuevo presupuesto";
 }
