@@ -43,6 +43,9 @@ export default async function BudgetPage({ params }: BudgetPageProps) {
               <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
                 Propuesta comercial para servicios digitales, desarrollo web, automatizaciones y soporte operativo.
               </p>
+              <p className="mt-3 text-sm font-semibold text-slate-700">
+                contact@scodedigital.com - scodedigital.com
+              </p>
             </div>
             <div className="text-right">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Presupuesto</p>

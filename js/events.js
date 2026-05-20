@@ -1094,7 +1094,7 @@ function budgetItems(budget) {
 }
 
 function openPrintSheet({ type, number, title, client, meta, rows, totals, notes }) {
-  const company = state.companySettings || {};
+  const company = normalizedCompanySettings();
   const win = window.open("", "_blank", "width=900,height=1100");
   if (!win) return notify("No se pudo abrir la hoja", "Habilita ventanas emergentes para imprimir.");
   const rowsHtml = rows.map((row) => `
@@ -1128,7 +1128,7 @@ function openPrintSheet({ type, number, title, client, meta, rows, totals, notes
           <header class="sheet-header">
             <section>
               <div class="brand-lockup"><span>s</span><div><strong>${escapeHTML(company.name || "sCode")}</strong><small>${escapeHTML(company.legalName || "Digital Solutions")}</small></div></div>
-              <p>${escapeHTML(company.email || "admin@scode.com")}<br>${escapeHTML(company.website || "scode.com")}</p>
+              <p>${escapeHTML(company.email)}<br>${escapeHTML(company.website)}</p>
             </section>
             <section class="sheet-title">
               <b>${escapeHTML(type)}</b>
@@ -1156,6 +1156,13 @@ function openPrintSheet({ type, number, title, client, meta, rows, totals, notes
       </body>
     </html>`);
   win.document.close();
+}
+
+function normalizedCompanySettings() {
+  const company = { ...(state.companySettings || {}) };
+  if (!company.email || company.email === "admin@scode.com") company.email = "contact@scodedigital.com";
+  if (!company.website || company.website === "https://scode.com" || company.website === "scode.com") company.website = "https://scodedigital.com";
+  return company;
 }
 
 function printSheetStyles() {

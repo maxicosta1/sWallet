@@ -123,7 +123,7 @@ export function migrateSnapshot(snapshot) {
     savedAt: snapshot.savedAt || new Date().toISOString(),
     session: snapshot.session || null,
     userProfiles: normalizeProfiles(snapshot.userProfiles),
-    companySettings: snapshot.companySettings || {},
+    companySettings: migrateCompanySettings(snapshot.companySettings),
     exchangeRate: Number(snapshot.exchangeRate) || 1200
   };
 
@@ -140,6 +140,13 @@ export function migrateSnapshot(snapshot) {
   migrated.goals = migrated.goals.map(migrateGoal);
   migrated.users = migrated.users.map(migrateUser);
 
+  return migrated;
+}
+
+function migrateCompanySettings(settings = {}) {
+  const migrated = { ...settings };
+  if (!migrated.email || migrated.email === "admin@scode.com") migrated.email = "contact@scodedigital.com";
+  if (!migrated.website || migrated.website === "https://scode.com" || migrated.website === "scode.com") migrated.website = "https://scodedigital.com";
   return migrated;
 }
 

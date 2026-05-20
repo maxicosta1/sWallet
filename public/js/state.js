@@ -31,8 +31,8 @@ export const state = {
   companySettings: {
     name: "sCode Digital Solutions",
     legalName: "sCode Digital Solutions",
-    email: "admin@scode.com",
-    website: "https://scode.com",
+    email: "contact@scodedigital.com",
+    website: "https://scodedigital.com",
     primaryColor: "#9f5cff",
     mainCurrency: "ARS",
     secondaryCurrency: "USD",
